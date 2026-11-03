@@ -116,8 +116,8 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
 
       <div className="config-scroll">
         <details className="config-section" open={openSection === 'layout'} onToggle={(event) => event.currentTarget.open && setOpenSection('layout')}>
-          <summary><span>页面布局</span><small>{settings.paperSize} · {settings.frontColumns} 栏</small></summary>
-          <div className="config-section-body config-grid-two">
+          <summary className="layout-summary"><span>版面设置：<b>{settings.paperSize} - {settings.frontColumns}栏</b></span></summary>
+          <div className="config-section-body layout-setting-row">
             <Field label="纸张">
               <MetisSelect
                 value={settings.paperSize}
