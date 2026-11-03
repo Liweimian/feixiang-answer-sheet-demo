@@ -29,11 +29,11 @@
       "name": "版本更新",
       "status": "completed",
       "startedAt": "2026-11-03T17:10:00+08:00",
-      "completedAt": "2026-11-03T20:30:00+08:00",
-      "version": "1.3.1",
-      "iterationCount": 4,
+      "completedAt": "2026-11-03T21:00:00+08:00",
+      "version": "1.3.2",
+      "iterationCount": 5,
       "awaitingUserConfirmation": true,
-      "scope": ["单一飞象模式", "移除全局头部", "移除题卡设置", "精简配置信息", "标题与控件同行", "客观题模块合并", "打印设置归口"],
+      "scope": ["单一飞象模式", "移除全局头部", "移除题卡设置", "注意事项显隐", "整卡分值展示", "精简配置信息", "标题与控件同行", "客观题模块合并", "打印设置归口"],
       "outputs": ["src/components/AnswerSheetConfigPanel.tsx", "src/components/AnswerSheetCanvas.tsx", "src/features/answer-sheet/operations.ts", "src/features/answer-sheet/export.ts", "docs/changelog.md"],
       "validation": ["npm run typecheck", "npm run build", "browser direct-editor regression"]
     }
@@ -48,5 +48,5 @@
     "9f6f9f3 Stage 4 v1.3.1: remove redundant editor sections"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-03T20:30:00+08:00"
+  "updatedAt": "2026-11-03T21:00:00+08:00"
 }

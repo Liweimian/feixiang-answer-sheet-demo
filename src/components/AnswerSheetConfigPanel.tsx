@@ -33,6 +33,7 @@ interface AnswerSheetConfigPanelProps {
   activePage: number
   selectedBlockId: string
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void
+  onScoreVisibilityChange: (visible: boolean) => void
   onPageChange: (page: number) => void
   onSelect: (id: string) => void
   onUpdateBlock: (patch: Partial<AnswerBlock>) => void
@@ -175,13 +176,11 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </div>
         </details>
 
-        <details className="config-section">
-          <summary><span>注意事项与页脚</span></summary>
-          <div className="config-section-body">
-            <ToggleField title="显示注意事项" checked={settings.showNotice} onChange={(checked) => props.onSettingsChange({ showNotice: checked })} />
-            {settings.showNotice && <Field label="注意事项文字"><textarea value={settings.noticeText} rows={3} onChange={(event) => props.onSettingsChange({ noticeText: event.target.value })} /></Field>}
-            <ToggleField title="显示页脚" description="自动追加第 x 面（共 x 面）" checked={settings.showFooter} onChange={(checked) => props.onSettingsChange({ showFooter: checked })} />
-            {settings.showFooter && <Field label="页脚文字"><MetisInput value={settings.footerText} onChange={(event) => props.onSettingsChange({ footerText: event.target.value })} /></Field>}
+        <details className="config-section" open>
+          <summary><span>显示设置</span></summary>
+          <div className="config-section-body display-settings-row">
+            <ToggleField title="注意事项" checked={settings.showNotice} onChange={(checked) => props.onSettingsChange({ showNotice: checked })} />
+            <ToggleField title="分值展示" checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showScore)} onChange={props.onScoreVisibilityChange} />
           </div>
         </details>
 

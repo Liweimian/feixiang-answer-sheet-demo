@@ -135,9 +135,19 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
 
       {page === 1 && settings.showNotice && (
         <div className="candidate-notice">
-          <strong>考生须知</strong>
-          <span>{settings.noticeText}</span>
-          <span className="absence-mark">缺考标记　[　]</span>
+          <strong className="notice-vertical-title">注意事项</strong>
+          <ol>
+            <li>答题前请将学号、姓名、班级填写清楚。</li>
+            <li>客观题答题，必须使用 2B 铅笔填涂，修改时用橡皮擦干净。</li>
+            <li>主观题必须使用黑色字迹签字笔书写。</li>
+            <li>必须在题号对应的答题区域内作答，超出答题区域书写无效。</li>
+            <li>保持答卷清洁完整，请勿折叠或污损答题卡。</li>
+          </ol>
+          <strong className="notice-vertical-title">填涂样例</strong>
+          <div className="fill-sample">
+            <span>正确填涂： <i className="fill-correct" /></span>
+            <span>错误填涂： <i>●</i> <i>×</i> <i>—</i> <i>✓</i></span>
+          </div>
         </div>
       )}
       {manualScoreEnabled && <div className="manual-score-strip"><b>手批评分栏</b><span>得分：________</span><span>阅卷人：________</span></div>}
