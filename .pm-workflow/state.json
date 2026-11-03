@@ -46,7 +46,8 @@
     "f236964 Fix: hide preflight dialog from printed answer sheet",
     "f06c165 Stage 4 v1.3: simplify editor and merge objective modules",
     "9f6f9f3 Stage 4 v1.3.1: remove redundant editor sections",
-    "37bc5a8 Stage 4 v1.3.2: simplify notice and score display"
+    "37bc5a8 Stage 4 v1.3.2: simplify notice and score display",
+    "f8981a6 Stage 4 v1.3.3: unify answer sheet columns"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-03T21:15:00+08:00"
