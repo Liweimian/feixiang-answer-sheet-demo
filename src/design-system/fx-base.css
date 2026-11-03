@@ -1,0 +1,57 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-width: var(--fx_page_min);
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow-x: hidden;
+  background: var(--fx_page);
+  color: var(--fx_text_1);
+  font-family: var(--fx_font_body);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.fx-app {
+  min-height: 100vh;
+}
+
+.fx-sider {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 100;
+  width: var(--fx_sider_width);
+  background: var(--fx_nav);
+}
+
+.fx-content {
+  min-width: var(--fx_content_min);
+  min-height: 100vh;
+  margin-left: var(--fx_sider_width);
+}
+
+.fx-zoom-area {
+  position: relative;
+  min-width: var(--fx_content_min);
+  min-height: 100vh;
+  transform-origin: left top;
+}
+
+.fx-page-header {
+  position: absolute;
+  top: var(--fx_page_gutter);
+  right: var(--fx_page_gutter);
+  left: var(--fx_page_gutter);
+  height: var(--fx_header_height);
+}

@@ -1,0 +1,158 @@
+import type {
+  AnswerBlock,
+  ExamPaper,
+  RulePack,
+  SourceKind,
+} from '../features/answer-sheet/types'
+
+export const sourceOptions: Array<{
+  id: SourceKind
+  title: string
+  description: string
+  badge: string
+}> = [
+  {
+    id: 'library',
+    title: '从题库试卷生成',
+    description: '自动读取题号、题型、分值和原卷顺序，生成后只需确认异常。',
+    badge: '推荐',
+  },
+  {
+    id: 'upload',
+    title: '上传 Word / PDF',
+    description: '解析外部试卷并保留题干图片、表格和公式位置。',
+    badge: '智能解析',
+  },
+  {
+    id: 'template',
+    title: '复用历史模板',
+    description: '从个人、备课组或学校模板复制，历史发布版本不受影响。',
+    badge: '高频',
+  },
+  {
+    id: 'blank',
+    title: '新建空白卡',
+    description: '适合第三方试卷或已有纸质卡，从题块结构开始设计。',
+    badge: '高级',
+  },
+]
+
+export const beijingEnglishPaper: ExamPaper = {
+  id: 'paper-bj-english-demo-2026',
+  title: '2026 北京市初三英语一模模拟卷',
+  subtitle: '答题卡能力演示 · 原创结构',
+  region: '北京',
+  grade: '初三',
+  subject: '英语',
+  examType: '一模',
+  durationMinutes: 90,
+  score: 60,
+  sourceLabel: '题库试卷 · 38 道题',
+  disclaimer: '非官方试卷；题号从 11 开始及逐页条码用于演示产品能力。',
+  sections: [
+    { id: 's1', title: '一、单项填空', range: '11–22', questionCount: 12, score: 6, answerKind: 'objective', confidence: 99 },
+    { id: 's2', title: '二、完形填空', range: '23–30', questionCount: 8, score: 8, answerKind: 'objective', confidence: 98 },
+    { id: 's3', title: '三、阅读理解', range: '31–43', questionCount: 13, score: 26, answerKind: 'objective', confidence: 97 },
+    { id: 's4', title: '四、阅读表达', range: '44–47', questionCount: 4, score: 10, answerKind: 'short-answer', confidence: 94 },
+    { id: 's5', title: '五、文段表达', range: '48', questionCount: 1, score: 10, answerKind: 'essay', confidence: 86 },
+  ],
+}
+
+export const initialAnswerBlocks: AnswerBlock[] = [
+  {
+    id: 'objective-11-43',
+    sectionId: 's1',
+    page: 1,
+    title: '客观题填涂区',
+    range: '11–43',
+    score: 40,
+    kind: 'objective',
+    height: 218,
+    showScore: true,
+    hint: '按大题保留分隔，题号全局连续',
+  },
+  {
+    id: 'short-44-46',
+    sectionId: 's4',
+    page: 1,
+    title: '四、阅读表达 44–46',
+    range: '44–46',
+    score: 6,
+    kind: 'short-answer',
+    height: 150,
+    lineCount: 6,
+    showScore: true,
+  },
+  {
+    id: 'short-47',
+    sectionId: 's4',
+    page: 2,
+    title: '四、阅读表达 47',
+    range: '47',
+    score: 4,
+    kind: 'short-answer',
+    height: 82,
+    lineCount: 3,
+    showScore: true,
+    hint: '建议 4 行，当前空间偏小',
+  },
+  {
+    id: 'essay-48',
+    sectionId: 's5',
+    page: 2,
+    title: '五、文段表达 48',
+    range: '48',
+    score: 10,
+    kind: 'essay',
+    height: 270,
+    lineCount: 10,
+    showScore: true,
+    hint: '二选一，共用作答区；不少于 50 词',
+  },
+  {
+    id: 'forbidden-page-2',
+    page: 2,
+    title: '禁答区，请勿书写',
+    kind: 'forbidden',
+    height: 56,
+    showScore: false,
+    locked: true,
+  },
+]
+
+export const rulePacks: RulePack[] = [
+  {
+    id: 'beijing-middle-2026',
+    name: '北京中考规范兼容版（2026）',
+    shortName: '北京中考 2026',
+    description: '依据北京教育考试院公开作答规则与官方示意制作，不代表官方扫描模板。',
+    evidenceLabel: '公开规则已核验',
+    paperSize: 'A4',
+    pageCount: 2,
+    subjectScope: '英语等分科笔试',
+    identityFields: ['学校', '班级', '姓名', '准考证号', '页码'],
+    lockedZones: ['定位点', '条形码框', '身份区', '右侧禁写条', '面码'],
+  },
+  {
+    id: 'shenzhen-physchem-2026',
+    name: '深圳物理+化学合卷兼容版（2026）',
+    shortName: '深圳理化合卷 2026',
+    description: '物理 70 分、化学 50 分，分学科题区和条码身份区按公开规则预置。',
+    evidenceLabel: '规则包预览',
+    paperSize: 'A3',
+    pageCount: 4,
+    subjectScope: '物理+化学合卷',
+    identityFields: ['姓名', '考生号', '考点', '考场号', '座位号'],
+    lockedZones: ['定位点', '检测区', '条形码框', '物理/化学分隔', '面码'],
+  },
+]
+
+export const blockKindLabels: Record<AnswerBlock['kind'], string> = {
+  objective: '客观题',
+  'short-answer': '短答横线',
+  essay: '英语作文',
+  forbidden: '禁答区',
+  drawing: '作图区',
+  table: '表格区',
+  notice: '说明文字',
+}
