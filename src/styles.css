@@ -436,7 +436,7 @@
   @page sheet-8k { size: 270mm 390mm; margin: 0; }
   @page sheet-16k { size: 195mm 270mm; margin: 0; }
   html, body, #root { width: auto; min-width: 0; margin: 0; padding: 0; background: #fff; }
-  .fx-sider, .studio-header, .editor-toolbar, .question-outline, .inspector-panel, .answer-sheet-config, .canvas-toolbar, .review-toggle, .review-stage-one, .editor-workbench-wrap > [class*='alert'], .paper-title-edit > span { display: none !important; }
+  .fx-sider, .studio-header, .editor-toolbar, .question-outline, .inspector-panel, .answer-sheet-config, .canvas-toolbar, .review-toggle, .review-stage-one, .editor-workbench-wrap > [class*='alert'], .paper-title-edit > span, .print-hidden { display: none !important; }
   .fx-content, .answer-sheet-app.is-review .fx-content { margin: 0; }
   .fx-zoom-area { zoom: 1 !important; }
   .studio-body, .studio-body.stage-editor { height: auto; min-height: 0; padding: 0; overflow: visible; }

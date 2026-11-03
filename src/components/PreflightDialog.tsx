@@ -42,7 +42,7 @@ export function PreflightDialog(props: PreflightDialogProps) {
   )
 
   return (
-    <MetisDialog open={props.open} title="印前校验与发布" width={720} footer={footer} onCancel={props.onClose}>
+    <MetisDialog rootClassName="print-hidden" open={props.open} title="印前校验与发布" width={720} footer={footer} onCancel={props.onClose}>
       {isPublishedCurrent && props.published ? (
         <div className="publish-success">
           <span><ShieldCheck size={34} /></span>
