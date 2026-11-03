@@ -3,10 +3,23 @@ export type SourceKind = 'library' | 'upload' | 'template' | 'blank'
 export type CardMode = 'smart' | 'standard'
 export type TemplateOrigin = 'system' | 'school' | 'personal'
 export type TemplateCategory = 'recommended' | 'standard' | 'subject' | 'blank'
+export type ReviewMode = 'online' | 'manual' | 'mixed'
+export type CardStyle = 'answer-only' | 'question-answer'
+export type PaperSize = 'A4' | 'A3' | '8K' | '16K'
+export type PrintSide = 'single' | 'double'
+export type PaperColumns = 1 | 2 | 3
+export type CandidateNumberLayout = 'fill' | 'barcode' | 'handwrite'
+export type CandidateNumberType = '准考证号' | '学籍号' | '学号' | '考号'
+export type IdentityField = '学校' | '姓名' | '班级' | '学号' | '准考证号' | '考场号' | '座位号'
+export type ObjectiveLayout = 'horizontal' | 'vertical' | 'merged'
+export type LineStyle = 'solid' | 'dashed'
+export type ResponseStyle = 'lines' | 'grid' | 'bracket' | 'square' | 'blank'
+export type ContentElement = 'table' | 'formula' | 'image'
 export type AnswerBlockKind =
   | 'objective'
   | 'short-answer'
   | 'essay'
+  | 'mixed'
   | 'forbidden'
   | 'drawing'
   | 'table'
@@ -16,6 +29,7 @@ export const questionBlockKinds: AnswerBlockKind[] = [
   'objective',
   'short-answer',
   'essay',
+  'mixed',
   'drawing',
   'table',
 ]
@@ -61,10 +75,37 @@ export interface AnswerBlock {
   lineCount?: number
   optionCount?: 4 | 5
   itemsPerColumn?: number
+  objectiveLayout?: ObjectiveLayout
   writingLayout?: 'choose-one' | 'separate'
+  lineStyle?: LineStyle
+  responseStyle?: ResponseStyle
+  contentText?: string
+  contentElements?: ContentElement[]
   showScore: boolean
+  showQuestionCount?: boolean
+  showScoreBox?: boolean
+  scoreStep?: number
   locked?: boolean
   hint?: string
+}
+
+export interface AnswerSheetSettings {
+  reviewMode: ReviewMode
+  cardStyle: CardStyle
+  paperSize: PaperSize
+  printSide: PrintSide
+  frontColumns: PaperColumns
+  backColumns: PaperColumns
+  candidateNumberLayout: CandidateNumberLayout
+  candidateNumberType: CandidateNumberType
+  candidateNumberDigits: number
+  identityFields: IdentityField[]
+  showBarcode: boolean
+  showNotice: boolean
+  noticeText: string
+  showFooter: boolean
+  footerText: string
+  linkedPaperId: string
 }
 
 export interface RulePack {
@@ -83,6 +124,7 @@ export interface RulePack {
 export interface AnswerSheetDocument {
   paper: ExamPaper
   blocks: AnswerBlock[]
+  settings: AnswerSheetSettings
   mode: CardMode
   rulePackId: string
   templateId: string
@@ -97,7 +139,7 @@ export interface AnswerSheetTemplate {
   category: TemplateCategory
   featured?: boolean
   tags: string[]
-  paperSize: 'A4' | 'A3' | '8K'
+  paperSize: PaperSize
   columns: 1 | 2 | 3
   identityMode: 'barcode' | 'candidate-number' | 'both'
   highlights: string[]
@@ -131,6 +173,7 @@ export interface PublishedVersion {
   version: number
   publishedAt: string
   referencedExamCount: number
+  snapshot: AnswerSheetDocument
 }
 
 export type DraftSnapshot = AnswerSheetDocument

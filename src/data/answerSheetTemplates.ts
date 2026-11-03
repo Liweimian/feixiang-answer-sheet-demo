@@ -1,10 +1,39 @@
 import type {
   AnswerBlock,
   AnswerSheetDocument,
+  AnswerSheetSettings,
   AnswerSheetTemplate,
   ExamPaper,
 } from '../features/answer-sheet/types'
 import { beijingEnglishPaper, initialAnswerBlocks } from './mockPaper'
+
+const defaultNotice = '客观题用 2B 铅笔填涂；主观题使用黑色字迹签字笔，在对应题号区域内作答。'
+
+function createSettings(overrides: Partial<AnswerSheetSettings> = {}): AnswerSheetSettings {
+  const defaults: AnswerSheetSettings = {
+    reviewMode: 'online',
+    cardStyle: 'answer-only',
+    paperSize: 'A4',
+    printSide: 'double',
+    frontColumns: 2,
+    backColumns: 2,
+    candidateNumberLayout: 'barcode',
+    candidateNumberType: '准考证号',
+    candidateNumberDigits: 10,
+    identityFields: ['学校', '姓名', '班级', '准考证号'],
+    showBarcode: false,
+    showNotice: true,
+    noticeText: defaultNotice,
+    showFooter: true,
+    footerText: '请按 100% 原尺寸打印',
+    linkedPaperId: '',
+  }
+  return {
+    ...defaults,
+    ...overrides,
+    identityFields: overrides.identityFields ? [...overrides.identityFields] : [...defaults.identityFields],
+  }
+}
 
 const generalPaper: ExamPaper = {
   id: 'paper-general-stage-test',
@@ -76,6 +105,33 @@ const blankPaper: ExamPaper = {
   sections: [],
 }
 
+const shenzhenPaper: ExamPaper = {
+  id: 'paper-shenzhen-physchem-layout',
+  title: '深圳市中考理化合卷答题卡结构演示',
+  subtitle: '深圳地区模板 · A3 四面',
+  region: '深圳',
+  grade: '初三',
+  subject: '物理+化学合卷',
+  examType: '中考结构演示',
+  durationMinutes: 120,
+  score: 120,
+  sourceLabel: '地区模板 · 结构演示',
+  disclaimer: '仅演示深圳理化合卷的分学科题区、考生信息与四面布局；正式印刷前请以当年考试机构样卡为准。',
+  sections: [
+    { id: 'sz-p1', title: '物理客观题', range: '1–20', questionCount: 20, score: 40, answerKind: 'objective', confidence: 100 },
+    { id: 'sz-p2', title: '物理主观题', range: '21–25', questionCount: 5, score: 30, answerKind: 'short-answer', confidence: 100 },
+    { id: 'sz-c1', title: '化学客观题', range: '26–35', questionCount: 10, score: 20, answerKind: 'objective', confidence: 100 },
+    { id: 'sz-c2', title: '化学主观题', range: '36–40', questionCount: 5, score: 30, answerKind: 'short-answer', confidence: 100 },
+  ],
+}
+
+const shenzhenBlocks: AnswerBlock[] = [
+  { id: 'sz-objective-physics', sectionId: 'sz-p1', page: 1, title: '物理客观题填涂区', range: '1–20', score: 40, kind: 'objective', height: 190, optionCount: 4, itemsPerColumn: 10, objectiveLayout: 'horizontal', showScore: true },
+  { id: 'sz-short-physics', sectionId: 'sz-p2', page: 2, title: '物理主观题作答区', range: '21–25', score: 30, kind: 'short-answer', height: 300, lineCount: 12, lineStyle: 'solid', responseStyle: 'lines', showScore: true, showScoreBox: true, scoreStep: 1 },
+  { id: 'sz-objective-chemistry', sectionId: 'sz-c1', page: 3, title: '化学客观题填涂区', range: '26–35', score: 20, kind: 'objective', height: 150, optionCount: 4, itemsPerColumn: 10, objectiveLayout: 'horizontal', showScore: true },
+  { id: 'sz-short-chemistry', sectionId: 'sz-c2', page: 4, title: '化学主观题作答区', range: '36–40', score: 30, kind: 'short-answer', height: 300, lineCount: 12, lineStyle: 'solid', responseStyle: 'lines', showScore: true, showScoreBox: true, scoreStep: 1 },
+]
+
 export const answerSheetTemplates: AnswerSheetTemplate[] = [
   {
     id: 'general-a4-smart',
@@ -89,7 +145,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
     columns: 2,
     identityMode: 'barcode',
     highlights: ['客观题自动分栏', '主观题空间已预估', '可自由增删题块'],
-    document: { paper: generalPaper, blocks: generalBlocks, mode: 'smart', rulePackId: 'beijing-middle-2026', templateId: 'general-a4-smart', pageCount: 2 },
+    document: { paper: generalPaper, blocks: generalBlocks, settings: createSettings({ linkedPaperId: generalPaper.id }), mode: 'smart', rulePackId: 'beijing-middle-2026', templateId: 'general-a4-smart', pageCount: 2 },
   },
   {
     id: 'beijing-english-standard',
@@ -102,7 +158,37 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
     columns: 2,
     identityMode: 'both',
     highlights: ['扫描安全区锁定', '短答与作文专用区', '印前规则校验'],
-    document: { paper: beijingEnglishPaper, blocks: initialAnswerBlocks, mode: 'standard', rulePackId: 'beijing-middle-2026', templateId: 'beijing-english-standard', pageCount: 2 },
+    document: { paper: beijingEnglishPaper, blocks: initialAnswerBlocks, settings: createSettings({ candidateNumberLayout: 'fill', showBarcode: true, linkedPaperId: beijingEnglishPaper.id }), mode: 'standard', rulePackId: 'beijing-middle-2026', templateId: 'beijing-english-standard', pageCount: 2 },
+  },
+  {
+    id: 'shenzhen-physchem-standard',
+    name: '深圳理化合卷 · 大考规范演示',
+    description: 'A3 四面，预置分学科题区、考场与座位信息，适合核对深圳地区大考版式。',
+    origin: 'system',
+    category: 'standard',
+    tags: ['深圳', '理化合卷', '大考规范'],
+    paperSize: 'A3',
+    columns: 2,
+    identityMode: 'both',
+    highlights: ['A3 四面布局', '物理与化学分区', '考场号与座位号'],
+    document: {
+      paper: shenzhenPaper,
+      blocks: shenzhenBlocks,
+      settings: createSettings({
+        paperSize: 'A3',
+        printSide: 'double',
+        frontColumns: 2,
+        backColumns: 2,
+        candidateNumberLayout: 'barcode',
+        candidateNumberType: '考号',
+        identityFields: ['姓名', '准考证号', '考场号', '座位号'],
+        linkedPaperId: shenzhenPaper.id,
+      }),
+      mode: 'standard',
+      rulePackId: 'shenzhen-physchem-2026',
+      templateId: 'shenzhen-physchem-standard',
+      pageCount: 4,
+    },
   },
   {
     id: 'science-lab-school',
@@ -115,7 +201,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
     columns: 2,
     identityMode: 'barcode',
     highlights: ['作图框', '实验长答区', '数据表格区'],
-    document: { paper: sciencePaper, blocks: scienceBlocks, mode: 'smart', rulePackId: 'beijing-middle-2026', templateId: 'science-lab-school', pageCount: 2 },
+    document: { paper: sciencePaper, blocks: scienceBlocks, settings: createSettings({ linkedPaperId: sciencePaper.id }), mode: 'smart', rulePackId: 'beijing-middle-2026', templateId: 'science-lab-school', pageCount: 2 },
   },
   {
     id: 'true-blank',
@@ -128,7 +214,23 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
     columns: 1,
     identityMode: 'candidate-number',
     highlights: ['无预置题号', '无预置分值', '适合第三方纸质卷'],
-    document: { paper: blankPaper, blocks: [], mode: 'smart', rulePackId: 'beijing-middle-2026', templateId: 'true-blank', pageCount: 1 },
+    document: {
+      paper: blankPaper,
+      blocks: [],
+      settings: createSettings({
+        reviewMode: 'manual',
+        printSide: 'single',
+        frontColumns: 1,
+        backColumns: 1,
+        candidateNumberLayout: 'handwrite',
+        candidateNumberType: '学号',
+        identityFields: ['学校', '姓名', '班级', '学号'],
+      }),
+      mode: 'smart',
+      rulePackId: 'beijing-middle-2026',
+      templateId: 'true-blank',
+      pageCount: 1,
+    },
   },
 ]
 
@@ -139,7 +241,14 @@ export function instantiateTemplate(template: AnswerSheetTemplate): AnswerSheetD
       ...template.document.paper,
       sections: template.document.paper.sections.map((section) => ({ ...section })),
     },
-    blocks: template.document.blocks.map((block) => ({ ...block })),
+    blocks: template.document.blocks.map((block) => ({
+      ...block,
+      contentElements: block.contentElements ? [...block.contentElements] : undefined,
+    })),
+    settings: {
+      ...template.document.settings,
+      identityFields: [...template.document.settings.identityFields],
+    },
   }
 }
 

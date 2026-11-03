@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisButton, MetisInput, MetisSelect, MetisTag } from '@yuanfudao/metis-web-component'
 import { LockKeyhole, Maximize2, Pencil, RotateCcw } from 'lucide-react'
-import type { AnswerBlock, CardMode, ExamPaper, RulePack } from '../features/answer-sheet/types'
+import type { AnswerBlock, AnswerSheetDocument, AnswerSheetSettings, CardMode, ExamPaper, RulePack } from '../features/answer-sheet/types'
+import { questionNumbers } from '../features/answer-sheet/range'
 import { AnswerBlockView } from './AnswerBlockView'
 
 interface AnswerSheetCanvasProps {
@@ -9,12 +10,16 @@ interface AnswerSheetCanvasProps {
   blocks: AnswerBlock[]
   mode: CardMode
   rulePack: RulePack
+  settings: AnswerSheetSettings
   pageCount: number
   activePage: number
   selectedBlockId: string
   onPageChange: (page: number) => void
   onSelectBlock: (id: string) => void
   onTitleCommit: (title: string) => void
+  onBlockTitleCommit: (id: string, title: string) => void
+  printDocument?: AnswerSheetDocument
+  printRulePack?: RulePack
 }
 
 interface PaperPageProps {
@@ -22,17 +27,34 @@ interface PaperPageProps {
   blocks: AnswerBlock[]
   mode: CardMode
   rulePack: RulePack
+  settings: AnswerSheetSettings
   page: number
   pageCount: number
   selectedBlockId?: string
   onSelectBlock?: (id: string) => void
   onTitleCommit?: (title: string) => void
+  onBlockTitleCommit?: (id: string, title: string) => void
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, page, pageCount, selectedBlockId, onSelectBlock, onTitleCommit }: PaperPageProps) {
+function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
+  const label = `${settings.candidateNumberType}（${settings.candidateNumberDigits} 位）`
+  if (settings.candidateNumberLayout === 'barcode') {
+    return <div className="barcode-box"><span>{label}条形码粘贴处</span><div className="barcode-lines" /></div>
+  }
+  if (settings.candidateNumberLayout === 'handwrite') {
+    return <div className="candidate-number-box"><span>{label}手写区</span><div style={{ gridTemplateColumns: `repeat(${settings.candidateNumberDigits}, 1fr)` }}>{Array.from({ length: settings.candidateNumberDigits }, (_, index) => <i key={index} />)}</div></div>
+  }
+  return <div className="candidate-fill-box"><span>{label}填涂区</span><div style={{ gridTemplateColumns: `repeat(${settings.candidateNumberDigits}, 1fr)` }}>{Array.from({ length: settings.candidateNumberDigits }, (_, index) => <i key={index}>0—9</i>)}</div></div>
+}
+
+function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockId, onSelectBlock, onTitleCommit, onBlockTitleCommit }: PaperPageProps) {
   const standard = mode === 'standard'
-  const paperSize = standard ? rulePack.paperSize.toLowerCase() : 'a4'
+  const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
+  const columns = settings.printSide === 'single' || page % 2 === 1 ? settings.frontColumns : settings.backColumns
+  const reviewModeLabel = settings.reviewMode === 'online' ? '网阅' : settings.reviewMode === 'manual' ? '手批' : '混合阅卷'
+  const scanEnabled = settings.reviewMode !== 'manual'
+  const manualScoreEnabled = settings.reviewMode !== 'online'
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(paper.title)
   const cancellingTitle = useRef(false)
@@ -56,8 +78,8 @@ function PaperPage({ paper, blocks, mode, rulePack, page, pageCount, selectedBlo
   }
 
   return (
-    <article className={`answer-paper paper-size-${paperSize} ${standard ? 'standard-paper' : 'smart-paper'}`} data-paper-page={page}>
-      {standard && <><i className="corner-mark top-left" /><i className="corner-mark top-right" /><i className="corner-mark bottom-left" /><i className="corner-mark bottom-right" /></>}
+    <article className={`answer-paper paper-size-${paperSize} ${standard ? 'standard-paper' : 'smart-paper'} review-${settings.reviewMode}`} data-paper-page={page}>
+      {scanEnabled && <><i className="corner-mark top-left" /><i className="corner-mark top-right" /><i className="corner-mark bottom-left" /><i className="corner-mark bottom-right" /></>}
       <header className="paper-header">
         <div className="paper-title">
           {editingTitle && onTitleCommit ? (
@@ -95,28 +117,32 @@ function PaperPage({ paper, blocks, mode, rulePack, page, pageCount, selectedBlo
               <h1>{paper.title}</h1><span><Pencil size={11} /> 点击编辑</span>
             </button>
           ) : <h1>{paper.title}</h1>}
-          <p>{paper.subject}答题卡 · 第 {page} 页 / 共 {pageCount} 页</p>
+          <p>{paper.subject}答题卡 · {reviewModeLabel} · 第 {page} 页 / 共 {pageCount} 页</p>
         </div>
         <div className="identity-and-code">
           <div className="identity-grid">
-            {(standard ? rulePack.identityFields.slice(0, 4) : ['姓名', '班级', '学号']).map((field) => (
+            {settings.identityFields.map((field) => (
               <span key={field}><b>{field}</b><i /></span>
             ))}
           </div>
-          <div className="barcode-box"><span>{standard ? '条形码粘贴处' : '答题卡二维码'}</span><div className="barcode-lines" /></div>
+          <CandidateNumberArea settings={settings} />
+          {settings.showBarcode && settings.candidateNumberLayout !== 'barcode' && (
+            <div className="barcode-box barcode-secondary"><span>条形码粘贴处</span><div className="barcode-lines" /></div>
+          )}
         </div>
-        {standard && <span className="locked-zone-label"><LockKeyhole size={10} /> 身份与条码区</span>}
+        {(standard || scanEnabled) && <span className="locked-zone-label"><LockKeyhole size={10} /> {standard ? rulePack.shortName : '网阅定位'} · 身份与考号区</span>}
       </header>
 
-      {page === 1 && (
+      {page === 1 && settings.showNotice && (
         <div className="candidate-notice">
           <strong>考生须知</strong>
-          <span>客观题用 2B 铅笔填涂；主观题使用黑色字迹签字笔，在对应题号区域内作答。</span>
+          <span>{settings.noticeText}</span>
           <span className="absence-mark">缺考标记　[　]</span>
         </div>
       )}
+      {manualScoreEnabled && <div className="manual-score-strip"><b>手批评分栏</b><span>得分：________</span><span>阅卷人：________</span></div>}
 
-      <div className="paper-blocks">
+      <div className={`paper-blocks columns-${columns}`} style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
         {pageBlocks.map((block) => (
           <AnswerBlockView
             key={block.id}
@@ -124,11 +150,19 @@ function PaperPage({ paper, blocks, mode, rulePack, page, pageCount, selectedBlo
             selected={selectedBlockId === block.id}
             locked={standard && Boolean(block.locked)}
             onSelect={() => onSelectBlock?.(block.id)}
+            onTitleCommit={onBlockTitleCommit ? (title) => onBlockTitleCommit(block.id, title) : undefined}
+            questionAnswer={settings.cardStyle === 'question-answer'}
+            questionContext={paper.sections.filter((section) => {
+              const blockNumbers = new Set(questionNumbers(block.range))
+              return questionNumbers(section.range).some((number) => blockNumbers.has(number))
+            }).map((section) => section.title).join(' / ')}
           />
         ))}
       </div>
       {standard && <div className="right-warning-strip">请在黑色框内作答，超出区域的答案无效</div>}
-      <footer className="paper-footer">请按 100% 原尺寸打印 · 模板版本：{standard ? rulePack.shortName : '飞象智能排版'}</footer>
+      {settings.showFooter && (
+        <footer className="paper-footer">{settings.footerText} · 第 {page} 面（共 {pageCount} 面）</footer>
+      )}
     </article>
   )
 }
@@ -167,24 +201,27 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
           blocks={props.blocks}
           mode={props.mode}
           rulePack={props.rulePack}
+          settings={props.settings}
           page={props.activePage}
           pageCount={props.pageCount}
           selectedBlockId={props.selectedBlockId}
           onSelectBlock={props.onSelectBlock}
           onTitleCommit={props.onTitleCommit}
+          onBlockTitleCommit={props.onBlockTitleCommit}
         />
       </div>
 
       <div className="print-pages" aria-hidden="true">
-        {Array.from({ length: props.pageCount }, (_, index) => index + 1).map((page) => (
+        {Array.from({ length: props.printDocument?.pageCount ?? props.pageCount }, (_, index) => index + 1).map((page) => (
           <PaperPage
             key={page}
-            paper={props.paper}
-            blocks={props.blocks}
-            mode={props.mode}
-            rulePack={props.rulePack}
+            paper={props.printDocument?.paper ?? props.paper}
+            blocks={props.printDocument?.blocks ?? props.blocks}
+            mode={props.printDocument?.mode ?? props.mode}
+            rulePack={props.printRulePack ?? props.rulePack}
+            settings={props.printDocument?.settings ?? props.settings}
             page={page}
-            pageCount={props.pageCount}
+            pageCount={props.printDocument?.pageCount ?? props.pageCount}
           />
         ))}
       </div>

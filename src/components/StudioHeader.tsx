@@ -1,22 +1,14 @@
-import { CircleHelp, Cloud, Sparkles } from 'lucide-react'
-import type { FlowStage } from '../features/answer-sheet/types'
+import { ChevronRight, CircleHelp, Cloud, FileText, Sparkles } from 'lucide-react'
 
-const stageIndex: Record<FlowStage, number> = { source: 1, parsing: 2, editor: 3 }
-
-export function StudioHeader({ stage }: { stage: FlowStage }) {
-  const current = stageIndex[stage]
+export function StudioHeader({ paperTitle }: { paperTitle: string }) {
   return (
     <header className="fx-page-header studio-header">
       <div className="studio-brand">
         <span><Sparkles size={18} /></span>
-        <div><strong>答题卡智能制卡</strong><small>从原卷到可印刷版本</small></div>
+        <div><strong>答题卡智能制卡</strong><small>当前试卷已自动生成答题卡</small></div>
       </div>
-      <div className="studio-steps" aria-label="制卡进度">
-        {['选择来源', '生成结构', '编辑与发布'].map((label, index) => (
-          <div key={label} className={current === index + 1 ? 'active' : current > index + 1 ? 'done' : ''}>
-            <span>{index + 1}</span><strong>{label}</strong>
-          </div>
-        ))}
+      <div className="studio-context" aria-label="当前位置">
+        <span><FileText size={14} /> 组卷</span><ChevronRight size={13} /><strong>答题卡编辑</strong><small>{paperTitle}</small>
       </div>
       <div className="studio-utilities">
         <span><Cloud size={15} /> 云端草稿</span>

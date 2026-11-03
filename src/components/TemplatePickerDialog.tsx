@@ -4,7 +4,6 @@ import {
   MetisButton,
   MetisDialog,
   MetisInput,
-  MetisSwitch,
   MetisTabs,
   MetisTag,
 } from '@yuanfudao/metis-web-component'
@@ -20,7 +19,7 @@ interface TemplatePickerDialogProps {
   currentTemplateId?: string
   initialFilter?: TemplateFilter
   onClose: () => void
-  onApply: (template: AnswerSheetTemplate, options: { preserveTitle: boolean }) => void
+  onApply: (template: AnswerSheetTemplate) => void
 }
 
 const originMeta = {
@@ -29,23 +28,15 @@ const originMeta = {
   personal: { label: '我的模板', icon: UserRound },
 }
 
-const identityLabels: Record<AnswerSheetTemplate['identityMode'], string> = {
-  barcode: '条形码',
-  'candidate-number': '准考证号',
-  both: '条码 + 准考证',
-}
-
 export function TemplatePickerDialog(props: TemplatePickerDialogProps) {
   const [filter, setFilter] = useState<TemplateFilter>(props.initialFilter ?? 'all')
   const [query, setQuery] = useState('')
   const [selectedId, setSelectedId] = useState(props.currentTemplateId ?? answerSheetTemplates[0].id)
-  const [preserveTitle, setPreserveTitle] = useState(true)
 
   useEffect(() => {
     if (!props.open) return
     setFilter(props.initialFilter ?? 'all')
     setQuery('')
-    setPreserveTitle(true)
     setSelectedId(props.currentTemplateId ?? (props.initialFilter === 'blank' ? 'true-blank' : answerSheetTemplates[0].id))
   }, [props.currentTemplateId, props.initialFilter, props.open])
 
@@ -73,8 +64,8 @@ export function TemplatePickerDialog(props: TemplatePickerDialogProps) {
     <div className="dialog-footer-actions template-dialog-footer">
       <span>{props.context === 'replace' ? '套用后可立即撤销，不会覆盖已发布版本' : '模板只是起点，进入画布后均可继续调整'}</span>
       <MetisButton type="borderless" onClick={props.onClose}>取消</MetisButton>
-      <MetisButton type="primary" disabled={!selected} onClick={() => selected && props.onApply(selected, { preserveTitle })}>
-        {props.context === 'replace' ? '套用并重新排版' : '使用此模板并开始编辑'}
+      <MetisButton type="primary" disabled={!selected} onClick={() => selected && props.onApply(selected)}>
+        {props.context === 'replace' ? '套用此版式' : '使用此模板并开始编辑'}
       </MetisButton>
     </div>
   )
@@ -133,7 +124,7 @@ export function TemplatePickerDialog(props: TemplatePickerDialogProps) {
                   <span className="template-card-copy">
                     <span><Icon size={13} /> {meta.label}{template.featured && <em>推荐</em>}</span>
                     <strong>{template.name}</strong>
-                    <small>{template.paperSize} · {template.document.pageCount} 页 · {template.columns} 栏</small>
+                    <small>{template.document.settings.paperSize} · {template.document.pageCount} 面 · {template.document.settings.frontColumns} 栏</small>
                   </span>
                   {active && <span className="template-card-check"><Check size={13} /></span>}
                 </button>
@@ -155,13 +146,9 @@ export function TemplatePickerDialog(props: TemplatePickerDialogProps) {
                 <MetisAlert
                   type="warning"
                   showIcon
-                  message="将替换当前版式与题块结构"
-                  description="已发布版本不受影响，本次套用可撤销。"
+                  message="将套用纸张、栏数与考生信息版式"
+                  description="当前试卷的标题、学科、题号、分值和题块保持不变；本次套用可撤销。"
                 />
-                <label className="preserve-title-option">
-                  <span><strong>保留当前试卷标题</strong><small>只采用模板的结构和学科配置</small></span>
-                  <MetisSwitch checked={preserveTitle} onChange={setPreserveTitle} />
-                </label>
               </>
             )}
 
@@ -184,10 +171,10 @@ export function TemplatePickerDialog(props: TemplatePickerDialogProps) {
             </div>
 
             <div className="template-facts">
-              <span><small>纸张与页数</small><strong>{selected.paperSize} · {selected.document.pageCount} 页</strong></span>
-              <span><small>考号方式</small><strong>{identityLabels[selected.identityMode]}</strong></span>
+              <span><small>纸张与面数</small><strong>{selected.document.settings.paperSize} · {selected.document.pageCount} 面</strong></span>
+              <span><small>考号方式</small><strong>{selected.document.settings.candidateNumberLayout === 'fill' ? '填涂' : selected.document.settings.candidateNumberLayout === 'barcode' ? '条形码' : '手写'}{selected.document.settings.showBarcode ? ' + 条码区' : ''}</strong></span>
               <span><small>默认模式</small><strong>{selected.document.mode === 'standard' ? '大考规范' : '飞象模式'}</strong></span>
-              <span><small>预置题块</small><strong>{selected.document.blocks.length ? `${selected.document.blocks.length} 个` : '无'}</strong></span>
+              <span><small>参考结构</small><strong>{selected.document.blocks.length ? `${selected.document.blocks.length} 个题块` : '纯空白'}</strong></span>
             </div>
             <div className="template-highlights">
               {selected.highlights.map((highlight) => <span key={highlight}><Check size={12} /> {highlight}</span>)}

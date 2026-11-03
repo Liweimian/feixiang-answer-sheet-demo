@@ -29,13 +29,13 @@
       "name": "版本更新",
       "status": "completed",
       "startedAt": "2026-11-03T17:10:00+08:00",
-      "completedAt": "2026-11-03T17:23:00+08:00",
-      "version": "1.1.0",
-      "iterationCount": 1,
+      "completedAt": "2026-11-03T19:55:00+08:00",
+      "version": "1.2.0",
+      "iterationCount": 2,
       "awaitingUserConfirmation": true,
-      "scope": ["可视化模板中心", "画布内标题直编", "空白卡基础信息与多页", "模板套用与完整快照", "安全题号与内容容量校验"],
-      "outputs": ["src/components/TemplatePickerDialog.tsx", "src/components/PaperSettingsDialog.tsx", "src/data/answerSheetTemplates.ts", "docs/changelog.md"],
-      "validation": ["npm run typecheck", "npm run build", "browser blank-card and library regression"]
+      "scope": ["当前试卷直达编辑", "左配置右画布", "P0 整卡与题块配置", "模板只套版式", "动态印前校验与多面打印"],
+      "outputs": ["src/components/AnswerSheetConfigPanel.tsx", "src/components/AnswerSheetCanvas.tsx", "src/features/answer-sheet/operations.ts", "src/features/answer-sheet/export.ts", "docs/changelog.md"],
+      "validation": ["npm run typecheck", "npm run build", "browser direct-editor regression"]
     }
   },
   "gitCommits": [
@@ -44,5 +44,5 @@
     "c1ffb37 Stage 4 v1.1: add template-first card creation"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-03T17:23:00+08:00"
+  "updatedAt": "2026-11-03T19:55:00+08:00"
 }

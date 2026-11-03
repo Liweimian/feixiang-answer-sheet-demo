@@ -9,7 +9,7 @@ import type {
 export interface AnswerSheetService {
   parsePaper(paper: ExamPaper): Promise<ParseResult>
   saveDraft(snapshot: DraftSnapshot, version: number): Promise<{ savedAt: string }>
-  publish(version: number): Promise<PublishedVersion>
+  publish(snapshot: DraftSnapshot, version: number): Promise<PublishedVersion>
 }
 
 const wait = (duration: number) => new Promise((resolve) => window.setTimeout(resolve, duration))
@@ -46,12 +46,13 @@ class MockAnswerSheetService implements AnswerSheetService {
     return { savedAt: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) }
   }
 
-  async publish(version: number): Promise<PublishedVersion> {
+  async publish(snapshot: DraftSnapshot, version: number): Promise<PublishedVersion> {
     await wait(680)
     return {
       version,
       publishedAt: new Date().toLocaleString('zh-CN', { hour12: false }),
       referencedExamCount: 0,
+      snapshot: structuredClone(snapshot),
     }
   }
 }

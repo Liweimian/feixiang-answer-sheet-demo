@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MetisMessage } from '@yuanfudao/metis-web-component'
 import {
   answerSheetTemplates,
@@ -7,26 +7,30 @@ import {
 } from '../data/answerSheetTemplates'
 import { rulePacks } from '../data/mockPaper'
 import { autoFixBlocks, buildPreflightChecks } from '../features/answer-sheet/preflight'
+import { downloadAnnotatedAnswerSheet } from '../features/answer-sheet/export'
+import {
+  consolidateBlocks,
+  mergeWithNext,
+  moveBlock as moveBlockOperation,
+  renumberQuestionBlocks,
+  reorderBlock,
+  splitBlock,
+} from '../features/answer-sheet/operations'
 import type {
   AnswerBlock,
   AnswerBlockKind,
   AnswerSheetDocument,
+  AnswerSheetSettings,
   AnswerSheetTemplate,
   DraftSnapshot,
-  FlowStage,
-  ParseResult,
   PublishedVersion,
-  SourceKind,
   TemplateCategory,
 } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { answerSheetService } from '../services/answerSheetService'
 import { EditorToolbar } from '../components/EditorToolbar'
 import { EditorWorkbench } from '../components/EditorWorkbench'
-import { ParsingStage } from '../components/ParsingStage'
-import { PaperSettingsDialog } from '../components/PaperSettingsDialog'
 import { PreflightDialog } from '../components/PreflightDialog'
-import { SourceSetup } from '../components/SourceSetup'
 import { StudioHeader } from '../components/StudioHeader'
 import { TemplatePickerDialog } from '../components/TemplatePickerDialog'
 
@@ -35,12 +39,15 @@ type TemplateFilter = 'all' | TemplateCategory
 function cloneDefaultDocument(): AnswerSheetDocument {
   return {
     ...defaultAnswerSheetDocument,
-    mode: 'smart',
     paper: {
       ...defaultAnswerSheetDocument.paper,
       sections: defaultAnswerSheetDocument.paper.sections.map((section) => ({ ...section })),
     },
-    blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block })),
+    blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block, contentElements: block.contentElements ? [...block.contentElements] : undefined })),
+    settings: {
+      ...defaultAnswerSheetDocument.settings,
+      identityFields: [...defaultAnswerSheetDocument.settings.identityFields],
+    },
   }
 }
 
@@ -49,9 +56,7 @@ function totalQuestionScore(blocks: AnswerBlock[]): number {
 }
 
 export function AnswerSheetStudioPage() {
-  const [stage, setStage] = useState<FlowStage>('source')
   const [document, setDocument] = useState<AnswerSheetDocument>(cloneDefaultDocument)
-  const [parseResult, setParseResult] = useState<ParseResult>()
   const [history, setHistory] = useState<AnswerSheetDocument[]>([])
   const [future, setFuture] = useState<AnswerSheetDocument[]>([])
   const [selectedBlockId, setSelectedBlockId] = useState(document.blocks[0]?.id ?? '')
@@ -63,17 +68,22 @@ export function AnswerSheetStudioPage() {
   const [preflightOpen, setPreflightOpen] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
-  const [templateDialogContext, setTemplateDialogContext] = useState<'create' | 'replace'>('create')
   const [templateInitialFilter, setTemplateInitialFilter] = useState<TemplateFilter>('all')
-  const [paperSettingsOpen, setPaperSettingsOpen] = useState(false)
+  const [printDocument, setPrintDocument] = useState<AnswerSheetDocument>()
   const saveTimer = useRef<number>()
 
-  const { paper, blocks, mode, rulePackId, pageCount } = document
+  useEffect(() => {
+    const clearPrintSnapshot = () => setPrintDocument(undefined)
+    window.addEventListener('afterprint', clearPrintSnapshot)
+    return () => window.removeEventListener('afterprint', clearPrintSnapshot)
+  }, [])
+
+  const { paper, blocks, settings, mode, rulePackId, pageCount } = document
   const rulePack = rulePacks.find((pack) => pack.id === rulePackId) ?? rulePacks[0]
   const currentTemplate = answerSheetTemplates.find((template) => template.id === document.templateId)
   const checks = useMemo(
-    () => buildPreflightChecks(paper, blocks, mode, rulePack, pageCount),
-    [blocks, mode, pageCount, paper, rulePack],
+    () => buildPreflightChecks(paper, blocks, mode, rulePack, pageCount, settings),
+    [blocks, mode, pageCount, paper, rulePack, settings],
   )
 
   const ensureNextDraft = () => {
@@ -117,75 +127,94 @@ export function AnswerSheetStudioPage() {
     commitDocument({ ...document, blocks: nextBlocks })
   }
 
-  const beginNewDocument = (nextDocument: AnswerSheetDocument) => {
-    window.clearTimeout(saveTimer.current)
-    setDocument(nextDocument)
-    setHistory([])
-    setFuture([])
-    setDraftVersion(1)
-    setPublished(undefined)
-    setActivePage(1)
-    setSelectedBlockId(nextDocument.blocks[0]?.id ?? '')
-    scheduleSave(nextDocument, 1)
-  }
-
-  const startFromSource = async (source: SourceKind) => {
-    if (source === 'blank' || source === 'template') {
-      setTemplateDialogContext('create')
-      setTemplateInitialFilter(document.mode === 'standard' ? 'standard' : 'all')
-      setTemplateDialogOpen(true)
-      return
+  const applyTemplate = (template: AnswerSheetTemplate) => {
+    const templateDocument = instantiateTemplate(template)
+    const nextPageCount = templateDocument.pageCount
+    const retainedBlocks = document.blocks.map((block) => ({
+      ...block,
+      page: Math.min(block.page, nextPageCount),
+      contentElements: block.contentElements ? [...block.contentElements] : undefined,
+    }))
+    let nextDocument: AnswerSheetDocument = {
+      ...templateDocument,
+      blocks: retainedBlocks,
+      templateId: template.id,
     }
-
-    const nextDocument = cloneDefaultDocument()
-    nextDocument.mode = document.mode
-    beginNewDocument(nextDocument)
-    setParseResult(undefined)
-    setStage('parsing')
-    setParseResult(await answerSheetService.parsePaper(nextDocument.paper))
-  }
-
-  const applyTemplate = (template: AnswerSheetTemplate, options: { preserveTitle: boolean }) => {
-    let nextDocument = instantiateTemplate(template)
-    if (templateDialogContext === 'replace' && options.preserveTitle) {
-      nextDocument = {
-        ...nextDocument,
-        paper: { ...nextDocument.paper, title: document.paper.title },
-      }
+    nextDocument = {
+      ...nextDocument,
+      paper: {
+        ...document.paper,
+        sections: document.paper.sections.map((section) => ({ ...section })),
+      },
+      settings: { ...nextDocument.settings, linkedPaperId: document.paper.id },
     }
-
-    if (templateDialogContext === 'replace') {
-      commitDocument(nextDocument)
-      MetisMessage.success(`已套用“${template.name}”，可使用撤销恢复原结构`)
-    } else {
-      beginNewDocument(nextDocument)
-      setStage('editor')
-      MetisMessage.success(`已从“${template.name}”开始创建`)
-    }
+    commitDocument(nextDocument)
+    MetisMessage.success(`已套用“${template.name}”版式，当前试卷题号与分值保持不变`)
     setActivePage(1)
     setSelectedBlockId(nextDocument.blocks[0]?.id ?? '')
     setTemplateDialogOpen(false)
   }
 
   const openTemplateCenter = () => {
-    setTemplateDialogContext('replace')
     setTemplateInitialFilter('all')
     setTemplateDialogOpen(true)
   }
 
   const moveBlock = (id: string, direction: -1 | 1) => {
-    const currentIndex = blocks.findIndex((block) => block.id === id)
-    if (currentIndex < 0) return
-    const pageIndices = blocks.reduce<number[]>((indices, block, index) => {
-      if (block.page === blocks[currentIndex].page) indices.push(index)
-      return indices
-    }, [])
-    const positionOnPage = pageIndices.indexOf(currentIndex)
-    const targetIndex = pageIndices[positionOnPage + direction]
-    if (targetIndex === undefined) return
-    const next = [...blocks]
-    ;[next[currentIndex], next[targetIndex]] = [next[targetIndex], next[currentIndex]]
+    const next = moveBlockOperation(blocks, id, direction)
+    if (next === blocks) return
     commitBlocks(next)
+  }
+
+  const dragBlock = (dragId: string, targetId: string) => {
+    const next = reorderBlock(blocks, dragId, targetId)
+    if (next === blocks) return
+    commitBlocks(next)
+    const moved = next.find((block) => block.id === dragId)
+    if (moved) {
+      setSelectedBlockId(dragId)
+      setActivePage(moved.page)
+    }
+  }
+
+  const renumberBlocks = (start: number) => {
+    const next = renumberQuestionBlocks(blocks, start)
+    if (next === blocks) {
+      MetisMessage.info('请先为题目区域设置有效题号')
+      return
+    }
+    commitBlocks(next)
+    MetisMessage.success(`已从第 ${Math.max(1, Math.floor(start || 1))} 题起连续编号`)
+  }
+
+  const splitSelected = () => {
+    const next = splitBlock(blocks, selectedBlockId)
+    if (next === blocks) {
+      MetisMessage.info('至少包含 2 道题的未锁定题块才可分割')
+      return
+    }
+    commitBlocks(next)
+    MetisMessage.success('题块已分割，题号与分值按题数分配')
+  }
+
+  const mergeSelected = () => {
+    const next = mergeWithNext(blocks, selectedBlockId)
+    if (next === blocks) {
+      MetisMessage.info('请选择同页且同类型的相邻题块进行合并')
+      return
+    }
+    commitBlocks(next)
+    MetisMessage.success('相邻题块已合并')
+  }
+
+  const consolidate = (kind: 'objective' | 'subjective') => {
+    const next = consolidateBlocks(blocks, kind)
+    if (next === blocks) {
+      MetisMessage.info(kind === 'objective' ? '客观题已经集中排列' : '主观题已经集中排列')
+      return
+    }
+    commitBlocks(next)
+    MetisMessage.success(kind === 'objective' ? '已按页集中客观题' : '已按页集中主观题')
   }
 
   const addBlock = (kind: AnswerBlockKind) => {
@@ -193,6 +222,7 @@ export function AnswerSheetStudioPage() {
       objective: '新增客观题填涂区',
       'short-answer': '新增短答区域',
       essay: '新增作文 / 综合题区',
+      mixed: '新增混合题区域',
       forbidden: '禁答区，请勿书写',
       drawing: '新增作图区',
       table: '新增表格区',
@@ -203,12 +233,18 @@ export function AnswerSheetStudioPage() {
       page: activePage,
       title: labels[kind],
       kind,
-      height: kind === 'forbidden' ? 56 : kind === 'essay' ? 260 : kind === 'drawing' || kind === 'table' ? 140 : 104,
-      lineCount: kind === 'short-answer' ? 4 : kind === 'essay' ? 12 : undefined,
-      optionCount: kind === 'objective' ? 4 : undefined,
-      itemsPerColumn: kind === 'objective' ? 11 : undefined,
+      height: kind === 'forbidden' ? 56 : kind === 'essay' ? 260 : kind === 'mixed' ? 180 : kind === 'drawing' || kind === 'table' ? 140 : 104,
+      lineCount: kind === 'short-answer' || kind === 'mixed' ? 4 : kind === 'essay' ? 12 : undefined,
+      optionCount: kind === 'objective' || kind === 'mixed' ? 4 : undefined,
+      itemsPerColumn: kind === 'objective' || kind === 'mixed' ? 11 : undefined,
+      objectiveLayout: kind === 'objective' || kind === 'mixed' ? 'horizontal' : undefined,
+      lineStyle: kind === 'short-answer' || kind === 'essay' || kind === 'mixed' ? 'solid' : undefined,
+      responseStyle: kind === 'essay' ? 'lines' : kind === 'short-answer' || kind === 'mixed' ? 'lines' : undefined,
       showScore: false,
-      locked: kind === 'forbidden',
+      showQuestionCount: false,
+      showScoreBox: false,
+      contentElements: [],
+      locked: false,
     }
     const next = [...blocks]
     const pageIndices = next.reduce<number[]>((indices, block, index) => {
@@ -240,10 +276,9 @@ export function AnswerSheetStudioPage() {
     setSelectedBlockId(fallback?.id ?? '')
   }
 
-  const updateSelected = (patch: Partial<AnswerBlock>) => {
+  const updateBlock = (blockId: string, patch: Partial<AnswerBlock>) => {
     const normalizedPatch: Partial<AnswerBlock> = { ...patch }
     if (patch.kind) {
-      normalizedPatch.locked = patch.kind === 'forbidden'
       if (!isQuestionBlockKind(patch.kind)) {
         Object.assign(normalizedPatch, {
           sectionId: undefined,
@@ -253,20 +288,27 @@ export function AnswerSheetStudioPage() {
           optionCount: undefined,
           itemsPerColumn: undefined,
           writingLayout: undefined,
+          objectiveLayout: undefined,
+          lineStyle: undefined,
+          responseStyle: undefined,
+          showQuestionCount: false,
+          showScoreBox: false,
+          scoreStep: undefined,
           showScore: false,
           hint: undefined,
         })
       } else {
         normalizedPatch.hint = undefined
-        if (patch.kind !== 'objective') {
+        if (patch.kind !== 'objective' && patch.kind !== 'mixed') {
           normalizedPatch.optionCount = undefined
           normalizedPatch.itemsPerColumn = undefined
+          normalizedPatch.objectiveLayout = undefined
         }
-        if (patch.kind !== 'short-answer' && patch.kind !== 'essay') normalizedPatch.lineCount = undefined
+        if (patch.kind !== 'short-answer' && patch.kind !== 'essay' && patch.kind !== 'mixed') normalizedPatch.lineCount = undefined
         if (patch.kind !== 'essay') normalizedPatch.writingLayout = undefined
       }
     }
-    const nextBlocks = blocks.map((block) => block.id === selectedBlockId ? { ...block, ...normalizedPatch } : block)
+    const nextBlocks = blocks.map((block) => block.id === blockId ? { ...block, ...normalizedPatch } : block)
     if (paper.sections.length === 0) {
       commitDocument({
         ...document,
@@ -278,34 +320,47 @@ export function AnswerSheetStudioPage() {
     commitBlocks(nextBlocks)
   }
 
+  const updateSelected = (patch: Partial<AnswerBlock>) => updateBlock(selectedBlockId, patch)
+
   const updateTitle = (title: string) => {
     if (title === paper.title) return
     commitDocument({ ...document, paper: { ...paper, title } })
     MetisMessage.success('标题已更新并自动保存')
   }
 
-  const savePaperSettings = (nextPaper: typeof paper, nextPageCount: number) => {
+  const changePageCount = (nextPageCount: number) => {
     const integerPageCount = Number.isFinite(nextPageCount) ? Math.round(nextPageCount) : 1
     const normalizedPageCount = Math.min(4, Math.max(1, integerPageCount))
     const nextBlocks = blocks.map((block) => block.page > normalizedPageCount ? { ...block, page: normalizedPageCount } : block)
-    commitDocument({ ...document, paper: nextPaper, blocks: nextBlocks, pageCount: normalizedPageCount })
-    setPaperSettingsOpen(false)
-    MetisMessage.success('基础信息已更新，相关校验已重新计算')
+    commitDocument({ ...document, blocks: nextBlocks, pageCount: normalizedPageCount })
   }
 
-  const confirmParsedStructure = (writingLayout: 'choose-one' | 'separate') => {
-    const nextBlocks = blocks.map((block) => block.kind === 'essay'
-      ? {
-          ...block,
-          writingLayout,
-          height: writingLayout === 'separate' ? Math.max(block.height, 320) : block.height,
-          hint: writingLayout === 'separate'
-            ? '两个作文选项分别预留独立作答区，请任选其一作答。'
-            : '二选一，共用作答区；不少于 50 词',
-        }
-      : block)
-    commitDocument({ ...document, blocks: nextBlocks })
-    setStage('editor')
+  const updateSettings = (patch: Partial<AnswerSheetSettings>) => {
+    const nextSettings = { ...settings, ...patch }
+    if (patch.identityFields) nextSettings.identityFields = [...patch.identityFields]
+    commitDocument({ ...document, settings: nextSettings })
+  }
+
+  const changeMode = (nextMode: typeof mode) => {
+    if (nextMode === mode) return
+    commitDocument({ ...document, mode: nextMode })
+    MetisMessage.success(nextMode === 'standard' ? '已启用大考规范约束' : '已切换为飞象自由排版')
+  }
+
+  const changeRulePack = (id: string) => {
+    if (id === rulePackId) return
+    const nextRulePack = rulePacks.find((pack) => pack.id === id)
+    if (!nextRulePack) return
+    const nextPageCount = Math.min(4, Math.max(1, nextRulePack.pageCount))
+    const nextBlocks = blocks.map((block) => block.page > nextPageCount ? { ...block, page: nextPageCount } : block)
+    commitDocument({
+      ...document,
+      rulePackId: id,
+      pageCount: nextPageCount,
+      blocks: nextBlocks,
+      settings: { ...settings, paperSize: nextRulePack.paperSize },
+    })
+    MetisMessage.info('规则包及默认纸张、面数已切换，题目内容保持不变')
   }
 
   const undo = () => {
@@ -344,7 +399,7 @@ export function AnswerSheetStudioPage() {
     const saved = await answerSheetService.saveDraft(document, draftVersion)
     setSavedAt(saved.savedAt)
     setSaving(false)
-    const version = await answerSheetService.publish(draftVersion)
+    const version = await answerSheetService.publish(document, draftVersion)
     setPublished(version)
     setPublishing(false)
   }
@@ -358,32 +413,17 @@ export function AnswerSheetStudioPage() {
     setPreflightOpen(false)
   }
 
+  const printSnapshot = (snapshot: AnswerSheetDocument) => {
+    setPrintDocument(snapshot)
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.print()))
+  }
+
   return (
     <>
-      <StudioHeader stage={stage} />
-      <div className={`studio-body stage-${stage}`}>
-        {stage === 'source' && (
-          <SourceSetup
-            mode={mode}
-            onModeChange={(nextMode) => setDocument((current) => ({ ...current, mode: nextMode }))}
-            onStart={(source) => void startFromSource(source)}
-          />
-        )}
-        {stage === 'parsing' && (
-          <ParsingStage
-            paper={paper}
-            result={parseResult}
-            onBack={() => setStage('source')}
-            onConfirm={confirmParsedStructure}
-          />
-        )}
-        {stage === 'editor' && (
-          <>
-            <EditorToolbar
+      <StudioHeader paperTitle={paper.title} />
+      <div className="studio-body stage-editor">
+        <EditorToolbar
               paper={paper}
-              mode={mode}
-              rulePacks={rulePacks}
-              rulePackId={rulePackId}
               templateName={currentTemplate?.name ?? '自定义模板'}
               draftVersion={draftVersion}
               publishedVersion={published?.version}
@@ -391,31 +431,22 @@ export function AnswerSheetStudioPage() {
               savedAt={savedAt}
               canUndo={history.length > 0}
               canRedo={future.length > 0}
-              onBack={() => setStage('source')}
-              onModeChange={(nextMode) => {
-                if (nextMode === mode) return
-                commitDocument({ ...document, mode: nextMode })
-                MetisMessage.success(nextMode === 'standard' ? '已启用大考规范约束' : '已切换为飞象自由排版')
-              }}
-              onRulePackChange={(id) => {
-                if (id === rulePackId) return
-                commitDocument({ ...document, rulePackId: id })
-                MetisMessage.info('规则包已切换，题目内容保持不变')
-              }}
-              onOpenTemplates={openTemplateCenter}
-              onOpenPaperSettings={() => setPaperSettingsOpen(true)}
+              onBack={() => MetisMessage.info('演示：返回组卷页；当前答题卡草稿已自动保存')}
               onUndo={undo}
               onRedo={redo}
               onSave={() => void saveNow()}
               onPreflight={() => setPreflightOpen(true)}
-              onPrint={() => window.print()}
-            />
-            <EditorWorkbench
-              paper={paper}
-              blocks={blocks}
-              mode={mode}
+              onPrint={() => printSnapshot(document)}
+              onDownloadAnnotated={() => {
+                downloadAnnotatedAnswerSheet(document, draftVersion)
+                MetisMessage.success('已下载带批改痕迹版，可在浏览器中继续打印为 PDF')
+              }}
+        />
+        <EditorWorkbench
+              document={document}
+              rulePacks={rulePacks}
               rulePack={rulePack}
-              pageCount={pageCount}
+              templateName={currentTemplate?.name ?? '自定义模板'}
               activePage={activePage}
               selectedBlockId={selectedBlockId}
               onPageChange={changePage}
@@ -425,26 +456,28 @@ export function AnswerSheetStudioPage() {
               onDelete={deleteSelected}
               onAdd={addBlock}
               onTitleCommit={updateTitle}
-            />
-          </>
-        )}
+              onBlockTitleCommit={(id, title) => updateBlock(id, { title })}
+              onModeChange={changeMode}
+              onRulePackChange={changeRulePack}
+              onOpenTemplates={openTemplateCenter}
+              onSettingsChange={updateSettings}
+              onPageCountChange={changePageCount}
+              onReorder={dragBlock}
+              onRenumber={renumberBlocks}
+              onSplit={splitSelected}
+              onMerge={mergeSelected}
+              onConsolidate={consolidate}
+              printDocument={printDocument}
+        />
       </div>
 
       <TemplatePickerDialog
         open={templateDialogOpen}
-        context={templateDialogContext}
-        currentTemplateId={templateDialogContext === 'replace' ? document.templateId : undefined}
+        context="replace"
+        currentTemplateId={document.templateId}
         initialFilter={templateInitialFilter}
         onClose={() => setTemplateDialogOpen(false)}
         onApply={applyTemplate}
-      />
-
-      <PaperSettingsDialog
-        open={paperSettingsOpen}
-        paper={paper}
-        pageCount={pageCount}
-        onClose={() => setPaperSettingsOpen(false)}
-        onSave={savePaperSettings}
       />
 
       <PreflightDialog
@@ -460,7 +493,8 @@ export function AnswerSheetStudioPage() {
         }}
         onPublish={() => void publish()}
         onLocate={locateBlock}
-        onDownload={() => MetisMessage.success('演示：打印版文件已生成')}
+        onDownload={() => printSnapshot(published?.snapshot ?? document)}
+        onDownloadPublished={() => printSnapshot(published?.snapshot ?? document)}
       />
     </>
   )

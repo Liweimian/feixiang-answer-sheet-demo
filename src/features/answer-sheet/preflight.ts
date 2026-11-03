@@ -1,5 +1,6 @@
 import type {
   AnswerBlock,
+  AnswerSheetSettings,
   CardMode,
   ExamPaper,
   PreflightCheck,
@@ -25,6 +26,7 @@ export function minimumContentHeight(block: AnswerBlock): number {
       : 48 + Math.max(lineCount * 9, questionCount * 28)
   }
   if (block.kind === 'essay') return block.writingLayout === 'separate' ? 320 : 260
+  if (block.kind === 'mixed') return Math.max(150, 64 + questionCount * 11)
   if (block.kind === 'drawing' || block.kind === 'table') return 120
   return 0
 }
@@ -35,47 +37,51 @@ export function buildPreflightChecks(
   mode: CardMode,
   rulePack: RulePack,
   pageCount: number,
+  settings: AnswerSheetSettings,
 ): PreflightCheck[] {
   const questionBlocks = blocks.filter((block) => isQuestionBlockKind(block.kind))
   const invalidRangeBlock = questionBlocks.find((block) => !parseQuestionRange(block.range).valid)
   const invalidScoreBlock = questionBlocks.find((block) => !Number.isFinite(block.score) || (block.score ?? 0) <= 0)
   const configurationReady = questionBlocks.length > 0 && !invalidRangeBlock && !invalidScoreBlock
   const representedNumbers = questionBlocks.flatMap((block) => questionNumbers(block.range))
-  const sectionNumbers = [...new Set(paper.sections.flatMap((section) => questionNumbers(section.range)))].sort((a, b) => a - b)
-  const numberBounds = representedNumbers.reduce(
-    (bounds, number) => ({ min: Math.min(bounds.min, number), max: Math.max(bounds.max, number) }),
-    { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY },
-  )
-  const blankCardNumbers = representedNumbers.length
-    ? Array.from({ length: numberBounds.max - numberBounds.min + 1 }, (_, index) => numberBounds.min + index)
-    : []
-  const expectedNumbers = sectionNumbers.length ? sectionNumbers : blankCardNumbers
+  const expectedQuestionCount = paper.sections.reduce((total, section) => total + section.questionCount, 0)
   const numberCounts = representedNumbers.reduce<Map<number, number>>((counts, number) => {
     counts.set(number, (counts.get(number) ?? 0) + 1)
     return counts
   }, new Map())
-  const missingNumbers = expectedNumbers.filter((number) => !numberCounts.has(number))
   const duplicateNumbers = [...numberCounts.entries()]
-    .filter(([number, count]) => expectedNumbers.includes(number) && count > 1)
+    .filter(([, count]) => count > 1)
     .map(([number]) => number)
-  const extraNumbers = [...numberCounts.keys()].filter((number) => !expectedNumbers.includes(number))
+  const representedQuestionCount = representedNumbers.length
   const scoredTotal = questionBlocks.reduce((total, block) => total + (block.score ?? 0), 0)
   const scoreConfigured = paper.score > 0 || paper.sections.length === 0 && scoredTotal > 0
   const scoreMatches = !invalidScoreBlock && scoreConfigured && scoredTotal === paper.score
-  const numberingConfigured = expectedNumbers.length > 0
-  const numberingMatches = !invalidRangeBlock && numberingConfigured && missingNumbers.length === 0 && duplicateNumbers.length === 0 && extraNumbers.length === 0
+  const numberingConfigured = representedQuestionCount > 0
+  const questionCountMatches = expectedQuestionCount === 0 || representedQuestionCount === expectedQuestionCount
+  const numberingMatches = !invalidRangeBlock && numberingConfigured && duplicateNumbers.length === 0 && questionCountMatches
   const subjectMatches = mode === 'smart' || rulePack.subjectScope.includes(paper.subject) || rulePack.id.startsWith('beijing') && paper.subject === '英语'
 
   const safePageCount = Math.max(1, pageCount)
   const pageHeights = Array.from({ length: safePageCount }, (_, index) => index + 1).map((page) => {
     const pageBlocks = blocks.filter((block) => block.page === page)
-    return pageBlocks.reduce((total, block) => total + block.height, 0) + Math.max(0, pageBlocks.length - 1) * 4
+    const columns = settings.printSide === 'single' || page % 2 === 1 ? settings.frontColumns : settings.backColumns
+    const rowHeights: number[] = []
+    pageBlocks.forEach((block, index) => {
+      const row = Math.floor(index / columns)
+      rowHeights[row] = Math.max(rowHeights[row] ?? 0, block.height)
+    })
+    return rowHeights.reduce((total, height) => total + height, 0) + Math.max(0, rowHeights.length - 1) * 4
   })
   const overflowingPage = pageHeights.findIndex((height) => height > 620)
   const outOfRangeBlock = blocks.find((block) => block.page < 1 || block.page > safePageCount)
   const emptyPages = Array.from({ length: safePageCount }, (_, index) => index + 1)
     .filter((page) => !blocks.some((block) => block.page === page))
   const pageCountMatches = mode === 'smart' || safePageCount === rulePack.pageCount
+  const paperSizeMatches = mode === 'smart' || settings.paperSize === rulePack.paperSize
+  const standardLayoutMatches = pageCountMatches && paperSizeMatches
+  const identityReady = settings.identityFields.length > 0
+    && settings.candidateNumberDigits >= 4
+    && settings.candidateNumberDigits <= 18
 
   const crampedContentBlock = questionBlocks.find((block) => {
     const minimumHeight = minimumContentHeight(block)
@@ -93,9 +99,8 @@ export function buildPreflightChecks(
   const tightEssayBlock = essayBlocks.find((block) => block.height < 260 || (block.lineCount ?? 0) < 12)
   const essaySpaceReady = !expectsEssay || essayBlocks.length > 0 && !tightEssayBlock
 
-  const numberSpan = numberingConfigured
-    ? `${expectedNumbers[0]}–${expectedNumbers[expectedNumbers.length - 1]}`
-    : '未设置'
+  const sortedNumbers = [...new Set(representedNumbers)].sort((a, b) => a - b)
+  const numberSpan = numberingConfigured ? `${sortedNumbers[0]}–${sortedNumbers[sortedNumbers.length - 1]}` : '未设置'
 
   return [
     {
@@ -125,15 +130,14 @@ export function buildPreflightChecks(
     },
     {
       id: 'numbering',
-      label: '题号连续性',
+      label: '题号与题数',
       detail: !numberingConfigured
         ? '空白卡尚未配置题号范围，请先添加或导入题目结构'
         : numberingMatches
-          ? `${numberSpan} 无重复、缺失或额外题号`
+          ? `${numberSpan} 共 ${representedQuestionCount} 题，无重复题号；允许自定义起点与跳号`
           : [
-              missingNumbers.length ? `缺少 ${missingNumbers.join('、')}` : '',
               duplicateNumbers.length ? `重复 ${duplicateNumbers.join('、')}` : '',
-              extraNumbers.length ? `额外 ${extraNumbers.join('、')}` : '',
+              !questionCountMatches ? `当前 ${representedQuestionCount} 题，原卷 ${expectedQuestionCount} 题` : '',
             ].filter(Boolean).join('；'),
       severity: numberingMatches ? 'pass' : 'blocking',
     },
@@ -208,11 +212,11 @@ export function buildPreflightChecks(
     },
     {
       id: 'identity',
-      label: '逐页身份与条码',
-      detail: mode === 'standard'
-        ? `共 ${safePageCount} 面，每张物理纸重复身份区与条码框`
-        : '飞象模式已保留姓名、班级、学号和二维码',
-      severity: 'pass',
+      label: '考生信息与考号',
+      detail: !identityReady
+        ? '至少保留 1 个考生信息字段，并将考号位数设置为 4–18 位'
+        : `${settings.identityFields.join('、')} · ${settings.candidateNumberType}${settings.candidateNumberDigits} 位 · ${settings.candidateNumberLayout === 'fill' ? '填涂' : settings.candidateNumberLayout === 'barcode' ? '条形码' : '手写'}`,
+      severity: identityReady ? 'pass' : 'blocking',
     },
     {
       id: 'safe-zone',
@@ -226,11 +230,19 @@ export function buildPreflightChecks(
       id: 'print',
       label: '打印与页序',
       detail: mode === 'smart'
-        ? `A4 单面 ${safePageCount} 页；已写入 100% 原尺寸打印提示`
-        : pageCountMatches
-          ? `${rulePack.paperSize} 共 ${rulePack.pageCount} 面，页序与规则包一致`
-          : `当前模板为 ${safePageCount} 页，${rulePack.shortName}要求 ${rulePack.pageCount} 面`,
-      severity: pageCountMatches ? 'pass' : 'blocking',
+        ? `${settings.paperSize} · ${settings.printSide === 'single' ? '单面' : '双面'} · 正面 ${settings.frontColumns} 栏 / 反面 ${settings.backColumns} 栏 · 共 ${safePageCount} 面`
+        : standardLayoutMatches
+          ? `${settings.paperSize} 共 ${safePageCount} 面，页序与${rulePack.shortName}一致`
+          : `当前为 ${settings.paperSize} / ${safePageCount} 面，${rulePack.shortName}要求 ${rulePack.paperSize} / ${rulePack.pageCount} 面`,
+      severity: standardLayoutMatches ? 'pass' : 'blocking',
+    },
+    {
+      id: 'paper-link',
+      label: '关联试卷与讲评',
+      detail: settings.linkedPaperId
+        ? `已关联试卷 ${settings.linkedPaperId}，可用于学情统计与讲评`
+        : '尚未关联试卷；不影响打印，但无法回流学情与讲评',
+      severity: settings.linkedPaperId ? 'pass' : 'warning',
     },
   ]
 }

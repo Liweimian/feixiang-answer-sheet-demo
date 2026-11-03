@@ -13,6 +13,7 @@ interface PreflightDialogProps {
   onPublish: () => void
   onLocate: (blockId: string) => void
   onDownload: () => void
+  onDownloadPublished: () => void
 }
 
 const severityMeta = {
@@ -34,6 +35,7 @@ export function PreflightDialog(props: PreflightDialogProps) {
   ) : (
     <div className="dialog-footer-actions">
       <MetisButton type="borderless" onClick={props.onClose}>稍后处理</MetisButton>
+      {props.published && <MetisButton type="bordered" icon={<Download size={15} />} onClick={props.onDownloadPublished}>下载 V{props.published.version}</MetisButton>}
       {fixableCount > 0 && <MetisButton type="bordered" icon={<WandSparkles size={15} />} onClick={props.onAutoFix}>一键优化 {fixableCount} 项</MetisButton>}
       <MetisButton type="primary" disabled={blockingCount > 0} loading={props.publishing} onClick={props.onPublish}>生成 V{props.draftVersion} 印刷版</MetisButton>
     </div>

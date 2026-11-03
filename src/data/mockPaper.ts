@@ -69,6 +69,10 @@ export const initialAnswerBlocks: AnswerBlock[] = [
     kind: 'objective',
     height: 218,
     showScore: true,
+    showQuestionCount: true,
+    objectiveLayout: 'horizontal',
+    optionCount: 4,
+    itemsPerColumn: 11,
     hint: '按大题保留分隔，题号全局连续',
   },
   {
@@ -82,6 +86,9 @@ export const initialAnswerBlocks: AnswerBlock[] = [
     height: 150,
     lineCount: 6,
     showScore: true,
+    showQuestionCount: false,
+    lineStyle: 'solid',
+    responseStyle: 'lines',
   },
   {
     id: 'short-47',
@@ -94,6 +101,9 @@ export const initialAnswerBlocks: AnswerBlock[] = [
     height: 82,
     lineCount: 3,
     showScore: true,
+    showQuestionCount: false,
+    lineStyle: 'solid',
+    responseStyle: 'lines',
     hint: '建议 4 行，当前空间偏小',
   },
   {
@@ -107,6 +117,9 @@ export const initialAnswerBlocks: AnswerBlock[] = [
     height: 270,
     lineCount: 10,
     showScore: true,
+    showQuestionCount: false,
+    lineStyle: 'solid',
+    responseStyle: 'lines',
     hint: '二选一，共用作答区；不少于 50 词',
   },
   {
@@ -151,6 +164,7 @@ export const blockKindLabels: Record<AnswerBlock['kind'], string> = {
   objective: '客观题',
   'short-answer': '短答横线',
   essay: '作文 / 综合题',
+  mixed: '混合题',
   forbidden: '禁答区',
   drawing: '作图区',
   table: '表格区',
