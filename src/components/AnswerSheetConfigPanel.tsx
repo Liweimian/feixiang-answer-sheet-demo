@@ -84,6 +84,11 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const [addKind, setAddKind] = useState<AnswerBlockKind>('short-answer')
   const [renumberStart, setRenumberStart] = useState(1)
   const [draggingId, setDraggingId] = useState('')
+  const [openSection, setOpenSection] = useState<'layout' | 'candidate' | 'display' | 'structure' | 'selected'>('structure')
+  const visibleSettings = [settings.showNotice && '注意事项', blocks.some((block) => isQuestionBlockKind(block.kind) && block.showScore) && '分值展示'].filter(Boolean).join('、') || '均关闭'
+  const identitySummary = settings.identityFields.length > 0
+    ? `${settings.identityFields.slice(0, 2).join('、')}${settings.identityFields.length > 2 ? `等 ${settings.identityFields.length} 项` : ''}`
+    : '未设置身份字段'
 
   const toggleIdentity = (field: IdentityField) => {
     const next = settings.identityFields.includes(field)
@@ -110,8 +115,8 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
       </div>
 
       <div className="config-scroll">
-        <details className="config-section" open>
-          <summary><span>页面布局</span></summary>
+        <details className="config-section" open={openSection === 'layout'} onToggle={(event) => event.currentTarget.open && setOpenSection('layout')}>
+          <summary><span>页面布局</span><small>{settings.paperSize} · {settings.frontColumns} 栏</small></summary>
           <div className="config-section-body config-grid-two">
             <Field label="纸张">
               <MetisSelect
@@ -133,8 +138,8 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </div>
         </details>
 
-        <details className="config-section">
-          <summary><span>考生信息</span></summary>
+        <details className="config-section" open={openSection === 'candidate'} onToggle={(event) => event.currentTarget.open && setOpenSection('candidate')}>
+          <summary><span>考生信息</span><small>{identitySummary} · {settings.candidateNumberLayout === 'fill' ? '填涂' : settings.candidateNumberLayout === 'barcode' ? '条形码' : '手写'}</small></summary>
           <div className="config-section-body">
             <Field label="身份字段">
               <div className="config-chip-list">
@@ -172,16 +177,16 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </div>
         </details>
 
-        <details className="config-section" open>
-          <summary><span>显示设置</span></summary>
+        <details className="config-section" open={openSection === 'display'} onToggle={(event) => event.currentTarget.open && setOpenSection('display')}>
+          <summary><span>显示设置</span><small>{visibleSettings}</small></summary>
           <div className="config-section-body display-settings-row">
             <ToggleField title="注意事项" checked={settings.showNotice} onChange={(checked) => props.onSettingsChange({ showNotice: checked })} />
             <ToggleField title="分值展示" checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showScore)} onChange={props.onScoreVisibilityChange} />
           </div>
         </details>
 
-        <details className="config-section config-block-section" open>
-          <summary><span>题目结构</span></summary>
+        <details className="config-section config-block-section" open={openSection === 'structure'} onToggle={(event) => event.currentTarget.open && setOpenSection('structure')}>
+          <summary><span>题目结构</span><small>{pageCount} 面 · {blocks.length} 个题块</small></summary>
           <div className="config-section-body">
             <div className="config-page-tabs">
               {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
@@ -208,7 +213,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                   }}
                 >
                   <GripVertical size={14} />
-                  <button type="button" onClick={() => props.onSelect(block.id)}><b>{block.title}</b><small>{blockKindLabels[block.kind]}{block.range ? ` · ${block.range}` : ''}</small></button>
+                  <button type="button" onClick={() => { props.onSelect(block.id); setOpenSection('selected') }}><b>{block.title}</b><small>{blockKindLabels[block.kind]}{block.range ? ` · ${block.range}` : ''}</small></button>
                 </div>
               ))}
               {!blocks.some((block) => block.page === props.activePage) && <div className="config-empty-blocks">当前页暂无题块</div>}
@@ -221,8 +226,8 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         </details>
 
         {selected && (
-          <details className="config-section config-selected-section" open>
-            <summary><span>所选题块</span></summary>
+          <details className="config-section config-selected-section" open={openSection === 'selected'} onToggle={(event) => event.currentTarget.open && setOpenSection('selected')}>
+            <summary><span>所选题块</span><small title={selected.title}>{selected.title}</small></summary>
             <div className="config-section-body">
               {locked && <div className="config-lock-tip">大考规范锁定区域不可修改</div>}
               <Field label="模块标题"><MetisInput value={selected.title} disabled={locked} onChange={(event) => props.onUpdateBlock({ title: event.target.value })} /></Field>

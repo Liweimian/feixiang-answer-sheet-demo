@@ -116,6 +116,8 @@
 .config-section > summary::before { content: '›'; color: var(--fx_text_3); font-size: 15px; transform: rotate(0); transition: transform 120ms ease; }
 .config-section[open] > summary::before { transform: rotate(90deg); }
 .config-section > summary span { font-size: 12px; font-weight: 700; }
+.config-section > summary small { min-width: 0; max-width: 205px; overflow: hidden; margin-left: auto; color: var(--fx_text_3); font-size: 9px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.config-section[open] > summary small { color: var(--fx_brand); }
 .config-section-body { display: grid; gap: var(--fx_sp_3); padding: 0 var(--fx_sp_4) var(--fx_sp_4); }
 .config-section-body [role='tablist'] { width: 100%; }
 .config-grid-two { display: grid; grid-template-columns: 1fr; gap: var(--fx_sp_2); }
