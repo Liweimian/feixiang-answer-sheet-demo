@@ -40,7 +40,8 @@
   },
   "gitCommits": [
     "60116e3 Stage 0: align answer sheet demo scope",
-    "82a957d Stage 1: build interactive answer sheet demo"
+    "82a957d Stage 1: build interactive answer sheet demo",
+    "c1ffb37 Stage 4 v1.1: add template-first card creation"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-03T17:23:00+08:00"
