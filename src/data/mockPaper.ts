@@ -150,7 +150,7 @@ export const rulePacks: RulePack[] = [
 export const blockKindLabels: Record<AnswerBlock['kind'], string> = {
   objective: '客观题',
   'short-answer': '短答横线',
-  essay: '英语作文',
+  essay: '作文 / 综合题',
   forbidden: '禁答区',
   drawing: '作图区',
   table: '表格区',

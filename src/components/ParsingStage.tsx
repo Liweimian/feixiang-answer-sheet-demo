@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { MetisButton, MetisSelect, MetisTag } from '@yuanfudao/metis-web-component'
 import { CheckCircle2, LoaderCircle, ScanSearch, TriangleAlert } from 'lucide-react'
-import { beijingEnglishPaper } from '../data/mockPaper'
-import type { ParseResult } from '../features/answer-sheet/types'
+import type { ExamPaper, ParseResult } from '../features/answer-sheet/types'
 
 interface ParsingStageProps {
+  paper: ExamPaper
   result?: ParseResult
   onBack: () => void
-  onConfirm: () => void
+  onConfirm: (writingLayout: 'choose-one' | 'separate') => void
 }
 
-export function ParsingStage({ result, onBack, onConfirm }: ParsingStageProps) {
+export function ParsingStage({ paper, result, onBack, onConfirm }: ParsingStageProps) {
   const [writingLayout, setWritingLayout] = useState<'choose-one' | 'separate'>('choose-one')
   return (
     <section className="parsing-stage" data-sec="2">
@@ -37,8 +37,8 @@ export function ParsingStage({ result, onBack, onConfirm }: ParsingStageProps) {
 
       <div className="parse-workbench">
         <div className="paper-structure">
-          <div className="panel-title"><strong>识别到的试卷结构</strong><span>{beijingEnglishPaper.sections.length} 个大题</span></div>
-          {beijingEnglishPaper.sections.map((section) => (
+          <div className="panel-title"><strong>识别到的试卷结构</strong><span>{paper.sections.length} 个大题</span></div>
+          {paper.sections.map((section) => (
             <div className="section-row" key={section.id}>
               <div><strong>{section.title}</strong><span>题号 {section.range} · {section.questionCount} 题</span></div>
               <span>{section.score} 分</span>
@@ -48,11 +48,11 @@ export function ParsingStage({ result, onBack, onConfirm }: ParsingStageProps) {
         </div>
 
         <aside className="parse-review">
-          <div className="panel-title"><strong>需要确认</strong><span>{result ? '1 项' : '分析中'}</span></div>
+          <div className="panel-title"><strong>需要确认</strong><span>{result ? `${result.needsReview.length} 项` : '分析中'}</span></div>
           {result ? (
             <div className="review-item">
               <TriangleAlert size={19} />
-              <div><strong>第 48 题命题形式</strong><p>检测到两个写作提示，请确认共用一个作答区。</p></div>
+              <div><strong>{result.needsReview[0]?.label ?? '结构已确认'}</strong><p>{result.needsReview[0]?.detail ?? '没有需要人工确认的内容。'}</p></div>
               <MetisSelect
                 value={writingLayout}
                 onChange={(value) => setWritingLayout(value as 'choose-one' | 'separate')}
@@ -73,7 +73,7 @@ export function ParsingStage({ result, onBack, onConfirm }: ParsingStageProps) {
 
       <footer className="stage-footer">
         <MetisButton type="bordered" onClick={onBack}>返回选择</MetisButton>
-        <MetisButton type="primary" disabled={!result} onClick={onConfirm}>确认结构并生成答题卡</MetisButton>
+        <MetisButton type="primary" disabled={!result} onClick={() => onConfirm(writingLayout)}>确认结构并生成答题卡</MetisButton>
       </footer>
     </section>
   )

@@ -52,7 +52,10 @@ export function PreflightDialog(props: PreflightDialogProps) {
         <div className="preflight-content">
           <div className={`preflight-summary ${blockingCount ? 'has-blocking' : 'ready'}`}>
             <ShieldCheck size={26} />
-            <div><strong>{blockingCount ? `发现 ${blockingCount} 项必须处理` : '关键检查已通过'}</strong><span>{fixableCount ? `另有 ${fixableCount} 项可一键优化` : '可以生成不可变印刷版本'}</span></div>
+            <div>
+              <strong>{blockingCount ? `发现 ${blockingCount} 项必须处理` : '关键检查已通过'}</strong>
+              <span>{blockingCount ? (fixableCount ? `其中 ${fixableCount} 项可一键优化` : '请先完善结构后再生成印刷版本') : fixableCount ? `另有 ${fixableCount} 项可一键优化` : '可以生成不可变印刷版本'}</span>
+            </div>
           </div>
           <div className="check-list">
             {props.checks.map((check) => {

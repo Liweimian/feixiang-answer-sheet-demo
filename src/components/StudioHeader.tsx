@@ -12,7 +12,7 @@ export function StudioHeader({ stage }: { stage: FlowStage }) {
         <div><strong>答题卡智能制卡</strong><small>从原卷到可印刷版本</small></div>
       </div>
       <div className="studio-steps" aria-label="制卡进度">
-        {['选择来源', '解析结构', '编辑与发布'].map((label, index) => (
+        {['选择来源', '生成结构', '编辑与发布'].map((label, index) => (
           <div key={label} className={current === index + 1 ? 'active' : current > index + 1 ? 'done' : ''}>
             <span>{index + 1}</span><strong>{label}</strong>
           </div>

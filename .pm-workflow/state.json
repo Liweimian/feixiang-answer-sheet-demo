@@ -1,6 +1,6 @@
 {
   "projectName": "飞象智能制卡 Demo",
-  "currentStage": 1,
+  "currentStage": 4,
   "stages": {
     "0": {
       "name": "需求澄清",
@@ -25,12 +25,23 @@
     },
     "2": { "name": "产品稿文字", "status": "pending" },
     "3": { "name": "埋点输出", "status": "pending" },
-    "4": { "name": "版本更新", "status": "pending" }
+    "4": {
+      "name": "版本更新",
+      "status": "completed",
+      "startedAt": "2026-11-03T17:10:00+08:00",
+      "completedAt": "2026-11-03T17:23:00+08:00",
+      "version": "1.1.0",
+      "iterationCount": 1,
+      "awaitingUserConfirmation": true,
+      "scope": ["可视化模板中心", "画布内标题直编", "空白卡基础信息与多页", "模板套用与完整快照", "安全题号与内容容量校验"],
+      "outputs": ["src/components/TemplatePickerDialog.tsx", "src/components/PaperSettingsDialog.tsx", "src/data/answerSheetTemplates.ts", "docs/changelog.md"],
+      "validation": ["npm run typecheck", "npm run build", "browser blank-card and library regression"]
+    }
   },
   "gitCommits": [
     "60116e3 Stage 0: align answer sheet demo scope",
     "82a957d Stage 1: build interactive answer sheet demo"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-03T16:58:00+08:00"
+  "updatedAt": "2026-11-03T17:23:00+08:00"
 }

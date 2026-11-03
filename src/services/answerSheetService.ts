@@ -17,18 +17,27 @@ const wait = (duration: number) => new Promise((resolve) => window.setTimeout(re
 class MockAnswerSheetService implements AnswerSheetService {
   async parsePaper(paper: ExamPaper): Promise<ParseResult> {
     await wait(900)
+    const objectiveCount = paper.sections
+      .filter((section) => section.answerKind === 'objective')
+      .reduce((total, section) => total + section.questionCount, 0)
+    const subjectiveCount = paper.sections
+      .filter((section) => section.answerKind !== 'objective')
+      .reduce((total, section) => total + section.questionCount, 0)
+    const needsReview = paper.sections
+      .filter((section) => section.confidence < 90)
+      .map((section) => ({
+        id: section.id,
+        label: `${section.title}的作答形式`,
+        detail: section.answerKind === 'essay'
+          ? '检测到作文提示，请确认是否共用一个作答区。'
+          : `当前识别置信度为 ${section.confidence}%，请确认题号与题型。`,
+      }))
     return {
       sectionCount: paper.sections.length,
-      objectiveCount: 33,
-      subjectiveCount: 5,
+      objectiveCount,
+      subjectiveCount,
       totalScore: paper.score,
-      needsReview: [
-        {
-          id: 'writing-choice',
-          label: '第 48 题命题形式',
-          detail: '检测到两个写作提示，已识别为“二选一，共用作答区”。',
-        },
-      ],
+      needsReview,
     }
   }
 

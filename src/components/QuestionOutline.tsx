@@ -5,6 +5,7 @@ import type { AnswerBlock, CardMode, ExamPaper } from '../features/answer-sheet/
 interface QuestionOutlineProps {
   paper: ExamPaper
   blocks: AnswerBlock[]
+  pageCount: number
   selectedBlockId: string
   activePage: number
   mode: CardMode
@@ -21,7 +22,7 @@ export function QuestionOutline(props: QuestionOutlineProps) {
         <span>自动排版</span>
       </div>
 
-      {[1, 2].map((page) => {
+      {Array.from({ length: props.pageCount }, (_, index) => index + 1).map((page) => {
         const pageBlocks = props.blocks.filter((block) => block.page === page)
         return (
           <section key={page} className="outline-page-group">

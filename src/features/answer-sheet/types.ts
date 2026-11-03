@@ -1,6 +1,8 @@
 export type FlowStage = 'source' | 'parsing' | 'editor'
 export type SourceKind = 'library' | 'upload' | 'template' | 'blank'
 export type CardMode = 'smart' | 'standard'
+export type TemplateOrigin = 'system' | 'school' | 'personal'
+export type TemplateCategory = 'recommended' | 'standard' | 'subject' | 'blank'
 export type AnswerBlockKind =
   | 'objective'
   | 'short-answer'
@@ -9,6 +11,18 @@ export type AnswerBlockKind =
   | 'drawing'
   | 'table'
   | 'notice'
+
+export const questionBlockKinds: AnswerBlockKind[] = [
+  'objective',
+  'short-answer',
+  'essay',
+  'drawing',
+  'table',
+]
+
+export function isQuestionBlockKind(kind: AnswerBlockKind): boolean {
+  return questionBlockKinds.includes(kind)
+}
 
 export interface PaperSection {
   id: string
@@ -45,6 +59,9 @@ export interface AnswerBlock {
   kind: AnswerBlockKind
   height: number
   lineCount?: number
+  optionCount?: 4 | 5
+  itemsPerColumn?: number
+  writingLayout?: 'choose-one' | 'separate'
   showScore: boolean
   locked?: boolean
   hint?: string
@@ -61,6 +78,30 @@ export interface RulePack {
   identityFields: string[]
   lockedZones: string[]
   subjectScope: string
+}
+
+export interface AnswerSheetDocument {
+  paper: ExamPaper
+  blocks: AnswerBlock[]
+  mode: CardMode
+  rulePackId: string
+  templateId: string
+  pageCount: number
+}
+
+export interface AnswerSheetTemplate {
+  id: string
+  name: string
+  description: string
+  origin: TemplateOrigin
+  category: TemplateCategory
+  featured?: boolean
+  tags: string[]
+  paperSize: 'A4' | 'A3' | '8K'
+  columns: 1 | 2 | 3
+  identityMode: 'barcode' | 'candidate-number' | 'both'
+  highlights: string[]
+  document: AnswerSheetDocument
 }
 
 export type CheckSeverity = 'pass' | 'warning' | 'blocking'
@@ -92,8 +133,4 @@ export interface PublishedVersion {
   referencedExamCount: number
 }
 
-export interface DraftSnapshot {
-  blocks: AnswerBlock[]
-  mode: CardMode
-  rulePackId: string
-}
+export type DraftSnapshot = AnswerSheetDocument

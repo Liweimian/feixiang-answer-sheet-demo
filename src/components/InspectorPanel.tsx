@@ -9,7 +9,7 @@ import {
 } from '@yuanfudao/metis-web-component'
 import { ArrowDown, ArrowUp, LockKeyhole, Plus, Trash2 } from 'lucide-react'
 import { blockKindLabels } from '../data/mockPaper'
-import type { AnswerBlock, AnswerBlockKind, CardMode, RulePack } from '../features/answer-sheet/types'
+import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type CardMode, type RulePack } from '../features/answer-sheet/types'
 
 interface InspectorPanelProps {
   block?: AnswerBlock
@@ -22,6 +22,9 @@ interface InspectorPanelProps {
 }
 
 const addableKinds: Array<{ kind: AnswerBlockKind; label: string }> = [
+  { kind: 'objective', label: '客观题' },
+  { kind: 'short-answer', label: '短答题' },
+  { kind: 'essay', label: '作文题' },
   { kind: 'forbidden', label: '禁答区' },
   { kind: 'drawing', label: '作图区' },
   { kind: 'table', label: '表格区' },
@@ -31,6 +34,7 @@ const addableKinds: Array<{ kind: AnswerBlockKind; label: string }> = [
 export function InspectorPanel(props: InspectorPanelProps) {
   const { block } = props
   const locked = props.mode === 'standard' && Boolean(block?.locked)
+  const questionBlock = block && isQuestionBlockKind(block.kind)
 
   return (
     <aside className="inspector-panel" data-sec="6">
@@ -52,11 +56,64 @@ export function InspectorPanel(props: InspectorPanelProps) {
             <span>作答区类型</span>
             <MetisSelect
               value={block.kind}
-              disabled={locked || block.kind === 'objective'}
+              disabled={locked}
               options={Object.entries(blockKindLabels).map(([value, label]) => ({ value, label }))}
               onChange={(value) => props.onUpdate({ kind: value as AnswerBlockKind })}
             />
           </label>
+          {questionBlock && (
+            <div className="inspector-field-grid inspector-question-fields">
+              <label>
+                <span>题号范围</span>
+                <MetisInput
+                  value={block.range ?? ''}
+                  placeholder="如 1–20"
+                  disabled={locked}
+                  onChange={(event) => props.onUpdate({ range: event.target.value })}
+                />
+              </label>
+              <label>
+                <span>区域分值</span>
+                <MetisInputNumber
+                  className="inspector-number-input"
+                  value={block.score}
+                  min={0}
+                  max={300}
+                  disabled={locked}
+                  addonAfter="分"
+                  onChange={(value) => props.onUpdate({ score: Number(value ?? 0) })}
+                />
+              </label>
+            </div>
+          )}
+          {block.kind === 'objective' && (
+            <div className="inspector-field-grid inspector-question-fields">
+              <label>
+                <span>选项数量</span>
+                <MetisSelect
+                  value={block.optionCount ?? 4}
+                  disabled={locked}
+                  options={[
+                    { value: 4, label: 'A–D（4 个）' },
+                    { value: 5, label: 'A–E（5 个）' },
+                  ]}
+                  onChange={(value) => props.onUpdate({ optionCount: Number(value) as 4 | 5 })}
+                />
+              </label>
+              <label>
+                <span>每栏建议题数</span>
+                <MetisInputNumber
+                  className="inspector-number-input"
+                  value={block.itemsPerColumn ?? 11}
+                  min={4}
+                  max={20}
+                  disabled={locked}
+                  addonAfter="题"
+                  onChange={(value) => props.onUpdate({ itemsPerColumn: Number(value ?? 11) })}
+                />
+              </label>
+            </div>
+          )}
           <div className="inspector-field-grid">
             <label>
               <span>区域高度</span>
@@ -93,7 +150,7 @@ export function InspectorPanel(props: InspectorPanelProps) {
           <div className="block-actions">
             <MetisButton type="bordered" icon={<ArrowUp size={14} />} disabled={locked} onClick={() => props.onMove(-1)}>上移</MetisButton>
             <MetisButton type="bordered" icon={<ArrowDown size={14} />} disabled={locked} onClick={() => props.onMove(1)}>下移</MetisButton>
-            <MetisButton type="borderless" danger icon={<Trash2 size={14} />} disabled={locked || block.kind === 'objective'} onClick={props.onDelete}>删除</MetisButton>
+            <MetisButton type="borderless" danger icon={<Trash2 size={14} />} disabled={locked} onClick={props.onDelete}>删除</MetisButton>
           </div>
         </div>
       ) : <div className="inspector-empty">在画布或左侧题目树中选择一个区域。</div>}

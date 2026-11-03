@@ -1,6 +1,6 @@
-import { useState, type CSSProperties } from 'react'
-import { MetisButton, MetisSelect, MetisTag } from '@yuanfudao/metis-web-component'
-import { LockKeyhole, Maximize2, RotateCcw } from 'lucide-react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { MetisButton, MetisInput, MetisSelect, MetisTag } from '@yuanfudao/metis-web-component'
+import { LockKeyhole, Maximize2, Pencil, RotateCcw } from 'lucide-react'
 import type { AnswerBlock, CardMode, ExamPaper, RulePack } from '../features/answer-sheet/types'
 import { AnswerBlockView } from './AnswerBlockView'
 
@@ -9,10 +9,12 @@ interface AnswerSheetCanvasProps {
   blocks: AnswerBlock[]
   mode: CardMode
   rulePack: RulePack
+  pageCount: number
   activePage: number
   selectedBlockId: string
   onPageChange: (page: number) => void
   onSelectBlock: (id: string) => void
+  onTitleCommit: (title: string) => void
 }
 
 interface PaperPageProps {
@@ -21,21 +23,79 @@ interface PaperPageProps {
   mode: CardMode
   rulePack: RulePack
   page: number
+  pageCount: number
   selectedBlockId?: string
   onSelectBlock?: (id: string) => void
+  onTitleCommit?: (title: string) => void
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, page, selectedBlockId, onSelectBlock }: PaperPageProps) {
+function PaperPage({ paper, blocks, mode, rulePack, page, pageCount, selectedBlockId, onSelectBlock, onTitleCommit }: PaperPageProps) {
   const standard = mode === 'standard'
+  const paperSize = standard ? rulePack.paperSize.toLowerCase() : 'a4'
   const pageBlocks = blocks.filter((block) => block.page === page)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState(paper.title)
+  const cancellingTitle = useRef(false)
+
+  useEffect(() => {
+    if (!editingTitle) setTitleDraft(paper.title)
+  }, [editingTitle, paper.title])
+
+  const commitTitle = () => {
+    if (!editingTitle) return
+    if (cancellingTitle.current) {
+      cancellingTitle.current = false
+      setTitleDraft(paper.title)
+      setEditingTitle(false)
+      return
+    }
+    const nextTitle = titleDraft.trim() || paper.title
+    setTitleDraft(nextTitle)
+    setEditingTitle(false)
+    if (nextTitle !== paper.title) onTitleCommit?.(nextTitle)
+  }
 
   return (
-    <article className={`answer-paper ${standard ? 'standard-paper' : 'smart-paper'}`} data-paper-page={page}>
+    <article className={`answer-paper paper-size-${paperSize} ${standard ? 'standard-paper' : 'smart-paper'}`} data-paper-page={page}>
       {standard && <><i className="corner-mark top-left" /><i className="corner-mark top-right" /><i className="corner-mark bottom-left" /><i className="corner-mark bottom-right" /></>}
       <header className="paper-header">
         <div className="paper-title">
-          <h1>{paper.title}</h1>
-          <p>{paper.subject}答题卡 · 第 {page} 页 / 共 2 页</p>
+          {editingTitle && onTitleCommit ? (
+            <MetisInput
+              className="paper-title-input"
+              autoFocus
+              maxLength={36}
+              value={titleDraft}
+              onChange={(event) => setTitleDraft(event.target.value)}
+              onBlur={commitTitle}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  event.currentTarget.blur()
+                }
+                if (event.key === 'Escape') {
+                  event.preventDefault()
+                  cancellingTitle.current = true
+                  setTitleDraft(paper.title)
+                  event.currentTarget.blur()
+                }
+              }}
+              aria-label="编辑答题卡标题"
+            />
+          ) : onTitleCommit ? (
+            <button
+              type="button"
+              className="paper-title-edit"
+              onClick={() => {
+                cancellingTitle.current = false
+                setEditingTitle(true)
+              }}
+              aria-label="编辑答题卡标题"
+            >
+              <h1>{paper.title}</h1><span><Pencil size={11} /> 点击编辑</span>
+            </button>
+          ) : <h1>{paper.title}</h1>}
+          <p>{paper.subject}答题卡 · 第 {page} 页 / 共 {pageCount} 页</p>
         </div>
         <div className="identity-and-code">
           <div className="identity-grid">
@@ -82,7 +142,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
     <section className="answer-canvas" data-sec="5">
       <header className="canvas-toolbar">
         <div className="page-switcher">
-          {[1, 2].map((page) => (
+          {Array.from({ length: props.pageCount }, (_, index) => index + 1).map((page) => (
             <MetisButton key={page} type={props.activePage === page ? 'primary' : 'borderless'} size="s" onClick={() => props.onPageChange(page)}>
               第 {page} 页
             </MetisButton>
@@ -108,13 +168,15 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
           mode={props.mode}
           rulePack={props.rulePack}
           page={props.activePage}
+          pageCount={props.pageCount}
           selectedBlockId={props.selectedBlockId}
           onSelectBlock={props.onSelectBlock}
+          onTitleCommit={props.onTitleCommit}
         />
       </div>
 
       <div className="print-pages" aria-hidden="true">
-        {[1, 2].map((page) => (
+        {Array.from({ length: props.pageCount }, (_, index) => index + 1).map((page) => (
           <PaperPage
             key={page}
             paper={props.paper}
@@ -122,6 +184,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
             mode={props.mode}
             rulePack={props.rulePack}
             page={page}
+            pageCount={props.pageCount}
           />
         ))}
       </div>
