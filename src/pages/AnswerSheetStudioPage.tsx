@@ -26,7 +26,6 @@ import { answerSheetService } from '../services/answerSheetService'
 import { EditorToolbar } from '../components/EditorToolbar'
 import { EditorWorkbench } from '../components/EditorWorkbench'
 import { PreflightDialog } from '../components/PreflightDialog'
-import { StudioHeader } from '../components/StudioHeader'
 
 function cloneDefaultDocument(): AnswerSheetDocument {
   return {
@@ -360,7 +359,6 @@ export function AnswerSheetStudioPage() {
 
   return (
     <>
-      <StudioHeader paperTitle={paper.title} />
       <div className="studio-body stage-editor">
         <EditorToolbar
               paper={paper}

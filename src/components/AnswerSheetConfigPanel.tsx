@@ -110,30 +110,6 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
 
       <div className="config-scroll">
         <details className="config-section" open>
-          <summary><span>题卡设置</span></summary>
-          <div className="config-section-body config-grid-two">
-            <Field label="答题卡模式">
-              <MetisSelect
-                value={settings.reviewMode}
-                options={[
-                  { value: 'online', label: '网阅' },
-                  { value: 'manual', label: '手批' },
-                  { value: 'mixed', label: '混合' },
-                ]}
-                onChange={(value) => props.onSettingsChange({ reviewMode: value as AnswerSheetSettings['reviewMode'] })}
-              />
-            </Field>
-            <Field label="题卡样式">
-              <MetisSelect
-                value={settings.cardStyle}
-                options={[{ value: 'answer-only', label: '纯题卡' }, { value: 'question-answer', label: '题卡合一' }]}
-                onChange={(value) => props.onSettingsChange({ cardStyle: value as AnswerSheetSettings['cardStyle'] })}
-              />
-            </Field>
-          </div>
-        </details>
-
-        <details className="config-section" open>
           <summary><span>页面布局</span></summary>
           <div className="config-section-body config-grid-two">
             <Field label="纸张">
