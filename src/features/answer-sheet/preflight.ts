@@ -64,7 +64,7 @@ export function buildPreflightChecks(
   const safePageCount = Math.max(1, pageCount)
   const pageHeights = Array.from({ length: safePageCount }, (_, index) => index + 1).map((page) => {
     const pageBlocks = blocks.filter((block) => block.page === page)
-    const columns = settings.printSide === 'single' || page % 2 === 1 ? settings.frontColumns : settings.backColumns
+    const columns = settings.frontColumns
     const rowHeights: number[] = []
     pageBlocks.forEach((block, index) => {
       const row = Math.floor(index / columns)
@@ -230,7 +230,7 @@ export function buildPreflightChecks(
       id: 'print',
       label: '打印与页序',
       detail: mode === 'smart'
-        ? `${settings.paperSize} · ${settings.printSide === 'single' ? '单面' : '双面'} · 正面 ${settings.frontColumns} 栏 / 反面 ${settings.backColumns} 栏 · 共 ${safePageCount} 面`
+        ? `${settings.paperSize} · ${settings.frontColumns} 栏 · 共 ${safePageCount} 面`
         : standardLayoutMatches
           ? `${settings.paperSize} 共 ${safePageCount} 面，页序与${rulePack.shortName}一致`
           : `当前为 ${settings.paperSize} / ${safePageCount} 面，${rulePack.shortName}要求 ${rulePack.paperSize} / ${rulePack.pageCount} 面`,

@@ -51,7 +51,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
   const standard = mode === 'standard'
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
-  const columns = settings.printSide === 'single' || page % 2 === 1 ? settings.frontColumns : settings.backColumns
+  const columns = settings.frontColumns
   const reviewModeLabel = settings.reviewMode === 'online' ? '网阅' : settings.reviewMode === 'manual' ? '手批' : '混合阅卷'
   const scanEnabled = settings.reviewMode !== 'manual'
   const manualScoreEnabled = settings.reviewMode !== 'online'

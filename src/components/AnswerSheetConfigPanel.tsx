@@ -120,18 +120,14 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                 onChange={(value) => props.onSettingsChange({ paperSize: value as AnswerSheetSettings['paperSize'] })}
               />
             </Field>
-            <Field label="正面栏数">
+            <Field label="栏数">
               <MetisSelect
                 value={settings.frontColumns}
                 options={[1, 2, 3].map((value) => ({ value, label: `${value} 栏` }))}
-                onChange={(value) => props.onSettingsChange({ frontColumns: Number(value) as 1 | 2 | 3 })}
-              />
-            </Field>
-            <Field label="反面栏数">
-              <MetisSelect
-                value={settings.backColumns}
-                options={[1, 2, 3].map((value) => ({ value, label: `${value} 栏` }))}
-                onChange={(value) => props.onSettingsChange({ backColumns: Number(value) as 1 | 2 | 3 })}
+                onChange={(value) => {
+                  const columns = Number(value) as 1 | 2 | 3
+                  props.onSettingsChange({ frontColumns: columns, backColumns: columns })
+                }}
               />
             </Field>
           </div>
