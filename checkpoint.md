@@ -27,6 +27,7 @@
 - 无应用运行时异常；本地环境仅有 Metis 埋点网络请求失败，不影响 Demo。
 - 功能提交：`7452a25 Stage 4 v1.2: rebuild current-paper answer sheet editor`。
 - 打印收尾：`f236964 Fix: hide preflight dialog from printed answer sheet`。
+- v1.3 功能提交：`f06c165 Stage 4 v1.3: simplify editor and merge objective modules`。
 
 ## 下一检查点
 - 用户确认 v1.3 页面方向后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
