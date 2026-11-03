@@ -48,7 +48,8 @@
     "9f6f9f3 Stage 4 v1.3.1: remove redundant editor sections",
     "37bc5a8 Stage 4 v1.3.2: simplify notice and score display",
     "f8981a6 Stage 4 v1.3.3: unify answer sheet columns",
-    "6ed418b Stage 4 v1.3.4: add summarized accordion settings"
+    "6ed418b Stage 4 v1.3.4: add summarized accordion settings",
+    "f5618fa Stage 4 v1.3.5: condense layout settings to one row"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-03T21:50:00+08:00"
