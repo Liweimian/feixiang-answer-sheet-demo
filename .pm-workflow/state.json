@@ -44,7 +44,8 @@
     "c1ffb37 Stage 4 v1.1: add template-first card creation",
     "7452a25 Stage 4 v1.2: rebuild current-paper answer sheet editor",
     "f236964 Fix: hide preflight dialog from printed answer sheet",
-    "f06c165 Stage 4 v1.3: simplify editor and merge objective modules"
+    "f06c165 Stage 4 v1.3: simplify editor and merge objective modules",
+    "9f6f9f3 Stage 4 v1.3.1: remove redundant editor sections"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-03T20:30:00+08:00"
