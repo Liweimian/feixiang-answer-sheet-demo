@@ -5,7 +5,6 @@ import {
   MetisInputNumber,
   MetisSelect,
   MetisSwitch,
-  MetisTabs,
   MetisTag,
 } from '@yuanfudao/metis-web-component'
 import {
@@ -13,7 +12,6 @@ import {
   ArrowUp,
   Combine,
   GripVertical,
-  LayoutTemplate,
   ListRestart,
   Plus,
   Scissors,
@@ -26,23 +24,15 @@ import {
   type AnswerBlockKind,
   type AnswerSheetDocument,
   type AnswerSheetSettings,
-  type CardMode,
   type ContentElement,
   type IdentityField,
-  type RulePack,
 } from '../features/answer-sheet/types'
 
 interface AnswerSheetConfigPanelProps {
   document: AnswerSheetDocument
-  rulePacks: RulePack[]
-  templateName: string
   activePage: number
   selectedBlockId: string
-  onModeChange: (mode: CardMode) => void
-  onRulePackChange: (id: string) => void
-  onOpenTemplates: () => void
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void
-  onPageCountChange: (count: number) => void
   onPageChange: (page: number) => void
   onSelect: (id: string) => void
   onUpdateBlock: (patch: Partial<AnswerBlock>) => void
@@ -54,6 +44,7 @@ interface AnswerSheetConfigPanelProps {
   onSplit: () => void
   onMerge: () => void
   onConsolidate: (kind: 'objective' | 'subjective') => void
+  onMergeObjectiveModules: () => void
 }
 
 const identityFields: IdentityField[] = ['学校', '姓名', '班级', '学号', '准考证号', '考场号', '座位号']
@@ -85,9 +76,9 @@ function ToggleField({ title, description, checked, disabled, onChange }: {
 
 export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const { document } = props
-  const { blocks, mode, pageCount, rulePackId, settings } = document
+  const { blocks, pageCount, settings } = document
   const selected = blocks.find((block) => block.id === props.selectedBlockId)
-  const locked = mode === 'standard' && Boolean(selected?.locked)
+  const locked = document.mode === 'standard' && Boolean(selected?.locked)
   const questionBlock = selected && isQuestionBlockKind(selected.kind)
   const [addKind, setAddKind] = useState<AnswerBlockKind>('short-answer')
   const [renumberStart, setRenumberStart] = useState(1)
@@ -113,36 +104,13 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   return (
     <aside className="answer-sheet-config" data-sec="4">
       <div className="config-panel-head">
-        <div><strong>答题卡配置</strong><span>左侧配置，右侧实时预览</span></div>
+        <div><strong>答题卡配置</strong></div>
         <MetisTag preset="primary">{blocks.length} 个题块</MetisTag>
       </div>
 
       <div className="config-scroll">
         <details className="config-section" open>
-          <summary><span>制卡与模板</span><small>{mode === 'standard' ? '大考规范' : '飞象模式'}</small></summary>
-          <div className="config-section-body">
-            <MetisTabs
-              activeKey={mode}
-              onChange={(key) => props.onModeChange(key as CardMode)}
-              items={[{ key: 'smart', label: '飞象模式' }, { key: 'standard', label: '大考规范' }]}
-            />
-            {mode === 'standard' && (
-              <Field label="地区规则包">
-                <MetisSelect
-                  value={rulePackId}
-                  options={props.rulePacks.map((pack) => ({ value: pack.id, label: pack.shortName }))}
-                  onChange={(value) => props.onRulePackChange(String(value))}
-                />
-              </Field>
-            )}
-            <button type="button" className="template-entry" onClick={props.onOpenTemplates}>
-              <LayoutTemplate size={17} /><span><b>{props.templateName}</b><small>地区、学校与个人模板</small></span><em>更换</em>
-            </button>
-          </div>
-        </details>
-
-        <details className="config-section" open>
-          <summary><span>题卡设置</span><small>阅卷与试卷</small></summary>
+          <summary><span>题卡设置</span></summary>
           <div className="config-section-body config-grid-two">
             <Field label="答题卡模式">
               <MetisSelect
@@ -162,34 +130,17 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                 onChange={(value) => props.onSettingsChange({ cardStyle: value as AnswerSheetSettings['cardStyle'] })}
               />
             </Field>
-            <Field label="关联试卷" hint="用于学情统计与讲评">
-              <MetisInput
-                value={settings.linkedPaperId}
-                placeholder="输入或粘贴试卷 ID"
-                onChange={(event) => props.onSettingsChange({ linkedPaperId: event.target.value })}
-              />
-            </Field>
           </div>
         </details>
 
         <details className="config-section" open>
-          <summary><span>页面布局</span><small>{settings.paperSize} · {pageCount} 面</small></summary>
+          <summary><span>页面布局</span></summary>
           <div className="config-section-body config-grid-two">
             <Field label="纸张">
               <MetisSelect
                 value={settings.paperSize}
                 options={['A4', 'A3', '8K', '16K'].map((value) => ({ value, label: value }))}
                 onChange={(value) => props.onSettingsChange({ paperSize: value as AnswerSheetSettings['paperSize'] })}
-              />
-            </Field>
-            <Field label="答题卡面数">
-              <MetisInputNumber className="config-number" value={pageCount} min={1} max={4} onChange={(value) => props.onPageCountChange(Number(value ?? 1))} />
-            </Field>
-            <Field label="印刷方式">
-              <MetisSelect
-                value={settings.printSide}
-                options={[{ value: 'single', label: '单面' }, { value: 'double', label: '双面' }]}
-                onChange={(value) => props.onSettingsChange({ printSide: value as AnswerSheetSettings['printSide'] })}
               />
             </Field>
             <Field label="正面栏数">
@@ -199,10 +150,9 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                 onChange={(value) => props.onSettingsChange({ frontColumns: Number(value) as 1 | 2 | 3 })}
               />
             </Field>
-            <Field label="反面栏数" hint={settings.printSide === 'single' ? '单面时沿用正面栏数' : undefined}>
+            <Field label="反面栏数">
               <MetisSelect
                 value={settings.backColumns}
-                disabled={settings.printSide === 'single'}
                 options={[1, 2, 3].map((value) => ({ value, label: `${value} 栏` }))}
                 onChange={(value) => props.onSettingsChange({ backColumns: Number(value) as 1 | 2 | 3 })}
               />
@@ -211,7 +161,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         </details>
 
         <details className="config-section">
-          <summary><span>考生信息</span><small>{settings.candidateNumberLayout === 'fill' ? '填涂' : settings.candidateNumberLayout === 'barcode' ? '条形码' : '手写'}</small></summary>
+          <summary><span>考生信息</span></summary>
           <div className="config-section-body">
             <Field label="身份字段">
               <div className="config-chip-list">
@@ -250,7 +200,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         </details>
 
         <details className="config-section">
-          <summary><span>注意事项与页脚</span><small>显示内容</small></summary>
+          <summary><span>注意事项与页脚</span></summary>
           <div className="config-section-body">
             <ToggleField title="显示注意事项" checked={settings.showNotice} onChange={(checked) => props.onSettingsChange({ showNotice: checked })} />
             {settings.showNotice && <Field label="注意事项文字"><textarea value={settings.noticeText} rows={3} onChange={(event) => props.onSettingsChange({ noticeText: event.target.value })} /></Field>}
@@ -260,7 +210,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         </details>
 
         <details className="config-section config-block-section" open>
-          <summary><span>题目结构</span><small>拖动排序</small></summary>
+          <summary><span>题目结构</span></summary>
           <div className="config-section-body">
             <div className="config-page-tabs">
               {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
@@ -270,6 +220,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             <div className="structure-tools">
               <div><MetisInputNumber value={renumberStart} min={1} max={999} onChange={(value) => setRenumberStart(Number(value ?? 1))} /><MetisButton type="bordered" size="s" icon={<ListRestart size={13} />} onClick={() => props.onRenumber(renumberStart)}>连续编号</MetisButton></div>
               <div><MetisButton type="borderless" size="s" onClick={() => props.onConsolidate('objective')}>集中客观题</MetisButton><MetisButton type="borderless" size="s" onClick={() => props.onConsolidate('subjective')}>集中主观题</MetisButton></div>
+              <MetisButton type="bordered" size="s" icon={<Combine size={13} />} onClick={props.onMergeObjectiveModules}>合并客观题模块</MetisButton>
             </div>
             <div className="config-block-list">
               {blocks.filter((block) => block.page === props.activePage).map((block) => (
@@ -300,7 +251,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
 
         {selected && (
           <details className="config-section config-selected-section" open>
-            <summary><span>所选题块</span><small>{blockKindLabels[selected.kind]}</small></summary>
+            <summary><span>所选题块</span></summary>
             <div className="config-section-body">
               {locked && <div className="config-lock-tip">大考规范锁定区域不可修改</div>}
               <Field label="模块标题"><MetisInput value={selected.title} disabled={locked} onChange={(event) => props.onUpdateBlock({ title: event.target.value })} /></Field>

@@ -265,3 +265,49 @@ export function consolidateBlocks(
 
   return next.some((block, index) => block !== blocks[index]) ? next : blocks
 }
+
+/** Merge all unlocked objective modules on each page into one answer area. */
+export function mergeObjectiveModules(blocks: AnswerBlock[]): AnswerBlock[] {
+  const pages = [...new Set(blocks.map((block) => block.page))]
+  let next = [...blocks]
+  let changed = false
+
+  pages.forEach((page) => {
+    const objectives = next.filter((block) => block.page === page && block.kind === 'objective' && !block.locked)
+    if (objectives.length < 2) return
+
+    const parsedRanges = objectives.map((block) => parseQuestionRange(block.range))
+    if (parsedRanges.some((range) => !range.valid || range.numbers.length === 0)) return
+    const numbers = parsedRanges.flatMap((range) => range.numbers)
+    if (new Set(numbers).size !== numbers.length) return
+
+    const first = objectives[0]
+    const objectiveIds = new Set(objectives.map((block) => block.id))
+    const scoreValues = objectives.map((block) => block.score)
+    const hasCompleteScore = scoreValues.every((score) => Number.isFinite(score))
+    const contentElements = [...new Set(objectives.flatMap((block) => block.contentElements ?? []))]
+    const contentText = objectives.map((block) => block.contentText?.trim()).filter(Boolean).join('\n')
+    const merged: AnswerBlock = {
+      ...first,
+      sectionId: undefined,
+      title: '客观题填涂区',
+      range: formatQuestionRange(numbers),
+      score: hasCompleteScore ? roundScore(scoreValues.reduce<number>((total, score) => total + Number(score), 0)) : undefined,
+      height: objectives.reduce((total, block) => total + block.height, 0),
+      contentText: contentText || undefined,
+      contentElements: contentElements.length ? contentElements : undefined,
+      showScore: objectives.some((block) => block.showScore),
+      showQuestionCount: objectives.some((block) => block.showQuestionCount),
+      showScoreBox: objectives.some((block) => block.showScoreBox),
+    }
+
+    next = next.flatMap((block) => {
+      if (block.id === first.id) return [merged]
+      if (objectiveIds.has(block.id)) return []
+      return [block]
+    })
+    changed = true
+  })
+
+  return changed ? next : blocks
+}

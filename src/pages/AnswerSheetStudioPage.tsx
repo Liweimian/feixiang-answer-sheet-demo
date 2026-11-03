@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MetisMessage } from '@yuanfudao/metis-web-component'
-import {
-  answerSheetTemplates,
-  defaultAnswerSheetDocument,
-  instantiateTemplate,
-} from '../data/answerSheetTemplates'
+import { defaultAnswerSheetDocument } from '../data/answerSheetTemplates'
 import { rulePacks } from '../data/mockPaper'
 import { autoFixBlocks, buildPreflightChecks } from '../features/answer-sheet/preflight'
 import { downloadAnnotatedAnswerSheet } from '../features/answer-sheet/export'
 import {
   consolidateBlocks,
+  mergeObjectiveModules,
   mergeWithNext,
   moveBlock as moveBlockOperation,
   renumberQuestionBlocks,
@@ -21,10 +18,8 @@ import type {
   AnswerBlockKind,
   AnswerSheetDocument,
   AnswerSheetSettings,
-  AnswerSheetTemplate,
   DraftSnapshot,
   PublishedVersion,
-  TemplateCategory,
 } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { answerSheetService } from '../services/answerSheetService'
@@ -32,13 +27,11 @@ import { EditorToolbar } from '../components/EditorToolbar'
 import { EditorWorkbench } from '../components/EditorWorkbench'
 import { PreflightDialog } from '../components/PreflightDialog'
 import { StudioHeader } from '../components/StudioHeader'
-import { TemplatePickerDialog } from '../components/TemplatePickerDialog'
-
-type TemplateFilter = 'all' | TemplateCategory
 
 function cloneDefaultDocument(): AnswerSheetDocument {
   return {
     ...defaultAnswerSheetDocument,
+    mode: 'smart',
     paper: {
       ...defaultAnswerSheetDocument.paper,
       sections: defaultAnswerSheetDocument.paper.sections.map((section) => ({ ...section })),
@@ -67,8 +60,6 @@ export function AnswerSheetStudioPage() {
   const [savedAt, setSavedAt] = useState('刚刚')
   const [preflightOpen, setPreflightOpen] = useState(false)
   const [publishing, setPublishing] = useState(false)
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
-  const [templateInitialFilter, setTemplateInitialFilter] = useState<TemplateFilter>('all')
   const [printDocument, setPrintDocument] = useState<AnswerSheetDocument>()
   const saveTimer = useRef<number>()
 
@@ -80,7 +71,6 @@ export function AnswerSheetStudioPage() {
 
   const { paper, blocks, settings, mode, rulePackId, pageCount } = document
   const rulePack = rulePacks.find((pack) => pack.id === rulePackId) ?? rulePacks[0]
-  const currentTemplate = answerSheetTemplates.find((template) => template.id === document.templateId)
   const checks = useMemo(
     () => buildPreflightChecks(paper, blocks, mode, rulePack, pageCount, settings),
     [blocks, mode, pageCount, paper, rulePack, settings],
@@ -125,39 +115,6 @@ export function AnswerSheetStudioPage() {
 
   const commitBlocks = (nextBlocks: AnswerBlock[]) => {
     commitDocument({ ...document, blocks: nextBlocks })
-  }
-
-  const applyTemplate = (template: AnswerSheetTemplate) => {
-    const templateDocument = instantiateTemplate(template)
-    const nextPageCount = templateDocument.pageCount
-    const retainedBlocks = document.blocks.map((block) => ({
-      ...block,
-      page: Math.min(block.page, nextPageCount),
-      contentElements: block.contentElements ? [...block.contentElements] : undefined,
-    }))
-    let nextDocument: AnswerSheetDocument = {
-      ...templateDocument,
-      blocks: retainedBlocks,
-      templateId: template.id,
-    }
-    nextDocument = {
-      ...nextDocument,
-      paper: {
-        ...document.paper,
-        sections: document.paper.sections.map((section) => ({ ...section })),
-      },
-      settings: { ...nextDocument.settings, linkedPaperId: document.paper.id },
-    }
-    commitDocument(nextDocument)
-    MetisMessage.success(`已套用“${template.name}”版式，当前试卷题号与分值保持不变`)
-    setActivePage(1)
-    setSelectedBlockId(nextDocument.blocks[0]?.id ?? '')
-    setTemplateDialogOpen(false)
-  }
-
-  const openTemplateCenter = () => {
-    setTemplateInitialFilter('all')
-    setTemplateDialogOpen(true)
   }
 
   const moveBlock = (id: string, direction: -1 | 1) => {
@@ -215,6 +172,18 @@ export function AnswerSheetStudioPage() {
     }
     commitBlocks(next)
     MetisMessage.success(kind === 'objective' ? '已按页集中客观题' : '已按页集中主观题')
+  }
+
+  const mergeObjectiveBlocks = () => {
+    const next = mergeObjectiveModules(blocks)
+    if (next === blocks) {
+      MetisMessage.info('当前每页只有一个可合并的客观题模块')
+      return
+    }
+    commitBlocks(next)
+    const merged = next.find((block) => block.kind === 'objective' && block.page === activePage)
+    if (merged) setSelectedBlockId(merged.id)
+    MetisMessage.success('已按页合并客观题模块，题号与分值已合并')
   }
 
   const addBlock = (kind: AnswerBlockKind) => {
@@ -328,39 +297,10 @@ export function AnswerSheetStudioPage() {
     MetisMessage.success('标题已更新并自动保存')
   }
 
-  const changePageCount = (nextPageCount: number) => {
-    const integerPageCount = Number.isFinite(nextPageCount) ? Math.round(nextPageCount) : 1
-    const normalizedPageCount = Math.min(4, Math.max(1, integerPageCount))
-    const nextBlocks = blocks.map((block) => block.page > normalizedPageCount ? { ...block, page: normalizedPageCount } : block)
-    commitDocument({ ...document, blocks: nextBlocks, pageCount: normalizedPageCount })
-  }
-
   const updateSettings = (patch: Partial<AnswerSheetSettings>) => {
     const nextSettings = { ...settings, ...patch }
     if (patch.identityFields) nextSettings.identityFields = [...patch.identityFields]
     commitDocument({ ...document, settings: nextSettings })
-  }
-
-  const changeMode = (nextMode: typeof mode) => {
-    if (nextMode === mode) return
-    commitDocument({ ...document, mode: nextMode })
-    MetisMessage.success(nextMode === 'standard' ? '已启用大考规范约束' : '已切换为飞象自由排版')
-  }
-
-  const changeRulePack = (id: string) => {
-    if (id === rulePackId) return
-    const nextRulePack = rulePacks.find((pack) => pack.id === id)
-    if (!nextRulePack) return
-    const nextPageCount = Math.min(4, Math.max(1, nextRulePack.pageCount))
-    const nextBlocks = blocks.map((block) => block.page > nextPageCount ? { ...block, page: nextPageCount } : block)
-    commitDocument({
-      ...document,
-      rulePackId: id,
-      pageCount: nextPageCount,
-      blocks: nextBlocks,
-      settings: { ...settings, paperSize: nextRulePack.paperSize },
-    })
-    MetisMessage.info('规则包及默认纸张、面数已切换，题目内容保持不变')
   }
 
   const undo = () => {
@@ -424,7 +364,6 @@ export function AnswerSheetStudioPage() {
       <div className="studio-body stage-editor">
         <EditorToolbar
               paper={paper}
-              templateName={currentTemplate?.name ?? '自定义模板'}
               draftVersion={draftVersion}
               publishedVersion={published?.version}
               saving={saving}
@@ -446,7 +385,6 @@ export function AnswerSheetStudioPage() {
               document={document}
               rulePacks={rulePacks}
               rulePack={rulePack}
-              templateName={currentTemplate?.name ?? '自定义模板'}
               activePage={activePage}
               selectedBlockId={selectedBlockId}
               onPageChange={changePage}
@@ -457,28 +395,16 @@ export function AnswerSheetStudioPage() {
               onAdd={addBlock}
               onTitleCommit={updateTitle}
               onBlockTitleCommit={(id, title) => updateBlock(id, { title })}
-              onModeChange={changeMode}
-              onRulePackChange={changeRulePack}
-              onOpenTemplates={openTemplateCenter}
               onSettingsChange={updateSettings}
-              onPageCountChange={changePageCount}
               onReorder={dragBlock}
               onRenumber={renumberBlocks}
               onSplit={splitSelected}
               onMerge={mergeSelected}
               onConsolidate={consolidate}
+              onMergeObjectiveModules={mergeObjectiveBlocks}
               printDocument={printDocument}
         />
       </div>
-
-      <TemplatePickerDialog
-        open={templateDialogOpen}
-        context="replace"
-        currentTemplateId={document.templateId}
-        initialFilter={templateInitialFilter}
-        onClose={() => setTemplateDialogOpen(false)}
-        onApply={applyTemplate}
-      />
 
       <PreflightDialog
         open={preflightOpen}

@@ -4,7 +4,6 @@ import type { ExamPaper } from '../features/answer-sheet/types'
 
 interface EditorToolbarProps {
   paper: ExamPaper
-  templateName: string
   draftVersion: number
   publishedVersion?: number
   saving: boolean
@@ -28,7 +27,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
         <MetisButton type="borderless" icon={<ChevronLeft size={17} />} onClick={props.onBack}>返回组卷</MetisButton>
         <div className="editor-paper-title">
           <strong>{props.paper.title}</strong>
-          <span>{props.paper.subject} · {props.paper.score} 分 · {props.templateName}</span>
+          <span>{props.paper.subject} · {props.paper.score} 分</span>
         </div>
         <MetisTag preset={isPublishedCurrent ? 'success' : props.publishedVersion ? 'warning' : 'primary'}>
           {isPublishedCurrent ? `V${props.draftVersion} 已发布` : props.publishedVersion ? `V${props.draftVersion} 新草稿` : `V${props.draftVersion} 草稿`}
