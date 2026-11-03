@@ -27,7 +27,10 @@
     "3": { "name": "埋点输出", "status": "pending" },
     "4": { "name": "版本更新", "status": "pending" }
   },
-  "gitCommits": ["60116e3 Stage 0: align answer sheet demo scope"],
+  "gitCommits": [
+    "60116e3 Stage 0: align answer sheet demo scope",
+    "82a957d Stage 1: build interactive answer sheet demo"
+  ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-03T16:58:00+08:00"
 }
