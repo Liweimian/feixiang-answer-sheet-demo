@@ -132,6 +132,7 @@
 - v1.5.14 题号排序与客观题设置提交：`d535334 Stage 4 v1.5.14: add objective layout settings`。
 - v1.5.15 客观题排列控件修正提交：`1bd8df8 Stage 4 v1.5.15: refine objective arrangement controls`。
 - v1.5.16 主观题插入入口收敛提交：`89cbb09 Stage 4 v1.5.16: consolidate subjective insert menu`。
+- v1.5.17 主观题工具条图标替换提交：`173d2ad Stage 4 v1.5.17: replace script controls with insert shortcuts`。
 
 ## 下一检查点
 - 用户确认 v1.4.1 自由拖动交互后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
