@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import {
   MetisButton,
+  MetisCheckbox,
   MetisInput,
   MetisInputNumber,
+  MetisRadio,
   MetisSelect,
-  MetisSwitch,
   MetisTag,
 } from '@yuanfudao/metis-web-component'
 import { Plus } from 'lucide-react'
@@ -45,10 +46,9 @@ function ToggleField({ title, description, checked, disabled, onChange }: {
   onChange: (checked: boolean) => void
 }) {
   return (
-    <label className={`config-toggle ${disabled ? 'disabled' : ''}`}>
+    <MetisCheckbox className={`config-toggle ${disabled ? 'disabled' : ''}`} checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)}>
       <span><b>{title}</b>{description && <small>{description}</small>}</span>
-      <MetisSwitch checked={checked} disabled={disabled} onChange={onChange} />
-    </label>
+    </MetisCheckbox>
   )
 }
 
@@ -86,11 +86,12 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               />
             </Field>
             <Field label="栏数">
-              <MetisSelect
+              <MetisRadio.Group
+                className="config-inline-options"
                 value={settings.frontColumns}
                 options={[1, 2, 3].map((value) => ({ value, label: `${value} 栏` }))}
-                onChange={(value) => {
-                  const columns = Number(value) as 1 | 2 | 3
+                onChange={(event) => {
+                  const columns = Number(event.target.value) as 1 | 2 | 3
                   props.onSettingsChange({ frontColumns: columns, backColumns: columns })
                 }}
               />
@@ -102,20 +103,17 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           <div className="config-flat-title">考生信息</div>
           <div className="config-flat-body">
             <Field label="身份字段">
-              <div className="config-chip-list">
-                {identityFields.map((field) => (
-                  <button key={field} type="button" aria-pressed={settings.identityFields.includes(field)} onClick={() => toggleIdentity(field)}>{field}</button>
-                ))}
-              </div>
+              <div className="config-check-list">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field}</MetisCheckbox>)}</div>
+            </Field>
+            <Field label="考号版式">
+              <MetisRadio.Group
+                className="config-inline-options"
+                value={settings.candidateNumberLayout}
+                options={[{ value: 'fill', label: '填涂' }, { value: 'barcode', label: '条形码' }, { value: 'handwrite', label: '手写' }]}
+                onChange={(event) => { const value = event.target.value; props.onSettingsChange({ candidateNumberLayout: value as AnswerSheetSettings['candidateNumberLayout'], ...(value === 'barcode' ? { showBarcode: false } : {}) }) }}
+              />
             </Field>
             <div className="config-grid-two">
-              <Field label="考号版式">
-                <MetisSelect
-                  value={settings.candidateNumberLayout}
-                  options={[{ value: 'fill', label: '填涂' }, { value: 'barcode', label: '条形码' }, { value: 'handwrite', label: '手写' }]}
-                  onChange={(value) => props.onSettingsChange({ candidateNumberLayout: value as AnswerSheetSettings['candidateNumberLayout'], ...(value === 'barcode' ? { showBarcode: false } : {}) })}
-                />
-              </Field>
               <Field label="考号类型">
                 <MetisSelect
                   value={settings.candidateNumberType}
