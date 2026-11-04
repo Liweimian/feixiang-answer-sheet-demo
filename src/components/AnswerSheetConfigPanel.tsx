@@ -142,14 +142,14 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           />
         </section>
 
-        <section className="config-flat-section">
+        <section className="config-flat-section config-layout-inline">
           <div className="config-flat-title">版面设置</div>
           <MetisCascader
             className="layout-cascader"
             value={[settings.paperSize, settings.frontColumns]}
             options={layoutOptions}
             allowClear={false}
-            displayRender={() => `版面设置：${settings.paperSize} - ${settings.frontColumns}栏`}
+            displayRender={() => `${settings.paperSize} - ${settings.frontColumns}栏`}
             onChange={(value) => {
               const [paperSize, rawColumns] = value as [AnswerSheetSettings['paperSize'], number]
               const columns = Number(rawColumns) as 1 | 2 | 3
