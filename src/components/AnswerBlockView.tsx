@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { AlignCenter, AlignLeft, AlignRight, Bold, Braces, GripVertical, Image, Italic, LockKeyhole, Pencil, Plus, Redo2, Scissors, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
+import { MetisDropdown } from '@yuanfudao/metis-web-component'
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Italic, LockKeyhole, Pencil, Plus, Redo2, Scissors, Sigma, Table2, Underline, Undo2, Image } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type ObjectiveSortMode } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
 
@@ -201,6 +202,18 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
     if (nextTitle !== block.title) onTitleCommit?.(nextTitle)
   }
 
+  const insertContent = (key: string) => {
+    if (key === 'table' || key === 'formula' || key === 'image') {
+      onToggleContent?.(key)
+      return
+    }
+    if (key === 'symbol') {
+      onUpdateBlock?.({ contentText: `${block.contentText ?? ''}Ω、√、∠`.trim() })
+      return
+    }
+    onUpdateBlock?.({ responseStyle: key as AnswerBlock['responseStyle'] })
+  }
+
   return (
     <div
       className={`answer-block kind-${block.kind} ${selected ? 'selected' : ''} ${multiSelected ? 'multi-selected' : ''}`}
@@ -234,15 +247,26 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
             <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'left' })} title="左对齐"><AlignLeft size={12} /></button>
             <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'center' })} title="居中"><AlignCenter size={12} /></button>
             <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'right' })} title="右对齐"><AlignRight size={12} /></button>
-            <button type="button" aria-pressed={block.contentElements?.includes('table')} onClick={() => onToggleContent('table')}><Table2 size={12} /> 表格</button>
-            <button type="button" aria-pressed={block.contentElements?.includes('formula')} onClick={() => onToggleContent('formula')}><Sigma size={12} /> 公式</button>
-            <button type="button" aria-pressed={block.contentElements?.includes('image')} onClick={() => onToggleContent('image')}><Image size={12} /> 图片</button>
-            <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'lines' })}>横线</button>
-            <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'bracket' })}>括号</button>
-            <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'tian' })}>田字格</button>
-            <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'mi' })}>米字格</button>
-            <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'four-line' })}>四线三格</button>
-            <button type="button" title="插入符号" onClick={() => onUpdateBlock?.({ contentText: `${block.contentText ?? ''}Ω、√、∠`.trim() })}><Braces size={12} /> 符号</button>
+            <MetisDropdown
+              trigger={['click']}
+              menu={{
+                items: [
+                  { key: 'image', label: '图片', icon: <Image size={12} /> },
+                  { key: 'table', label: '表格', icon: <Table2 size={12} /> },
+                  { key: 'formula', label: '公式', icon: <Sigma size={12} /> },
+                  { key: 'symbol', label: '符号' },
+                  { type: 'divider' },
+                  { key: 'lines', label: '作答横线' },
+                  { key: 'bracket', label: '括号' },
+                  { key: 'tian', label: '田字格' },
+                  { key: 'mi', label: '米字格' },
+                  { key: 'four-line', label: '四线三格' },
+                ],
+                onClick: ({ key }) => insertContent(String(key)),
+              }}
+            >
+              <button type="button"><Plus size={12} /> 插入 <ChevronDown size={11} /></button>
+            </MetisDropdown>
           </>}
           {block.mergedParts?.length && onSplitMerged && <button type="button" onClick={onSplitMerged}><Scissors size={12} /> 切割</button>}
         </div>
@@ -252,10 +276,6 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
           <span><Plus size={11} /> 在模块后插入</span>
           <button type="button" onClick={() => onInsertAfter('response-area', 'blank')}>空行</button>
           <button type="button" onClick={() => onInsertAfter('forbidden')}>禁答区</button>
-          <button type="button" onClick={() => onInsertAfter('response-area', 'lines')}>作答横线</button>
-          <button type="button" onClick={() => onInsertAfter('response-area', 'tian')}>田字格</button>
-          <button type="button" onClick={() => onInsertAfter('response-area', 'mi')}>米字格</button>
-          <button type="button" onClick={() => onInsertAfter('response-area', 'four-line')}>四线三格</button>
         </div>
       )}
       <span className="answer-block-heading">
