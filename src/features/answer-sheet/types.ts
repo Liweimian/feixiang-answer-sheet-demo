@@ -72,6 +72,9 @@ export interface AnswerBlock {
   score?: number
   kind: AnswerBlockKind
   height: number
+  canvasX?: number
+  canvasY?: number
+  canvasWidth?: number
   lineCount?: number
   optionCount?: 4 | 5
   itemsPerColumn?: number

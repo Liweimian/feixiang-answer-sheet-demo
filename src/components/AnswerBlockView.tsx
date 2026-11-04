@@ -5,17 +5,16 @@ import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/r
 
 interface AnswerBlockViewProps {
   block: AnswerBlock
+  layout: { x: number; y: number; width: number }
   selected: boolean
   multiSelected?: boolean
   locked?: boolean
   onSelect: (additive?: boolean) => void
   onTitleCommit?: (title: string) => void
-  onResizeCommit?: (height: number) => void
+  onMoveCommit?: (x: number, y: number) => void
+  onResizeCommit?: (height: number, width: number) => void
   onToggleContent?: (element: ContentElement) => void
   onSplitMerged?: () => void
-  onDragStart?: () => void
-  onDragEnd?: () => void
-  onDrop?: () => void
   questionAnswer?: boolean
   questionContext?: string
 }
@@ -91,9 +90,15 @@ function ScoreBox({ block }: { block: AnswerBlock }) {
   return <div className="score-box"><b>评分栏</b>{Array.from({ length: cells }, (_, index) => <span key={index} />)}</div>
 }
 
-export function AnswerBlockView({ block, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onResizeCommit, onToggleContent, onSplitMerged, onDragStart, onDragEnd, onDrop, questionAnswer = false, questionContext }: AnswerBlockViewProps) {
+export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onSplitMerged, questionAnswer = false, questionContext }: AnswerBlockViewProps) {
   const [resizeHeight, setResizeHeight] = useState(block.height)
-  const style = { '--block-height': `${resizeHeight}px` } as CSSProperties
+  const [draftLayout, setDraftLayout] = useState(layout)
+  const style = {
+    '--block-height': `${resizeHeight}px`,
+    left: `${draftLayout.x}%`,
+    top: `${draftLayout.y}px`,
+    width: `${draftLayout.width}%`,
+  } as CSSProperties
   const normalizedTitle = block.title.replace(/[–—]/g, '-').replace(/\s/g, '')
   const normalizedRange = block.range?.replace(/[–—]/g, '-').replace(/\s/g, '')
   const showRange = Boolean(block.range && normalizedRange && !normalizedTitle.includes(normalizedRange))
@@ -107,20 +112,66 @@ export function AnswerBlockView({ block, selected, multiSelected = false, locked
   }, [block.title, editingTitle])
 
   useEffect(() => setResizeHeight(block.height), [block.height])
+  useEffect(() => setDraftLayout(layout), [layout.x, layout.y, layout.width])
+
+  const beginMove = (event: React.PointerEvent<HTMLSpanElement>) => {
+    if (locked || !onMoveCommit) return
+    event.preventDefault()
+    event.stopPropagation()
+    const container = event.currentTarget.closest('.paper-blocks') as HTMLElement | null
+    if (!container) return
+    const containerRect = container.getBoundingClientRect()
+    const scale = containerRect.width / container.offsetWidth || 1
+    const startX = event.clientX
+    const startY = event.clientY
+    const start = draftLayout
+    const move = (pointerEvent: PointerEvent) => {
+      const deltaX = (pointerEvent.clientX - startX) / scale / container.offsetWidth * 100
+      const deltaY = (pointerEvent.clientY - startY) / scale
+      const x = Math.max(0, Math.min(100 - start.width, start.x + deltaX))
+      const y = Math.max(0, Math.min(container.offsetHeight - block.height, start.y + deltaY))
+      setDraftLayout({ ...start, x, y })
+    }
+    const finish = (pointerEvent: PointerEvent) => {
+      const deltaX = (pointerEvent.clientX - startX) / scale / container.offsetWidth * 100
+      const deltaY = (pointerEvent.clientY - startY) / scale
+      const x = Math.max(0, Math.min(100 - start.width, start.x + deltaX))
+      const y = Math.max(0, Math.min(container.offsetHeight - block.height, start.y + deltaY))
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', finish)
+      setDraftLayout({ ...start, x, y })
+      onMoveCommit(x, y)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', finish)
+  }
 
   const beginResize = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (locked || !onResizeCommit) return
     event.preventDefault()
     event.stopPropagation()
     const startY = event.clientY
+    const startX = event.clientX
     const startHeight = resizeHeight
-    const move = (pointerEvent: PointerEvent) => setResizeHeight(Math.max(48, Math.min(620, Math.round(startHeight + pointerEvent.clientY - startY))))
+    const container = event.currentTarget.closest('.paper-blocks') as HTMLElement | null
+    if (!container) return
+    const containerRect = container.getBoundingClientRect()
+    const scale = containerRect.width / container.offsetWidth || 1
+    const move = (pointerEvent: PointerEvent) => {
+      const height = Math.max(48, Math.min(620, Math.round(startHeight + (pointerEvent.clientY - startY) / scale)))
+      const widthDelta = (pointerEvent.clientX - startX) / scale / container.offsetWidth * 100
+      setResizeHeight(height)
+      setDraftLayout((current) => ({ ...current, width: Math.max(18, Math.min(100 - current.x, layout.width + widthDelta)) }))
+    }
     const finish = (pointerEvent: PointerEvent) => {
-      const nextHeight = Math.max(48, Math.min(620, Math.round(startHeight + pointerEvent.clientY - startY)))
+      const nextHeight = Math.max(48, Math.min(620, Math.round(startHeight + (pointerEvent.clientY - startY) / scale)))
+      const widthDelta = (pointerEvent.clientX - startX) / scale / container.offsetWidth * 100
+      const nextWidth = Math.max(18, Math.min(100 - draftLayout.x, layout.width + widthDelta))
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', finish)
       setResizeHeight(nextHeight)
-      if (nextHeight !== block.height) onResizeCommit(nextHeight)
+      setDraftLayout((current) => ({ ...current, width: nextWidth }))
+      if (nextHeight !== block.height || nextWidth !== layout.width) onResizeCommit(nextHeight, nextWidth)
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', finish)
@@ -148,11 +199,6 @@ export function AnswerBlockView({ block, selected, multiSelected = false, locked
       data-block-range={block.range ?? ''}
       data-block-locked={block.locked ? 'true' : 'false'}
       style={style}
-      draggable={!locked}
-      onDragStart={(event) => { if ((event.target as HTMLElement).closest('button,input')) { event.preventDefault(); return }; onDragStart?.() }}
-      onDragEnd={onDragEnd}
-      onDragOver={(event) => event.preventDefault()}
-      onDrop={(event) => { event.preventDefault(); event.stopPropagation(); onDrop?.() }}
       onClick={(event) => onSelect(event.metaKey || event.ctrlKey || event.shiftKey)}
       onKeyDown={(event) => {
         if (event.key === 'Enter' && event.target === event.currentTarget) onSelect(false)
@@ -161,7 +207,7 @@ export function AnswerBlockView({ block, selected, multiSelected = false, locked
       tabIndex={0}
       aria-label={`编辑${block.title}`}
     >
-      <span className="block-drag-handle" aria-hidden="true"><GripVertical size={13} /></span>
+      <span className="block-drag-handle" aria-label={`自由拖动${block.title}`} role="button" tabIndex={0} onPointerDown={beginMove}><GripVertical size={13} /></span>
       <button type="button" className="block-select-toggle" aria-label={`${multiSelected ? '取消选择' : '多选'}${block.title}`} onClick={(event) => { event.stopPropagation(); onSelect(true) }}>{multiSelected ? '✓' : '+'}</button>
       {selected && (block.kind !== 'objective' || block.mergedParts?.length) && (
         <div className="block-floating-tools" onClick={(event) => event.stopPropagation()}>
@@ -253,7 +299,7 @@ export function AnswerBlockView({ block, selected, multiSelected = false, locked
         <div className="table-area">{Array.from({ length: 8 }, (_, index) => <span key={index} />)}</div>
       )}
       {block.kind === 'notice' && <div className="notice-area">{block.contentText || '请在指定区域内作答，超出边框的答案无效。'}</div>}
-      {!locked && onResizeCommit && <button type="button" className="block-resize-handle" aria-label={`调整${block.title}高度`} onPointerDown={beginResize} onClick={(event) => event.stopPropagation()} />}
+      {!locked && onResizeCommit && <button type="button" className="block-resize-handle" aria-label={`调整${block.title}宽度和高度`} onPointerDown={beginResize} onClick={(event) => event.stopPropagation()} />}
     </div>
   )
 }

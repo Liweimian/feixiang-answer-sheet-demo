@@ -32,7 +32,8 @@ interface EditorWorkbenchProps {
   onMerge: () => void
   onConsolidate: (kind: 'objective' | 'subjective') => void
   onMergeObjectiveModules: () => void
-  onResizeBlock: (id: string, height: number) => void
+  onMoveBlock: (id: string, x: number, y: number) => void
+  onResizeBlock: (id: string, height: number, width: number) => void
   onToggleBlockContent: (id: string, element: ContentElement) => void
   onMergeBlocks: (ids: string[]) => void
   onSplitMerged: (id: string) => void
@@ -69,9 +70,9 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           onSelectBlock={props.onSelect}
           onTitleCommit={props.onTitleCommit}
           onBlockTitleCommit={props.onBlockTitleCommit}
+          onMoveBlock={props.onMoveBlock}
           onResizeBlock={props.onResizeBlock}
           onToggleBlockContent={props.onToggleBlockContent}
-          onReorderBlock={props.onReorder}
           onMergeBlocks={props.onMergeBlocks}
           onSplitMerged={props.onSplitMerged}
           printDocument={props.printDocument}

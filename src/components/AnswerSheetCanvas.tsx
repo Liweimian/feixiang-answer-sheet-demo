@@ -19,9 +19,9 @@ interface AnswerSheetCanvasProps {
   onSelectBlock: (id: string) => void
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
-  onResizeBlock: (id: string, height: number) => void
+  onMoveBlock: (id: string, x: number, y: number) => void
+  onResizeBlock: (id: string, height: number, width: number) => void
   onToggleBlockContent: (id: string, element: ContentElement) => void
-  onReorderBlock: (dragId: string, targetId: string) => void
   onMergeBlocks: (ids: string[]) => void
   onSplitMerged: (id: string) => void
   printDocument?: AnswerSheetDocument
@@ -40,12 +40,10 @@ interface PaperPageProps {
   onSelectBlock?: (id: string) => void
   onTitleCommit?: (title: string) => void
   onBlockTitleCommit?: (id: string, title: string) => void
-  onResizeBlock?: (id: string, height: number) => void
+  onMoveBlock?: (id: string, x: number, y: number) => void
+  onResizeBlock?: (id: string, height: number, width: number) => void
   onToggleBlockContent?: (id: string, element: ContentElement) => void
-  onReorderBlock?: (dragId: string, targetId: string) => void
   onSplitMerged?: (id: string) => void
-  draggingId?: string
-  onDraggingChange?: (id: string) => void
   onSelectionChange?: (id: string, additive: boolean) => void
 }
 
@@ -60,11 +58,29 @@ function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
   return <div className="candidate-fill-box"><span>{label}填涂区</span><div style={{ gridTemplateColumns: `repeat(${settings.candidateNumberDigits}, 1fr)` }}>{Array.from({ length: settings.candidateNumberDigits }, (_, index) => <i key={index}>0—9</i>)}</div></div>
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onResizeBlock, onToggleBlockContent, onReorderBlock, onSplitMerged, draggingId, onDraggingChange, onSelectionChange }: PaperPageProps) {
+function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onSplitMerged, onSelectionChange }: PaperPageProps) {
   const standard = mode === 'standard'
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
   const columns = settings.frontColumns
+  const gapPercent = 1.2
+  const defaultWidth = (100 - gapPercent * (columns - 1)) / columns
+  const columnBottoms = Array.from({ length: columns }, () => 0)
+  const blockLayouts = new Map(pageBlocks.map((block) => {
+    if (block.canvasX !== undefined && block.canvasY !== undefined) {
+      const layout = { x: block.canvasX, y: block.canvasY, width: block.canvasWidth ?? defaultWidth }
+      return [block.id, layout] as const
+    }
+    const column = columnBottoms.indexOf(Math.min(...columnBottoms))
+    const layout = { x: column * (defaultWidth + gapPercent), y: columnBottoms[column], width: block.canvasWidth ?? defaultWidth }
+    columnBottoms[column] += block.height + 4
+    return [block.id, layout] as const
+  }))
+  const minimumCanvasHeight = paperSize === 'a3' ? 390 : paperSize === '16k' ? 450 : paperSize === '8k' ? 650 : 720
+  const contentHeight = Math.max(minimumCanvasHeight, ...pageBlocks.map((block) => {
+    const layout = blockLayouts.get(block.id)
+    return (layout?.y ?? 0) + block.height
+  }))
   const reviewModeLabel = settings.reviewMode === 'online' ? '网阅' : settings.reviewMode === 'manual' ? '手批' : '混合阅卷'
   const scanEnabled = settings.reviewMode !== 'manual'
   const manualScoreEnabled = settings.reviewMode !== 'online'
@@ -165,22 +181,21 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
       )}
       {manualScoreEnabled && <div className="manual-score-strip"><b>手批评分栏</b><span>得分：________</span><span>阅卷人：________</span></div>}
 
-      <div className={`paper-blocks columns-${columns}`} style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+      <div className={`paper-blocks columns-${columns}`} style={{ height: contentHeight }}>
         {pageBlocks.map((block) => (
           <AnswerBlockView
             key={block.id}
             block={block}
+            layout={blockLayouts.get(block.id) ?? { x: 0, y: 0, width: 100 }}
             selected={selectedBlockIds.includes(block.id)}
             multiSelected={selectedBlockIds.includes(block.id)}
             locked={standard && Boolean(block.locked)}
             onSelect={(additive) => { onSelectBlock?.(block.id); onSelectionChange?.(block.id, Boolean(additive)) }}
             onTitleCommit={onBlockTitleCommit ? (title) => onBlockTitleCommit(block.id, title) : undefined}
-            onResizeCommit={onResizeBlock ? (height) => onResizeBlock(block.id, height) : undefined}
+            onMoveCommit={onMoveBlock ? (x, y) => onMoveBlock(block.id, x, y) : undefined}
+            onResizeCommit={onResizeBlock ? (height, width) => onResizeBlock(block.id, height, width) : undefined}
             onToggleContent={onToggleBlockContent ? (element) => onToggleBlockContent(block.id, element) : undefined}
             onSplitMerged={onSplitMerged ? () => onSplitMerged(block.id) : undefined}
-            onDragStart={() => onDraggingChange?.(block.id)}
-            onDragEnd={() => onDraggingChange?.('')}
-            onDrop={() => { if (draggingId && draggingId !== block.id) onReorderBlock?.(draggingId, block.id); onDraggingChange?.('') }}
             questionAnswer={settings.cardStyle === 'question-answer'}
             questionContext={paper.sections.filter((section) => {
               const blockNumbers = new Set(questionNumbers(block.range))
@@ -200,7 +215,6 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
 export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   const canvasStyle = { '--canvas-zoom': .85 } as CSSProperties
   const [selectedIds, setSelectedIds] = useState<string[]>(props.selectedBlockId ? [props.selectedBlockId] : [])
-  const [draggingId, setDraggingId] = useState('')
 
   useEffect(() => {
     if (props.selectedBlockId && !selectedIds.includes(props.selectedBlockId)) setSelectedIds([props.selectedBlockId])
@@ -247,12 +261,10 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
             onSelectionChange={selectBlock}
             onTitleCommit={props.onTitleCommit}
             onBlockTitleCommit={props.onBlockTitleCommit}
+            onMoveBlock={props.onMoveBlock}
             onResizeBlock={props.onResizeBlock}
             onToggleBlockContent={props.onToggleBlockContent}
-            onReorderBlock={props.onReorderBlock}
             onSplitMerged={props.onSplitMerged}
-            draggingId={draggingId}
-            onDraggingChange={setDraggingId}
           />
           <button type="button" className="paper-page-badge" onClick={() => props.onPageChange(props.activePage >= props.pageCount ? 1 : props.activePage + 1)} aria-label="切换下一页">{props.activePage}/{props.pageCount}</button>
         </div>

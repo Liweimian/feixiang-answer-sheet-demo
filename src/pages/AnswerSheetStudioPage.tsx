@@ -436,7 +436,8 @@ export function AnswerSheetStudioPage() {
               onMerge={mergeSelected}
               onConsolidate={consolidate}
               onMergeObjectiveModules={mergeObjectiveBlocks}
-              onResizeBlock={(id, height) => updateBlock(id, { height })}
+              onMoveBlock={(id, canvasX, canvasY) => updateBlock(id, { canvasX, canvasY })}
+              onResizeBlock={(id, height, canvasWidth) => updateBlock(id, { height, canvasWidth })}
               onToggleBlockContent={toggleBlockContent}
               onMergeBlocks={mergeCanvasBlocks}
               onSplitMerged={splitCanvasBlock}
