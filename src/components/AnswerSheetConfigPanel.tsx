@@ -98,8 +98,24 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const applyCandidatePreset = (preset: 'quiz' | 'exam') => {
     setCandidatePreset(preset)
     props.onSettingsChange(preset === 'quiz'
-      ? { identityFields: ['学号', '姓名', '班级'], candidateNumberType: '学号', candidateNumberLayouts: [] }
-      : { identityFields: ['学校', '姓名', '准考证号'], candidateNumberType: '准考证号', candidateNumberLayouts: ['fill', 'handwrite'] })
+      ? {
+          paperSize: 'A4',
+          frontColumns: 2,
+          backColumns: 2,
+          identityFields: ['学号', '姓名', '班级'],
+          candidateNumberType: '学号',
+          candidateNumberLayouts: [],
+          showNotice: true,
+        }
+      : {
+          paperSize: 'A4',
+          frontColumns: 2,
+          backColumns: 2,
+          identityFields: ['学校', '姓名', '准考证号'],
+          candidateNumberType: '准考证号',
+          candidateNumberLayouts: ['fill', 'handwrite'],
+          showNotice: true,
+        })
   }
 
   return (
@@ -110,6 +126,16 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
       </div>
 
       <div className="config-scroll">
+        <section className="config-flat-section config-preset-section">
+          <div className="config-flat-title">快捷设置</div>
+          <MetisRadio.Group
+            className="config-inline-options"
+            value={candidatePreset}
+            options={[{ value: 'quiz', label: '日常测验' }, { value: 'exam', label: '大型考试' }]}
+            onChange={(event) => applyCandidatePreset(event.target.value as 'quiz' | 'exam')}
+          />
+        </section>
+
         <section className="config-flat-section">
           <div className="config-flat-title">版面设置</div>
           <div className="layout-setting-row">
@@ -137,14 +163,6 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         <section className="config-flat-section">
           <div className="config-flat-title">考生信息</div>
           <div className="config-flat-body">
-            <Field label="快捷设置">
-              <MetisRadio.Group
-                className="config-inline-options"
-                value={candidatePreset}
-                options={[{ value: 'quiz', label: '日常测验' }, { value: 'exam', label: '大型考试' }]}
-                onChange={(event) => applyCandidatePreset(event.target.value as 'quiz' | 'exam')}
-              />
-            </Field>
             <Field label="身份字段">
               <div className="config-check-list">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field}</MetisCheckbox>)}</div>
             </Field>

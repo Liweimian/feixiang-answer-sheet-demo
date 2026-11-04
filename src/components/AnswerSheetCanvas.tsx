@@ -88,7 +88,6 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
     const layout = blockLayouts.get(block.id)
     return (layout?.y ?? 0) + block.height
   }))
-  const reviewModeLabel = settings.reviewMode === 'online' ? '网阅' : settings.reviewMode === 'manual' ? '手批' : '混合阅卷'
   const scanEnabled = settings.reviewMode !== 'manual'
   const manualScoreEnabled = settings.reviewMode !== 'online'
   const dailyQuizIdentity = settings.identityFields.includes('学号') && !settings.identityFields.includes('准考证号')
@@ -154,7 +153,6 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
               <h1>{paper.title}</h1><span><Pencil size={11} /> 点击编辑</span>
             </button>
           ) : <h1>{paper.title}</h1>}
-          <p>{paper.subject}答题卡 · {reviewModeLabel} · 第 {page} 页 / 共 {pageCount} 页</p>
         </div>
         <div className="identity-and-code">
           <div className={`identity-grid ${dailyQuizIdentity ? 'daily-identity-grid' : ''}`}>
