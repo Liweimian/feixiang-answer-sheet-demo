@@ -7,6 +7,7 @@
 
 ## 已完成
 - 删除身份字段中的考场号和座位号，并同步清理模板默认值。
+- 学号与学校交换位置，日常测验三个字段优先排列在第一行。
 - 默认选择日常测验，自动带出学号、姓名、班级，不生成额外准考证号区域。
 - 大型考试快捷带出学校、姓名、准考证号，并默认展示填涂与逐格手写区。
 - 准考证号的填涂、条形码和手写改为复选，支持填涂 + 手写、条形码 + 手写等组合。
@@ -83,6 +84,7 @@
 - v1.5.1 左侧配置平铺提交：`e1d0bce Stage 4 v1.5.1: flatten left configuration panel`。
 - v1.5.2 控件语义提交：`a0eb237 Stage 4 v1.5.2: use visible radio and checkbox settings`。
 - v1.5.3 考生信息预设提交：`736e831 Stage 4 v1.5.3: add candidate information presets`。
+- v1.5.4 身份字段精简提交：`43c57c2 Stage 4 v1.5.4: simplify identity fields`。
 
 ## 下一检查点
 - 用户确认 v1.4.1 自由拖动交互后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。

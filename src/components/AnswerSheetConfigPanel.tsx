@@ -32,7 +32,7 @@ interface AnswerSheetConfigPanelProps {
   onAdd: (kind: AnswerBlockKind) => void
 }
 
-const identityFields: IdentityField[] = ['学校', '姓名', '班级', '学号', '准考证号']
+const identityFields: IdentityField[] = ['学号', '姓名', '班级', '学校', '准考证号']
 const candidateLayoutOptions: Array<{ value: CandidateNumberLayout; label: string }> = [
   { value: 'fill', label: '填涂' },
   { value: 'barcode', label: '条形码' },
