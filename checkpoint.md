@@ -88,6 +88,7 @@
 - v1.5.3 考生信息预设提交：`736e831 Stage 4 v1.5.3: add candidate information presets`。
 - v1.5.4 身份字段精简提交：`43c57c2 Stage 4 v1.5.4: simplify identity fields`。
 - 身份字段排序提交：`2a8c813 Fix: reorder identity field options`。
+- v1.5.5 准考证号条件配置提交：`d08d02c Stage 4 v1.5.5: condition candidate number settings`。
 
 ## 下一检查点
 - 用户确认 v1.4.1 自由拖动交互后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
