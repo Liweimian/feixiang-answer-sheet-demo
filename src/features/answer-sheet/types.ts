@@ -14,7 +14,8 @@ export type IdentityField = '学校' | '姓名' | '班级' | '学号' | '准考�
 export type ObjectiveLayout = 'horizontal' | 'vertical' | 'merged'
 export type LineStyle = 'solid' | 'dashed'
 export type NoticeStyle = 'daily' | 'exam'
-export type QuestionNumberOrder = 'default' | 'within-question'
+export type QuestionNumberOrder = 'major' | 'minor'
+export type ObjectiveSortMode = 'number-vertical-option-horizontal' | 'number-horizontal-option-vertical' | 'number-horizontal-option-horizontal'
 export type ResponseStyle = 'lines' | 'grid' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
 export type ContentElement = 'table' | 'formula' | 'image'
 export type AnswerBlockKind =
@@ -118,7 +119,7 @@ export interface AnswerSheetSettings {
   showNotice: boolean
   noticeStyle: NoticeStyle
   questionNumberOrder: QuestionNumberOrder
-  objectiveVertical: boolean
+  objectiveSortMode: ObjectiveSortMode
   objectiveMerge: boolean
   noticeText: string
   showFooter: boolean

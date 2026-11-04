@@ -288,9 +288,12 @@
 .block-title-input { min-width: 120px; height: 20px; padding: 0 4px; border: 1px solid var(--fx_brand); font-size: 9px; font-weight: 700; }
 .answer-block-heading > span { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; color: var(--fx_brand); font-size: 7px; }
 .objective-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(102px, 1fr)); align-content: start; gap: 2px var(--fx_sp_3); padding: var(--fx_sp_2) var(--fx_sp_3); overflow: hidden; }
-.objective-grid.layout-vertical { max-width: 220px; }
 .objective-grid.layout-merged { gap: var(--fx_sp_1); padding-right: var(--fx_sp_2); padding-left: var(--fx_sp_2); }
-.objective-grid.order-within-question { grid-auto-flow: column; grid-template-rows: repeat(var(--objective-rows), auto); grid-template-columns: repeat(auto-fit, minmax(102px, 1fr)); }
+.objective-grid.sort-number-vertical-option-horizontal { grid-auto-flow: column; grid-template-rows: repeat(var(--objective-rows), auto); grid-template-columns: repeat(auto-fit, minmax(102px, 1fr)); }
+.objective-grid.sort-number-horizontal-option-vertical { grid-template-columns: repeat(auto-fit, minmax(42px, 1fr)); gap: var(--fx_sp_2); }
+.objective-grid.sort-number-horizontal-option-vertical .bubble-row { justify-items: center; gap: 1px; }
+.objective-grid.sort-number-horizontal-option-vertical .bubble-row b { padding: 0 0 2px; text-align: center; }
+.objective-sort-select { width: 100%; }
 .objective-grid.compact { max-height: 72px; overflow: hidden; padding: 4px 8px; }
 .objective-column { display: grid; align-content: start; gap: 2px; }
 .unconfigured-block { height: calc(100% - 24px); display: grid; place-items: center; color: var(--fx_text_3); font-size: 9px; }

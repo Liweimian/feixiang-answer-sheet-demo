@@ -7,6 +7,7 @@ import {
   MetisInputNumber,
   MetisRadio,
   MetisSelect,
+  MetisSwitch,
   MetisTag,
 } from '@yuanfudao/metis-web-component'
 import { Plus } from 'lucide-react'
@@ -215,16 +216,26 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             <MetisRadio.Group
               className="config-inline-options"
               value={settings.questionNumberOrder}
-              options={[{ value: 'default', label: '默认排序' }, { value: 'within-question', label: '题内单独排序' }]}
+              options={[{ value: 'major', label: '按大题排序' }, { value: 'minor', label: '按小题排序' }]}
               onChange={(event) => props.onSettingsChange({ questionNumberOrder: event.target.value as AnswerSheetSettings['questionNumberOrder'] })}
             />
           </div>
+          <div className="config-meta-row config-objective-sort-row">
+            <span>客观题排列</span>
+            <MetisSelect
+              className="objective-sort-select"
+              value={settings.objectiveSortMode}
+              options={[
+                { value: 'number-vertical-option-horizontal', label: '题号竖排 · 选项横排' },
+                { value: 'number-horizontal-option-vertical', label: '题号横排 · 选项竖排' },
+                { value: 'number-horizontal-option-horizontal', label: '题号横排 · 选项横排' },
+              ]}
+              onChange={(value) => props.onSettingsChange({ objectiveSortMode: value as AnswerSheetSettings['objectiveSortMode'] })}
+            />
+          </div>
           <div className="config-meta-row">
-            <span>客观题</span>
-            <div className="config-check-list">
-              <MetisCheckbox checked={settings.objectiveVertical} onChange={(event) => props.onSettingsChange({ objectiveVertical: event.target.checked })}>竖向排列</MetisCheckbox>
-              <MetisCheckbox checked={settings.objectiveMerge} onChange={(event) => props.onSettingsChange({ objectiveMerge: event.target.checked })}>客观题合并</MetisCheckbox>
-            </div>
+            <span>客观题合并</span>
+            <MetisSwitch checked={settings.objectiveMerge} onChange={(checked) => props.onSettingsChange({ objectiveMerge: checked })} />
           </div>
         </section>
 
