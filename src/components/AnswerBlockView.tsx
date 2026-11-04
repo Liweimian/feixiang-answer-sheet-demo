@@ -287,8 +287,9 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
           </button>
         ) : <strong>{block.title}</strong>}
         {showRange && <small>题号 {block.range}</small>}
-        {block.showScore && block.showQuestionCount && questionCount > 0 && <small>共 {questionCount} 题</small>}
-        {block.showScore && block.score !== undefined && <small>（{block.score} 分）</small>}
+        {block.showQuestionCount && questionCount > 0 && <small>共 {questionCount} 题</small>}
+        {block.showUnitScore && block.score !== undefined && questionCount > 0 && <small>{block.score % questionCount === 0 ? `每题 ${block.score / questionCount} 分` : '分值不等'}</small>}
+        {block.showScore && block.score !== undefined && <small>共 {block.score} 分</small>}
         {locked && <span><LockKeyhole size={11} /> 已锁定</span>}
       </span>
 

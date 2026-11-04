@@ -362,8 +362,8 @@ export function AnswerSheetStudioPage() {
     commitDocument({ ...document, settings: nextSettings })
   }
 
-  const updateScoreVisibility = (visible: boolean) => {
-    commitBlocks(blocks.map((block) => isQuestionBlockKind(block.kind) ? { ...block, showScore: visible } : block))
+  const updateMetaVisibility = (field: 'showQuestionCount' | 'showUnitScore' | 'showScore', visible: boolean) => {
+    commitBlocks(blocks.map((block) => isQuestionBlockKind(block.kind) ? { ...block, [field]: visible } : block))
   }
 
   const undo = () => {
@@ -458,7 +458,7 @@ export function AnswerSheetStudioPage() {
               onTitleCommit={updateTitle}
               onBlockTitleCommit={(id, title) => updateBlock(id, { title })}
               onSettingsChange={updateSettings}
-              onScoreVisibilityChange={updateScoreVisibility}
+              onMetaVisibilityChange={updateMetaVisibility}
               onReorder={dragBlock}
               onRenumber={renumberBlocks}
               onSplit={splitSelected}

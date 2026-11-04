@@ -143,6 +143,8 @@
 .config-toggle b { font-size: 10px; }
 .config-toggle small { color: var(--fx_text_3); font-size: 8px; line-height: 1.4; }
 .config-toggle.disabled { opacity: .7; }
+.config-meta-row { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: start; gap: var(--fx_sp_2); }
+.config-meta-row > span { padding-top: 2px; color: var(--fx_text_2); font-size: 10px; font-weight: 500; }
 .template-entry { width: 100%; min-height: 54px; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: var(--fx_sp_2); padding: var(--fx_sp_2) var(--fx_sp_3); border: 1px solid var(--fx_border); border-radius: var(--fx_radius_3); background: var(--fx_brand_subtle); color: var(--fx_brand); cursor: pointer; text-align: left; }
 .template-entry > span { min-width: 0; display: grid; gap: 2px; }
 .template-entry b, .template-entry small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -214,6 +216,7 @@
 .standard-paper { padding-right: 46px; border-color: var(--fx_paper_ink); }
 .paper-header { position: relative; padding-bottom: var(--fx_sp_2); border-bottom: 2px solid var(--fx_paper_ink); }
 .paper-title { text-align: center; }
+.daily-quiz-header .paper-title { padding: 0 64px; }
 .paper-title h1 { margin: 0; font-family: var(--fx_font_display); font-size: 17px; line-height: 24px; }
 .paper-title-edit { position: relative; max-width: 100%; display: inline-flex; align-items: center; gap: var(--fx_sp_1); padding: 0 var(--fx_sp_2); border: 1px dashed transparent; border-radius: var(--fx_radius_2); background: transparent; color: inherit; cursor: text; }
 .paper-title-edit > span { position: absolute; left: calc(100% + var(--fx_sp_1)); display: inline-flex; align-items: center; gap: 2px; color: var(--fx_brand); font-size: 7px; opacity: 0; white-space: nowrap; transition: opacity 120ms ease; }
@@ -222,6 +225,7 @@
 .paper-title-input { width: 420px; max-width: 88%; margin: 0 auto; }
 .paper-title-input input { text-align: center; font-family: var(--fx_font_display); font-size: 17px; font-weight: 700; }
 .identity-and-code { display: flex; align-items: stretch; gap: var(--fx_sp_3); }
+.daily-quiz-header .identity-and-code { padding-right: 64px; }
 .identity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--fx_sp_2) var(--fx_sp_3); padding-top: 2px; }
 .identity-grid { min-width: 0; flex: 1; }
 .daily-identity-grid { grid-template-columns: 1.2fr 1.2fr 1fr; align-items: start; padding-top: 0; }
@@ -239,7 +243,7 @@
 .candidate-number-box i { min-width: 0; height: 13px; display: block; border: 1px solid var(--fx_paper_rule); }
 .candidate-fill-box i { color: var(--fx_text_3); font-size: 5px; font-style: normal; writing-mode: vertical-rl; }
 .barcode-lines { width: 88px; height: 18px; background: repeating-linear-gradient(90deg, var(--fx_paper_ink) 0 1px, transparent 1px 3px, var(--fx_paper_ink) 3px 5px, transparent 5px 7px); }
-.daily-qr { width: 54px; flex: 0 0 54px; display: grid; place-items: start center; color: var(--fx_paper_ink); }
+.daily-qr { position: absolute; top: 0; right: 0; width: 54px; height: 54px; display: grid; place-items: center; color: var(--fx_paper_ink); }
 .locked-zone-label { position: absolute; top: -18px; right: 0; display: inline-flex; align-items: center; gap: 3px; color: var(--fx_brand); font-size: 8px; }
 .candidate-notice { display: grid; grid-template-columns: 34px minmax(0, 1.7fr) 34px minmax(150px, .9fr); align-items: stretch; min-height: 112px; margin-top: var(--fx_sp_2); border: 1px solid var(--fx_paper_ink); font-size: 8px; line-height: 1.55; }
 .candidate-notice > * { min-width: 0; padding: var(--fx_sp_2); }

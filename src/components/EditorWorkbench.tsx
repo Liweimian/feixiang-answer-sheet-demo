@@ -26,7 +26,7 @@ interface EditorWorkbenchProps {
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void
-  onScoreVisibilityChange: (visible: boolean) => void
+  onMetaVisibilityChange: (field: 'showQuestionCount' | 'showUnitScore' | 'showScore', visible: boolean) => void
   onRenumber: (start: number) => void
   onSplit: () => void
   onMerge: () => void
@@ -55,7 +55,7 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           activePage={props.activePage}
           selectedBlockId={props.selectedBlockId}
           onSettingsChange={props.onSettingsChange}
-          onScoreVisibilityChange={props.onScoreVisibilityChange}
+          onMetaVisibilityChange={props.onMetaVisibilityChange}
           onPageChange={props.onPageChange}
           onSelect={props.onSelect}
           onUpdateBlock={props.onUpdate}

@@ -116,7 +116,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
   return (
     <article className={`answer-paper paper-size-${paperSize} ${standard ? 'standard-paper' : 'smart-paper'} review-${settings.reviewMode}`} data-paper-page={page}>
       {scanEnabled && <><i className="corner-mark top-left" /><i className="corner-mark top-right" /><i className="corner-mark bottom-left" /><i className="corner-mark bottom-right" /></>}
-      <header className="paper-header">
+      <header className={`paper-header ${dailyQuizIdentity ? 'daily-quiz-header' : ''}`}>
         <div className="paper-title">
           {editingTitle && onTitleCommit ? (
             <MetisInput
@@ -154,6 +154,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
             </button>
           ) : <h1>{paper.title}</h1>}
         </div>
+        {dailyQuizIdentity && <div className="daily-qr" aria-label="答题卡二维码"><QrCode size={46} strokeWidth={2.4} /></div>}
         <div className="identity-and-code">
           <div className={`identity-grid ${dailyQuizIdentity ? 'daily-identity-grid' : ''}`}>
             {settings.identityFields.map((field) => (
@@ -163,7 +164,6 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
             ))}
           </div>
           <CandidateNumberArea settings={settings} />
-          {dailyQuizIdentity && <div className="daily-qr" aria-label="答题卡二维码"><QrCode size={46} strokeWidth={2.4} /></div>}
         </div>
         {(standard || scanEnabled) && <span className="locked-zone-label"><LockKeyhole size={10} /> {standard ? rulePack.shortName : '网阅定位'} · 身份与考号区</span>}
       </header>

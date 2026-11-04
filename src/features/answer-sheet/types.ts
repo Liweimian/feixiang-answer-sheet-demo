@@ -94,6 +94,7 @@ export interface AnswerBlock {
   lineSpacing?: 'compact' | 'normal' | 'loose'
   showScore: boolean
   showQuestionCount?: boolean
+  showUnitScore?: boolean
   showScoreBox?: boolean
   scoreStep?: number
   locked?: boolean

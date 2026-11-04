@@ -26,7 +26,7 @@ interface AnswerSheetConfigPanelProps {
   activePage: number
   selectedBlockId: string
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void
-  onScoreVisibilityChange: (visible: boolean) => void
+  onMetaVisibilityChange: (field: 'showQuestionCount' | 'showUnitScore' | 'showScore', visible: boolean) => void
   onPageChange: (page: number) => void
   onSelect: (id: string) => void
   onUpdateBlock: (patch: Partial<AnswerBlock>) => void
@@ -176,10 +176,17 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         </section>
 
         <section className="config-flat-section">
-          <div className="config-flat-title">显示设置</div>
-          <div className="display-settings-row">
+          <div className="config-flat-title">显示内容</div>
+          <div className="display-settings-row display-settings-notice">
             <ToggleField title="注意事项" checked={settings.showNotice} onChange={(checked) => props.onSettingsChange({ showNotice: checked })} />
-            <ToggleField title="分值展示" checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showScore)} onChange={props.onScoreVisibilityChange} />
+          </div>
+          <div className="config-meta-row">
+            <span>题量与分值</span>
+            <div className="config-check-list">
+              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showQuestionCount)} onChange={(event) => props.onMetaVisibilityChange('showQuestionCount', event.target.checked)}>题量</MetisCheckbox>
+              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showUnitScore)} onChange={(event) => props.onMetaVisibilityChange('showUnitScore', event.target.checked)}>每题分值</MetisCheckbox>
+              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showScore)} onChange={(event) => props.onMetaVisibilityChange('showScore', event.target.checked)}>总分</MetisCheckbox>
+            </div>
           </div>
         </section>
 
