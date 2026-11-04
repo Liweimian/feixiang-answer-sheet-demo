@@ -13,6 +13,7 @@ export type CandidateNumberType = '准考证号' | '学籍号' | '学号' | '考
 export type IdentityField = '学校' | '姓名' | '班级' | '学号' | '准考证号'
 export type ObjectiveLayout = 'horizontal' | 'vertical' | 'merged'
 export type LineStyle = 'solid' | 'dashed'
+export type NoticeStyle = 'daily' | 'exam'
 export type ResponseStyle = 'lines' | 'grid' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
 export type ContentElement = 'table' | 'formula' | 'image'
 export type AnswerBlockKind =
@@ -114,6 +115,7 @@ export interface AnswerSheetSettings {
   candidateNumberDigits: number
   identityFields: IdentityField[]
   showNotice: boolean
+  noticeStyle: NoticeStyle
   noticeText: string
   showFooter: boolean
   footerText: string

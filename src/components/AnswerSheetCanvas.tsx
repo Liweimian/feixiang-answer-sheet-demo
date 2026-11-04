@@ -169,7 +169,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
       </header>
 
       {page === 1 && settings.showNotice && (
-        <div className="candidate-notice">
+        <div className={`candidate-notice notice-style-${settings.noticeStyle}`}>
           <strong className="notice-vertical-title">注意事项</strong>
           <ol>
             <li>答题前请将{settings.identityFields.join('、')}填写清楚。</li>

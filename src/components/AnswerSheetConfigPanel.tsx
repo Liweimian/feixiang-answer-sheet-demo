@@ -112,6 +112,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           candidateNumberType: '学号',
           candidateNumberLayouts: [],
           showNotice: true,
+          noticeStyle: 'daily',
         }
       : {
           paperSize: 'A4',
@@ -121,6 +122,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           candidateNumberType: '准考证号',
           candidateNumberLayouts: ['fill', 'handwrite'],
           showNotice: true,
+          noticeStyle: 'daily',
         })
   }
 
@@ -177,9 +179,24 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
 
         <section className="config-flat-section">
           <div className="config-flat-title">显示内容</div>
-          <div className="display-settings-row display-settings-notice">
-            <ToggleField title="注意事项" checked={settings.showNotice} onChange={(checked) => props.onSettingsChange({ showNotice: checked })} />
+          <div className="config-meta-row">
+            <span>注意事项</span>
+            <MetisRadio.Group
+              className="config-inline-options"
+              value={settings.showNotice ? 'show' : 'hide'}
+              options={[{ value: 'show', label: '显示' }, { value: 'hide', label: '隐藏' }]}
+              onChange={(event) => props.onSettingsChange({ showNotice: event.target.value === 'show' })}
+            />
           </div>
+          {settings.showNotice && <div className="config-meta-row">
+            <span>样式</span>
+            <MetisSelect
+              className="notice-style-select"
+              value={settings.noticeStyle}
+              options={[{ value: 'daily', label: '日常样式' }]}
+              onChange={(value) => props.onSettingsChange({ noticeStyle: value as AnswerSheetSettings['noticeStyle'] })}
+            />
+          </div>}
           <div className="config-meta-row">
             <span>题量与分值</span>
             <div className="config-check-list">

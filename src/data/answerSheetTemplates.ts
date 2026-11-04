@@ -22,6 +22,7 @@ function createSettings(overrides: Partial<AnswerSheetSettings> = {}): AnswerShe
     candidateNumberDigits: 10,
     identityFields: ['学校', '姓名', '班级', '准考证号'],
     showNotice: true,
+    noticeStyle: 'daily',
     noticeText: defaultNotice,
     showFooter: true,
     footerText: '请按 100% 原尺寸打印',
