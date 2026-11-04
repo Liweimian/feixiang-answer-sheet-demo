@@ -51,7 +51,8 @@
     "6ed418b Stage 4 v1.3.4: add summarized accordion settings",
     "f5618fa Stage 4 v1.3.5: condense layout settings to one row",
     "9573695 Stage 4 v1.4: move block editing onto canvas",
-    "38719f6 Stage 4 v1.4.1: enable free canvas block movement"
+    "38719f6 Stage 4 v1.4.1: enable free canvas block movement",
+    "c39cb6b Stage 4 v1.4.2: fix objective option spacing"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-04T12:00:00+08:00"

@@ -64,6 +64,7 @@
 - v1.3.5 版面单行提交：`f5618fa Stage 4 v1.3.5: condense layout settings to one row`。
 - v1.4.0 画布直接编辑提交：`9573695 Stage 4 v1.4: move block editing onto canvas`。
 - v1.4.1 自由拖动提交：`38719f6 Stage 4 v1.4.1: enable free canvas block movement`。
+- v1.4.2 客观题间距提交：`c39cb6b Stage 4 v1.4.2: fix objective option spacing`。
 
 ## 下一检查点
 - 用户确认 v1.4.1 自由拖动交互后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
