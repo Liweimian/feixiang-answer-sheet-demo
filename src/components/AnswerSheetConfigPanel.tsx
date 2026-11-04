@@ -209,6 +209,25 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </div>
         </section>
 
+        <section className="config-flat-section">
+          <div className="config-meta-row">
+            <span>题号排序</span>
+            <MetisRadio.Group
+              className="config-inline-options"
+              value={settings.questionNumberOrder}
+              options={[{ value: 'default', label: '默认排序' }, { value: 'within-question', label: '题内单独排序' }]}
+              onChange={(event) => props.onSettingsChange({ questionNumberOrder: event.target.value as AnswerSheetSettings['questionNumberOrder'] })}
+            />
+          </div>
+          <div className="config-meta-row">
+            <span>客观题</span>
+            <div className="config-check-list">
+              <MetisCheckbox checked={settings.objectiveVertical} onChange={(event) => props.onSettingsChange({ objectiveVertical: event.target.checked })}>竖向排列</MetisCheckbox>
+              <MetisCheckbox checked={settings.objectiveMerge} onChange={(event) => props.onSettingsChange({ objectiveMerge: event.target.checked })}>客观题合并</MetisCheckbox>
+            </div>
+          </div>
+        </section>
+
         <section className="config-flat-section config-block-section">
           <div className="config-flat-title"><span>题目结构</span><small>{pageCount} 面 · {blocks.length} 个题块</small></div>
           <div className="config-flat-body">

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { AlignCenter, AlignLeft, AlignRight, Bold, Braces, GripVertical, Image, Italic, LockKeyhole, Pencil, Plus, Redo2, Scissors, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
-import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement } from '../features/answer-sheet/types'
+import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type QuestionNumberOrder } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
 
 interface AnswerBlockViewProps {
@@ -21,14 +21,20 @@ interface AnswerBlockViewProps {
   onSplitMerged?: () => void
   questionAnswer?: boolean
   questionContext?: string
+  questionNumberOrder?: QuestionNumberOrder
+  objectiveVertical?: boolean
+  objectiveMerge?: boolean
 }
 
-function ObjectiveGrid({ block, compact = false }: { block: AnswerBlock; compact?: boolean }) {
+function ObjectiveGrid({ block, compact = false, questionNumberOrder = 'default', vertical = false, merged = true }: { block: AnswerBlock; compact?: boolean; questionNumberOrder?: QuestionNumberOrder; vertical?: boolean; merged?: boolean }) {
   const questions = questionNumbers(block.range)
   if (questions.length === 0) return <div className="unconfigured-block">请在左侧设置题号范围与分值</div>
   const options = ['A', 'B', 'C', 'D', 'E'].slice(0, block.optionCount ?? 4)
   return (
-    <div className={`objective-grid adaptive ${compact ? 'compact' : ''}`}>
+    <div
+      className={`objective-grid adaptive order-${questionNumberOrder} ${vertical ? 'layout-vertical' : ''} ${merged ? 'layout-merged' : ''} ${compact ? 'compact' : ''}`}
+      style={{ '--objective-rows': Math.max(1, block.itemsPerColumn ?? 10) } as CSSProperties}
+    >
       {questions.map((no) => (
         <div key={no} className="bubble-row" style={{ gridTemplateColumns: `24px repeat(${options.length}, 18px)` }}>
           <b>{no}</b>
@@ -95,7 +101,7 @@ function ScoreBox({ block }: { block: AnswerBlock }) {
   return <div className="score-box"><b>评分栏</b>{Array.from({ length: cells }, (_, index) => <span key={index} />)}</div>
 }
 
-export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onSplitMerged, questionAnswer = false, questionContext }: AnswerBlockViewProps) {
+export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onSplitMerged, questionAnswer = false, questionContext, questionNumberOrder = 'default', objectiveVertical = false, objectiveMerge = true }: AnswerBlockViewProps) {
   const [resizeHeight, setResizeHeight] = useState(block.height)
   const [draftLayout, setDraftLayout] = useState(layout)
   const style = {
@@ -299,7 +305,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       )}
       <RichElements elements={block.contentElements} />
       <ScoreBox block={block} />
-      {block.kind === 'objective' && <ObjectiveGrid block={block} />}
+      {block.kind === 'objective' && <ObjectiveGrid block={block} questionNumberOrder={questionNumberOrder} vertical={objectiveVertical} merged={objectiveMerge} />}
       {block.kind === 'short-answer' && <ShortAnswerContent block={block} />}
       {block.kind === 'mixed' && (
         <div className="mixed-area">
@@ -310,7 +316,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
             const subjectiveRange = formatQuestionRange(numbers.slice(splitAt))
             return (
               <>
-                <section><b>客观小题 {objectiveRange}</b><ObjectiveGrid block={{ ...block, range: objectiveRange }} compact /></section>
+                <section><b>客观小题 {objectiveRange}</b><ObjectiveGrid block={{ ...block, range: objectiveRange }} compact questionNumberOrder={questionNumberOrder} vertical={objectiveVertical} merged={objectiveMerge} /></section>
                 <section><b>主观小题 {subjectiveRange || objectiveRange}</b><ShortAnswerContent block={{ ...block, range: subjectiveRange || objectiveRange, responseStyle: block.responseStyle ?? 'lines', lineCount: Math.min(4, block.lineCount ?? 4) }} /></section>
               </>
             )

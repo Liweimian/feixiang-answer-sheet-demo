@@ -14,6 +14,7 @@ export type IdentityField = '学校' | '姓名' | '班级' | '学号' | '准考�
 export type ObjectiveLayout = 'horizontal' | 'vertical' | 'merged'
 export type LineStyle = 'solid' | 'dashed'
 export type NoticeStyle = 'daily' | 'exam'
+export type QuestionNumberOrder = 'default' | 'within-question'
 export type ResponseStyle = 'lines' | 'grid' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
 export type ContentElement = 'table' | 'formula' | 'image'
 export type AnswerBlockKind =
@@ -116,6 +117,9 @@ export interface AnswerSheetSettings {
   identityFields: IdentityField[]
   showNotice: boolean
   noticeStyle: NoticeStyle
+  questionNumberOrder: QuestionNumberOrder
+  objectiveVertical: boolean
+  objectiveMerge: boolean
   noticeText: string
   showFooter: boolean
   footerText: string

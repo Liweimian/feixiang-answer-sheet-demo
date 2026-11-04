@@ -207,6 +207,9 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
             onRedo={onRedo}
             onSplitMerged={onSplitMerged ? () => onSplitMerged(block.id) : undefined}
             questionAnswer={settings.cardStyle === 'question-answer'}
+            questionNumberOrder={settings.questionNumberOrder}
+            objectiveVertical={settings.objectiveVertical}
+            objectiveMerge={settings.objectiveMerge}
             questionContext={paper.sections.filter((section) => {
               const blockNumbers = new Set(questionNumbers(block.range))
               return questionNumbers(section.range).some((number) => blockNumbers.has(number))
