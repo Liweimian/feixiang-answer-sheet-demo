@@ -26,7 +26,7 @@ function ObjectiveGrid({ block, compact = false }: { block: AnswerBlock; compact
   return (
     <div className={`objective-grid adaptive ${compact ? 'compact' : ''}`}>
       {questions.map((no) => (
-        <div key={no} className="bubble-row" style={{ gridTemplateColumns: `24px repeat(${options.length}, 1fr)` }}>
+        <div key={no} className="bubble-row" style={{ gridTemplateColumns: `24px repeat(${options.length}, 18px)` }}>
           <b>{no}</b>
           {options.map((option) => <span key={option}>[{option}]</span>)}
         </div>

@@ -259,13 +259,14 @@
 .block-title-edit:hover, .block-title-edit:focus-visible { border-color: var(--fx_brand); color: var(--fx_brand); outline: 0; }
 .block-title-input { min-width: 120px; height: 20px; padding: 0 4px; border: 1px solid var(--fx_brand); font-size: 9px; font-weight: 700; }
 .answer-block-heading > span { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; color: var(--fx_brand); font-size: 7px; }
-.objective-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); align-content: start; gap: 2px var(--fx_sp_3); padding: var(--fx_sp_2) var(--fx_sp_3); overflow: hidden; }
+.objective-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(102px, 1fr)); align-content: start; gap: 2px var(--fx_sp_3); padding: var(--fx_sp_2) var(--fx_sp_3); overflow: hidden; }
 .objective-grid.layout-vertical { max-width: 220px; }
 .objective-grid.layout-merged { gap: var(--fx_sp_1); padding-right: var(--fx_sp_2); padding-left: var(--fx_sp_2); }
 .objective-grid.compact { max-height: 72px; overflow: hidden; padding: 4px 8px; }
 .objective-column { display: grid; align-content: start; gap: 2px; }
 .unconfigured-block { height: calc(100% - 24px); display: grid; place-items: center; color: var(--fx_text_3); font-size: 9px; }
-.bubble-row { min-height: 13px; display: grid; align-items: center; font-family: var(--fx_font_accent); font-size: 7px; }
+.bubble-row { min-height: 13px; display: grid; align-items: center; justify-content: start; font-family: var(--fx_font_accent); font-size: 7px; white-space: nowrap; }
+.bubble-row > span { width: 18px; text-align: left; }
 .bubble-row.section-start { margin-top: 3px; padding-top: 3px; border-top: 1px dotted var(--fx_paper_rule); }
 .bubble-row b { padding-right: var(--fx_sp_1); text-align: right; }
 .short-answer-groups, .single-short-answer, .essay-area { padding: var(--fx_sp_2) var(--fx_sp_3); }
