@@ -61,7 +61,8 @@
     "2a8c813 Fix: reorder identity field options",
     "d08d02c Stage 4 v1.5.5: condition candidate number settings",
     "bcd6d48 Stage 4 v1.5.6: refine daily quiz identity area",
-    "1643aca Stage 4 v1.5.7: promote presets and tighten header"
+    "1643aca Stage 4 v1.5.7: promote presets and tighten header",
+    "e7b225c Stage 4 v1.5.9: add cascading layout settings"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-04T12:00:00+08:00"
