@@ -235,7 +235,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </div>
           <div className="config-meta-row">
             <span>客观题合并</span>
-            <MetisSwitch checked={settings.objectiveMerge} onChange={(checked) => props.onSettingsChange({ objectiveMerge: checked })} />
+            <MetisSwitch size="small" checked={settings.objectiveMerge} onChange={(checked) => props.onSettingsChange({ objectiveMerge: checked })} />
           </div>
         </section>
 

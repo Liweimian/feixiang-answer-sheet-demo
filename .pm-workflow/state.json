@@ -67,7 +67,8 @@
     "234f7f6 Stage 4 v1.5.11: add question and score labels",
     "f42e314 Stage 4 v1.5.12: separate notice visibility and style",
     "a7a79aa Stage 4 v1.5.13: compact candidate fields",
-    "d535334 Stage 4 v1.5.14: add objective layout settings"
+    "d535334 Stage 4 v1.5.14: add objective layout settings",
+    "1bd8df8 Stage 4 v1.5.15: refine objective arrangement controls"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-04T12:00:00+08:00"
