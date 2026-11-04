@@ -170,7 +170,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
     paperSize: 'A3',
     columns: 2,
     identityMode: 'both',
-    highlights: ['A3 四面布局', '物理与化学分区', '考场号与座位号'],
+    highlights: ['A3 四面布局', '物理与化学分区', '大考身份信息'],
     document: {
       paper: shenzhenPaper,
       blocks: shenzhenBlocks,
@@ -181,7 +181,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
         backColumns: 2,
         candidateNumberLayouts: ['barcode', 'handwrite'],
         candidateNumberType: '考号',
-        identityFields: ['姓名', '准考证号', '考场号', '座位号'],
+        identityFields: ['学校', '姓名', '准考证号'],
         linkedPaperId: shenzhenPaper.id,
       }),
       mode: 'standard',

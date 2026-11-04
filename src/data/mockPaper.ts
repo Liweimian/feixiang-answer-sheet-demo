@@ -155,7 +155,7 @@ export const rulePacks: RulePack[] = [
     paperSize: 'A3',
     pageCount: 4,
     subjectScope: '物理+化学合卷',
-    identityFields: ['姓名', '考生号', '考点', '考场号', '座位号'],
+    identityFields: ['学校', '姓名', '准考证号'],
     lockedZones: ['定位点', '检测区', '条形码框', '物理/化学分隔', '面码'],
   },
 ]
