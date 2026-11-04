@@ -121,6 +121,7 @@
 - v1.5.11 题量与分值提交：`234f7f6 Stage 4 v1.5.11: add question and score labels`。
 - v1.5.12 注意事项显隐与样式提交：`f42e314 Stage 4 v1.5.12: separate notice visibility and style`。
 - v1.5.13 考生信息紧凑布局提交：`a7a79aa Stage 4 v1.5.13: compact candidate fields`。
+- v1.5.14 题号排序与客观题设置提交：`d535334 Stage 4 v1.5.14: add objective layout settings`。
 
 ## 下一检查点
 - 用户确认 v1.4.1 自由拖动交互后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
