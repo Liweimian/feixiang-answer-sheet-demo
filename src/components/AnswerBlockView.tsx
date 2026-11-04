@@ -1,14 +1,21 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { Image, LockKeyhole, Pencil, Sigma, Table2 } from 'lucide-react'
+import { GripVertical, Image, LockKeyhole, Pencil, Scissors, Sigma, Table2 } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type ContentElement } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
 
 interface AnswerBlockViewProps {
   block: AnswerBlock
   selected: boolean
+  multiSelected?: boolean
   locked?: boolean
-  onSelect: () => void
+  onSelect: (additive?: boolean) => void
   onTitleCommit?: (title: string) => void
+  onResizeCommit?: (height: number) => void
+  onToggleContent?: (element: ContentElement) => void
+  onSplitMerged?: () => void
+  onDragStart?: () => void
+  onDragEnd?: () => void
+  onDrop?: () => void
   questionAnswer?: boolean
   questionContext?: string
 }
@@ -17,25 +24,12 @@ function ObjectiveGrid({ block, compact = false }: { block: AnswerBlock; compact
   const questions = questionNumbers(block.range)
   if (questions.length === 0) return <div className="unconfigured-block">请在左侧设置题号范围与分值</div>
   const options = ['A', 'B', 'C', 'D', 'E'].slice(0, block.optionCount ?? 4)
-  const layout = block.objectiveLayout ?? 'horizontal'
-  const itemsPerColumn = Math.max(4, block.itemsPerColumn ?? 11)
-  const columnCount = layout === 'vertical'
-    ? 1
-    : layout === 'merged'
-      ? Math.min(4, Math.max(1, Math.ceil(questions.length / Math.max(6, itemsPerColumn))))
-      : Math.min(3, Math.max(1, Math.ceil(questions.length / itemsPerColumn)))
-  const chunkSize = Math.ceil(questions.length / columnCount)
-  const columns = Array.from({ length: columnCount }, (_, index) => questions.slice(index * chunkSize, (index + 1) * chunkSize))
   return (
-    <div className={`objective-grid layout-${layout} ${compact ? 'compact' : ''}`} style={{ gridTemplateColumns: `repeat(${columnCount}, 1fr)` }}>
-      {columns.map((column, columnIndex) => (
-        <div key={columnIndex} className="objective-column">
-          {column.map((no) => (
-            <div key={no} className="bubble-row" style={{ gridTemplateColumns: `24px repeat(${options.length}, 1fr)` }}>
-              <b>{no}</b>
-              {options.map((option) => <span key={option}>[{option}]</span>)}
-            </div>
-          ))}
+    <div className={`objective-grid adaptive ${compact ? 'compact' : ''}`}>
+      {questions.map((no) => (
+        <div key={no} className="bubble-row" style={{ gridTemplateColumns: `24px repeat(${options.length}, 1fr)` }}>
+          <b>{no}</b>
+          {options.map((option) => <span key={option}>[{option}]</span>)}
         </div>
       ))}
     </div>
@@ -97,8 +91,9 @@ function ScoreBox({ block }: { block: AnswerBlock }) {
   return <div className="score-box"><b>评分栏</b>{Array.from({ length: cells }, (_, index) => <span key={index} />)}</div>
 }
 
-export function AnswerBlockView({ block, selected, locked = false, onSelect, onTitleCommit, questionAnswer = false, questionContext }: AnswerBlockViewProps) {
-  const style = { '--block-height': `${block.height}px` } as CSSProperties
+export function AnswerBlockView({ block, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onResizeCommit, onToggleContent, onSplitMerged, onDragStart, onDragEnd, onDrop, questionAnswer = false, questionContext }: AnswerBlockViewProps) {
+  const [resizeHeight, setResizeHeight] = useState(block.height)
+  const style = { '--block-height': `${resizeHeight}px` } as CSSProperties
   const normalizedTitle = block.title.replace(/[–—]/g, '-').replace(/\s/g, '')
   const normalizedRange = block.range?.replace(/[–—]/g, '-').replace(/\s/g, '')
   const showRange = Boolean(block.range && normalizedRange && !normalizedTitle.includes(normalizedRange))
@@ -110,6 +105,26 @@ export function AnswerBlockView({ block, selected, locked = false, onSelect, onT
   useEffect(() => {
     if (!editingTitle) setTitleDraft(block.title)
   }, [block.title, editingTitle])
+
+  useEffect(() => setResizeHeight(block.height), [block.height])
+
+  const beginResize = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (locked || !onResizeCommit) return
+    event.preventDefault()
+    event.stopPropagation()
+    const startY = event.clientY
+    const startHeight = resizeHeight
+    const move = (pointerEvent: PointerEvent) => setResizeHeight(Math.max(48, Math.min(620, Math.round(startHeight + pointerEvent.clientY - startY))))
+    const finish = (pointerEvent: PointerEvent) => {
+      const nextHeight = Math.max(48, Math.min(620, Math.round(startHeight + pointerEvent.clientY - startY)))
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', finish)
+      setResizeHeight(nextHeight)
+      if (nextHeight !== block.height) onResizeCommit(nextHeight)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', finish)
+  }
 
   const commitTitle = () => {
     if (!editingTitle) return
@@ -127,16 +142,37 @@ export function AnswerBlockView({ block, selected, locked = false, onSelect, onT
 
   return (
     <div
-      className={`answer-block kind-${block.kind} ${selected ? 'selected' : ''}`}
+      className={`answer-block kind-${block.kind} ${selected ? 'selected' : ''} ${multiSelected ? 'multi-selected' : ''}`}
+      data-block-id={block.id}
+      data-block-kind={block.kind}
+      data-block-range={block.range ?? ''}
+      data-block-locked={block.locked ? 'true' : 'false'}
       style={style}
-      onClick={onSelect}
+      draggable={!locked}
+      onDragStart={(event) => { if ((event.target as HTMLElement).closest('button,input')) { event.preventDefault(); return }; onDragStart?.() }}
+      onDragEnd={onDragEnd}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => { event.preventDefault(); event.stopPropagation(); onDrop?.() }}
+      onClick={(event) => onSelect(event.metaKey || event.ctrlKey || event.shiftKey)}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' && event.target === event.currentTarget) onSelect()
+        if (event.key === 'Enter' && event.target === event.currentTarget) onSelect(false)
       }}
       role="button"
       tabIndex={0}
       aria-label={`编辑${block.title}`}
     >
+      <span className="block-drag-handle" aria-hidden="true"><GripVertical size={13} /></span>
+      <button type="button" className="block-select-toggle" aria-label={`${multiSelected ? '取消选择' : '多选'}${block.title}`} onClick={(event) => { event.stopPropagation(); onSelect(true) }}>{multiSelected ? '✓' : '+'}</button>
+      {selected && (block.kind !== 'objective' || block.mergedParts?.length) && (
+        <div className="block-floating-tools" onClick={(event) => event.stopPropagation()}>
+          {block.kind !== 'objective' && onToggleContent && <>
+            <button type="button" aria-pressed={block.contentElements?.includes('table')} onClick={() => onToggleContent('table')}><Table2 size={12} /> 表格</button>
+            <button type="button" aria-pressed={block.contentElements?.includes('formula')} onClick={() => onToggleContent('formula')}><Sigma size={12} /> 公式</button>
+            <button type="button" aria-pressed={block.contentElements?.includes('image')} onClick={() => onToggleContent('image')}><Image size={12} /> 图片</button>
+          </>}
+          {block.mergedParts?.length && onSplitMerged && <button type="button" onClick={onSplitMerged}><Scissors size={12} /> 切割</button>}
+        </div>
+      )}
       <span className="answer-block-heading">
         {editingTitle && onTitleCommit ? (
           <input
@@ -217,6 +253,7 @@ export function AnswerBlockView({ block, selected, locked = false, onSelect, onT
         <div className="table-area">{Array.from({ length: 8 }, (_, index) => <span key={index} />)}</div>
       )}
       {block.kind === 'notice' && <div className="notice-area">{block.contentText || '请在指定区域内作答，超出边框的答案无效。'}</div>}
+      {!locked && onResizeCommit && <button type="button" className="block-resize-handle" aria-label={`调整${block.title}高度`} onPointerDown={beginResize} onClick={(event) => event.stopPropagation()} />}
     </div>
   )
 }

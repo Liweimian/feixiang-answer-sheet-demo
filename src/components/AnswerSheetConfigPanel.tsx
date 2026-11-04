@@ -7,16 +7,7 @@ import {
   MetisSwitch,
   MetisTag,
 } from '@yuanfudao/metis-web-component'
-import {
-  ArrowDown,
-  ArrowUp,
-  Combine,
-  GripVertical,
-  ListRestart,
-  Plus,
-  Scissors,
-  Trash2,
-} from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { blockKindLabels } from '../data/mockPaper'
 import {
   isQuestionBlockKind,
@@ -24,7 +15,6 @@ import {
   type AnswerBlockKind,
   type AnswerSheetDocument,
   type AnswerSheetSettings,
-  type ContentElement,
   type IdentityField,
 } from '../features/answer-sheet/types'
 
@@ -37,24 +27,11 @@ interface AnswerSheetConfigPanelProps {
   onPageChange: (page: number) => void
   onSelect: (id: string) => void
   onUpdateBlock: (patch: Partial<AnswerBlock>) => void
-  onMove: (direction: -1 | 1) => void
-  onReorder: (dragId: string, targetId: string) => void
-  onDelete: () => void
   onAdd: (kind: AnswerBlockKind) => void
-  onRenumber: (start: number) => void
-  onSplit: () => void
-  onMerge: () => void
-  onConsolidate: (kind: 'objective' | 'subjective') => void
-  onMergeObjectiveModules: () => void
 }
 
 const identityFields: IdentityField[] = ['学校', '姓名', '班级', '学号', '准考证号', '考场号', '座位号']
 const addableKinds: AnswerBlockKind[] = ['objective', 'short-answer', 'essay', 'mixed', 'drawing', 'table', 'forbidden', 'notice']
-const contentElements: Array<{ value: ContentElement; label: string }> = [
-  { value: 'table', label: '表格' },
-  { value: 'formula', label: '公式' },
-  { value: 'image', label: '图片' },
-]
 
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return <label className="config-field"><span>{label}</span>{children}{hint && <small>{hint}</small>}</label>
@@ -79,11 +56,9 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const { document } = props
   const { blocks, pageCount, settings } = document
   const selected = blocks.find((block) => block.id === props.selectedBlockId)
-  const locked = document.mode === 'standard' && Boolean(selected?.locked)
   const questionBlock = selected && isQuestionBlockKind(selected.kind)
+  const blankCard = document.paper.sections.length === 0
   const [addKind, setAddKind] = useState<AnswerBlockKind>('short-answer')
-  const [renumberStart, setRenumberStart] = useState(1)
-  const [draggingId, setDraggingId] = useState('')
   const [openSection, setOpenSection] = useState<'layout' | 'candidate' | 'display' | 'structure' | 'selected'>('structure')
   const visibleSettings = [settings.showNotice && '注意事项', blocks.some((block) => isQuestionBlockKind(block.kind) && block.showScore) && '分值展示'].filter(Boolean).join('、') || '均关闭'
   const identitySummary = settings.identityFields.length > 0
@@ -95,16 +70,6 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
       ? settings.identityFields.filter((item) => item !== field)
       : [...settings.identityFields, field]
     props.onSettingsChange({ identityFields: next })
-  }
-
-  const toggleContentElement = (element: ContentElement) => {
-    if (!selected) return
-    const current = selected.contentElements ?? []
-    props.onUpdateBlock({
-      contentElements: current.includes(element)
-        ? current.filter((item) => item !== element)
-        : [...current, element],
-    })
   }
 
   return (
@@ -193,89 +158,42 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                 <button key={page} type="button" className={props.activePage === page ? 'active' : ''} onClick={() => props.onPageChange(page)}>第 {page} 面</button>
               ))}
             </div>
-            <div className="structure-tools">
-              <div><MetisInputNumber value={renumberStart} min={1} max={999} onChange={(value) => setRenumberStart(Number(value ?? 1))} /><MetisButton type="bordered" size="s" icon={<ListRestart size={13} />} onClick={() => props.onRenumber(renumberStart)}>连续编号</MetisButton></div>
-              <div><MetisButton type="borderless" size="s" onClick={() => props.onConsolidate('objective')}>集中客观题</MetisButton><MetisButton type="borderless" size="s" onClick={() => props.onConsolidate('subjective')}>集中主观题</MetisButton></div>
-              <MetisButton type="bordered" size="s" icon={<Combine size={13} />} onClick={props.onMergeObjectiveModules}>合并客观题模块</MetisButton>
-            </div>
             <div className="config-block-list">
               {blocks.filter((block) => block.page === props.activePage).map((block) => (
                 <div
                   key={block.id}
                   className={`config-block-row ${block.id === props.selectedBlockId ? 'selected' : ''}`}
-                  draggable={!block.locked}
-                  onDragStart={() => setDraggingId(block.id)}
-                  onDragEnd={() => setDraggingId('')}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={() => {
-                    if (draggingId) props.onReorder(draggingId, block.id)
-                    setDraggingId('')
-                  }}
                 >
-                  <GripVertical size={14} />
-                  <button type="button" onClick={() => { props.onSelect(block.id); setOpenSection('selected') }}><b>{block.title}</b><small>{blockKindLabels[block.kind]}{block.range ? ` · ${block.range}` : ''}</small></button>
+                  <button type="button" onClick={() => { props.onSelect(block.id); if (blankCard) setOpenSection('selected') }}><b>{block.title}</b><small>{blockKindLabels[block.kind]}{block.range ? ` · ${block.range}` : ''}</small></button>
                 </div>
               ))}
               {!blocks.some((block) => block.page === props.activePage) && <div className="config-empty-blocks">当前页暂无题块</div>}
             </div>
-            <div className="config-add-row">
+            {blankCard && <div className="config-add-row">
               <MetisSelect value={addKind} options={addableKinds.map((kind) => ({ value: kind, label: blockKindLabels[kind] }))} onChange={(value) => setAddKind(value as AnswerBlockKind)} />
               <MetisButton type="primary" size="s" icon={<Plus size={13} />} onClick={() => props.onAdd(addKind)}>添加到本页</MetisButton>
-            </div>
+            </div>}
           </div>
         </details>
 
-        {selected && (
+        {blankCard && selected && (
           <details className="config-section config-selected-section" open={openSection === 'selected'} onToggle={(event) => event.currentTarget.open && setOpenSection('selected')}>
             <summary><span>所选题块</span><small title={selected.title}>{selected.title}</small></summary>
             <div className="config-section-body">
-              {locked && <div className="config-lock-tip">大考规范锁定区域不可修改</div>}
-              <Field label="模块标题"><MetisInput value={selected.title} disabled={locked} onChange={(event) => props.onUpdateBlock({ title: event.target.value })} /></Field>
+              <Field label="模块标题"><MetisInput value={selected.title} onChange={(event) => props.onUpdateBlock({ title: event.target.value })} /></Field>
               <div className="config-grid-two">
                 <Field label="题块类型">
-                  <MetisSelect value={selected.kind} disabled={locked} options={addableKinds.map((kind) => ({ value: kind, label: blockKindLabels[kind] }))} onChange={(value) => props.onUpdateBlock({ kind: value as AnswerBlockKind })} />
+                  <MetisSelect value={selected.kind} options={addableKinds.map((kind) => ({ value: kind, label: blockKindLabels[kind] }))} onChange={(value) => props.onUpdateBlock({ kind: value as AnswerBlockKind })} />
                 </Field>
-                <Field label="所在页面">
-                  <MetisSelect value={selected.page} disabled={locked} options={Array.from({ length: pageCount }, (_, index) => ({ value: index + 1, label: `第 ${index + 1} 面` }))} onChange={(value) => props.onUpdateBlock({ page: Number(value) })} />
-                </Field>
-                {questionBlock && <Field label="题号范围" hint="支持 1–10，12–20 跳号"><MetisInput value={selected.range ?? ''} disabled={locked} placeholder="如 1–20" onChange={(event) => props.onUpdateBlock({ range: event.target.value })} /></Field>}
-                {questionBlock && <Field label="区域分值"><MetisInputNumber className="config-number" value={selected.score} min={0} max={300} disabled={locked} addonAfter="分" onChange={(value) => props.onUpdateBlock({ score: Number(value ?? 0) })} /></Field>}
-                <Field label="区域高度"><MetisInputNumber className="config-number" value={selected.height} min={48} max={620} step={8} disabled={locked} addonAfter="px" onChange={(value) => props.onUpdateBlock({ height: Number(value ?? selected.height) })} /></Field>
-                {(selected.kind === 'short-answer' || selected.kind === 'essay' || selected.kind === 'mixed') && <Field label="作答行数"><MetisInputNumber className="config-number" value={selected.lineCount ?? 4} min={1} max={30} disabled={locked} onChange={(value) => props.onUpdateBlock({ lineCount: Number(value ?? 4) })} /></Field>}
+                {questionBlock && <Field label="题号范围" hint="支持 1–10，12–20 跳号"><MetisInput value={selected.range ?? ''} placeholder="如 1–20" onChange={(event) => props.onUpdateBlock({ range: event.target.value })} /></Field>}
+                {questionBlock && <Field label="区域分值"><MetisInputNumber className="config-number" value={selected.score} min={0} max={300} addonAfter="分" onChange={(value) => props.onUpdateBlock({ score: Number(value ?? 0) })} /></Field>}
               </div>
 
-              {(selected.kind === 'objective' || selected.kind === 'mixed') && (
+              {selected.kind === 'objective' && (
                 <div className="config-grid-two">
-                  <Field label="客观题布局"><MetisSelect value={selected.objectiveLayout ?? 'horizontal'} disabled={locked} options={[{ value: 'horizontal', label: '横向排列' }, { value: 'vertical', label: '竖向排列' }, { value: 'merged', label: '合并排列' }]} onChange={(value) => props.onUpdateBlock({ objectiveLayout: value as AnswerBlock['objectiveLayout'] })} /></Field>
-                  <Field label="选项数量"><MetisSelect value={selected.optionCount ?? 4} disabled={locked} options={[{ value: 4, label: 'A–D' }, { value: 5, label: 'A–E' }]} onChange={(value) => props.onUpdateBlock({ optionCount: Number(value) as 4 | 5 })} /></Field>
-                  <Field label="每栏题数"><MetisInputNumber className="config-number" value={selected.itemsPerColumn ?? 11} min={4} max={30} disabled={locked} onChange={(value) => props.onUpdateBlock({ itemsPerColumn: Number(value ?? 11) })} /></Field>
+                  <Field label="选项数量"><MetisSelect value={selected.optionCount ?? 4} options={[{ value: 4, label: 'A–D' }, { value: 5, label: 'A–E' }]} onChange={(value) => props.onUpdateBlock({ optionCount: Number(value) as 4 | 5 })} /></Field>
                 </div>
               )}
-
-              {(selected.kind === 'short-answer' || selected.kind === 'essay' || selected.kind === 'mixed') && (
-                <div className="config-grid-two">
-                  <Field label="作答样式"><MetisSelect value={selected.responseStyle ?? 'lines'} disabled={locked} options={[{ value: 'lines', label: '横线' }, { value: 'grid', label: '作文方格' }, { value: 'bracket', label: '括号' }, { value: 'square', label: '方块' }, { value: 'blank', label: '留白' }]} onChange={(value) => props.onUpdateBlock({ responseStyle: value as AnswerBlock['responseStyle'] })} /></Field>
-                  <Field label="线条样式"><MetisSelect value={selected.lineStyle ?? 'solid'} disabled={locked || selected.responseStyle !== 'lines'} options={[{ value: 'solid', label: '实线' }, { value: 'dashed', label: '虚线' }]} onChange={(value) => props.onUpdateBlock({ lineStyle: value as AnswerBlock['lineStyle'] })} /></Field>
-                </div>
-              )}
-
-              <ToggleField title="标题显示分值" description="关闭后不会残留题数文字" checked={selected.showScore} disabled={locked} onChange={(checked) => props.onUpdateBlock({ showScore: checked, showQuestionCount: checked ? selected.showQuestionCount : false })} />
-              {questionBlock && <ToggleField title="显示题数" description="例如“共 20 题”；关闭分值后一并隐藏" checked={Boolean(selected.showScore && selected.showQuestionCount)} disabled={locked || !selected.showScore} onChange={(checked) => props.onUpdateBlock({ showQuestionCount: checked })} />}
-              {questionBlock && <ToggleField title="评分栏 / 打分框" checked={Boolean(selected.showScoreBox)} disabled={locked} onChange={(checked) => props.onUpdateBlock({ showScoreBox: checked })} />}
-              {selected.showScoreBox && <Field label="评分步长"><MetisInputNumber className="config-number" value={selected.scoreStep ?? 1} min={0.5} max={10} step={0.5} disabled={locked} addonAfter="分" onChange={(value) => props.onUpdateBlock({ scoreStep: Number(value ?? 1) })} /></Field>}
-              <Field label="自定义文字"><textarea rows={2} value={selected.contentText ?? ''} disabled={locked} placeholder="可加入作答说明或题内文字" onChange={(event) => props.onUpdateBlock({ contentText: event.target.value })} /></Field>
-              <Field label="插入内容">
-                <div className="config-chip-list">
-                  {contentElements.map((element) => <button key={element.value} type="button" disabled={locked} aria-pressed={selected.contentElements?.includes(element.value)} onClick={() => toggleContentElement(element.value)}>{element.label}</button>)}
-                </div>
-              </Field>
-              <div className="selected-block-actions">
-                <MetisButton type="bordered" size="s" icon={<ArrowUp size={13} />} disabled={locked} onClick={() => props.onMove(-1)}>上移</MetisButton>
-                <MetisButton type="bordered" size="s" icon={<ArrowDown size={13} />} disabled={locked} onClick={() => props.onMove(1)}>下移</MetisButton>
-                <MetisButton type="bordered" size="s" icon={<Scissors size={13} />} disabled={locked || !questionBlock} onClick={props.onSplit}>分割</MetisButton>
-                <MetisButton type="bordered" size="s" icon={<Combine size={13} />} disabled={locked || !questionBlock} onClick={props.onMerge}>合并</MetisButton>
-                <MetisButton type="borderless" size="s" danger icon={<Trash2 size={13} />} disabled={locked} onClick={props.onDelete}>删除</MetisButton>
-              </div>
             </div>
           </details>
         )}

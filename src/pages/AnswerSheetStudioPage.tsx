@@ -7,17 +7,20 @@ import { downloadAnnotatedAnswerSheet } from '../features/answer-sheet/export'
 import {
   consolidateBlocks,
   mergeObjectiveModules,
+  mergeSelectedBlocks,
   mergeWithNext,
   moveBlock as moveBlockOperation,
   renumberQuestionBlocks,
   reorderBlock,
   splitBlock,
+  splitMergedBlock,
 } from '../features/answer-sheet/operations'
 import type {
   AnswerBlock,
   AnswerBlockKind,
   AnswerSheetDocument,
   AnswerSheetSettings,
+  ContentElement,
   DraftSnapshot,
   PublishedVersion,
 } from '../features/answer-sheet/types'
@@ -35,7 +38,7 @@ function cloneDefaultDocument(): AnswerSheetDocument {
       ...defaultAnswerSheetDocument.paper,
       sections: defaultAnswerSheetDocument.paper.sections.map((section) => ({ ...section })),
     },
-    blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block, contentElements: block.contentElements ? [...block.contentElements] : undefined })),
+    blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block, locked: false, contentElements: block.contentElements ? [...block.contentElements] : undefined })),
     settings: {
       ...defaultAnswerSheetDocument.settings,
       identityFields: [...defaultAnswerSheetDocument.settings.identityFields],
@@ -290,6 +293,34 @@ export function AnswerSheetStudioPage() {
 
   const updateSelected = (patch: Partial<AnswerBlock>) => updateBlock(selectedBlockId, patch)
 
+  const toggleBlockContent = (blockId: string, element: ContentElement) => {
+    const block = blocks.find((item) => item.id === blockId)
+    if (!block || block.kind === 'objective') return
+    const current = block.contentElements ?? []
+    updateBlock(blockId, { contentElements: current.includes(element) ? current.filter((item) => item !== element) : [...current, element] })
+  }
+
+  const mergeCanvasBlocks = (ids: string[]) => {
+    const next = mergeSelectedBlocks(blocks, ids)
+    if (next === blocks) {
+      MetisMessage.info('只能合并同页、题号有效且未锁定的题块')
+      return
+    }
+    commitBlocks(next)
+    const merged = next.find((block) => block.id === ids[0])
+    if (merged) setSelectedBlockId(merged.id)
+    MetisMessage.success('题块已合并，可在画布中随时切割恢复')
+  }
+
+  const splitCanvasBlock = (id: string) => {
+    const next = splitMergedBlock(blocks, id)
+    if (next === blocks) return
+    commitBlocks(next)
+    const first = next.find((block) => block.id === id)
+    if (first) setSelectedBlockId(first.id)
+    MetisMessage.success('已恢复合并前的题块')
+  }
+
   const updateTitle = (title: string) => {
     if (title === paper.title) return
     commitDocument({ ...document, paper: { ...paper, title } })
@@ -405,6 +436,10 @@ export function AnswerSheetStudioPage() {
               onMerge={mergeSelected}
               onConsolidate={consolidate}
               onMergeObjectiveModules={mergeObjectiveBlocks}
+              onResizeBlock={(id, height) => updateBlock(id, { height })}
+              onToggleBlockContent={toggleBlockContent}
+              onMergeBlocks={mergeCanvasBlocks}
+              onSplitMerged={splitCanvasBlock}
               printDocument={printDocument}
         />
       </div>

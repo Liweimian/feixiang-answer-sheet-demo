@@ -311,3 +311,48 @@ export function mergeObjectiveModules(blocks: AnswerBlock[]): AnswerBlock[] {
 
   return changed ? next : blocks
 }
+
+/** Merge an explicit same-page, same-kind selection and keep its source parts reversible. */
+export function mergeSelectedBlocks(blocks: AnswerBlock[], ids: string[]): AnswerBlock[] {
+  const selectedIds = new Set(ids)
+  const selected = blocks.filter((block) => selectedIds.has(block.id))
+  if (selected.length < 2 || selected.some((block) => block.locked || !isQuestionBlockKind(block.kind))) return blocks
+  const first = selected[0]
+  if (selected.some((block) => block.page !== first.page)) return blocks
+
+  const parsed = selected.map((block) => parseQuestionRange(block.range))
+  if (parsed.some((range) => !range.valid || range.numbers.length === 0)) return blocks
+  const numbers = parsed.flatMap((range) => range.numbers)
+  if (new Set(numbers).size !== numbers.length) return blocks
+
+  const selectedIndexes = selected.map((block) => blocks.findIndex((item) => item.id === block.id))
+  const insertionIndex = Math.min(...selectedIndexes)
+  const scoreValues = selected.map((block) => block.score)
+  const merged: AnswerBlock = {
+    ...first,
+    kind: selected.every((block) => block.kind === first.kind) ? first.kind : 'mixed',
+    title: selected.map((block) => block.title).join(' / '),
+    range: formatQuestionRange(numbers),
+    score: scoreValues.every((score) => Number.isFinite(score))
+      ? roundScore(scoreValues.reduce<number>((sum, score) => sum + Number(score), 0))
+      : undefined,
+    height: selected.reduce((sum, block) => sum + block.height, 0),
+    lineCount: selected.every((block) => Number.isFinite(block.lineCount))
+      ? selected.reduce((sum, block) => sum + Number(block.lineCount), 0)
+      : first.lineCount,
+    contentElements: [...new Set(selected.flatMap((block) => block.contentElements ?? []))],
+    mergedParts: selected.map((block) => ({ ...block, contentElements: block.contentElements ? [...block.contentElements] : undefined })),
+  }
+  const remaining = blocks.filter((block) => !selectedIds.has(block.id))
+  const beforeCount = blocks.slice(0, insertionIndex).filter((block) => !selectedIds.has(block.id)).length
+  return [...remaining.slice(0, beforeCount), merged, ...remaining.slice(beforeCount)]
+}
+
+/** Restore a block that was produced by mergeSelectedBlocks. */
+export function splitMergedBlock(blocks: AnswerBlock[], id: string): AnswerBlock[] {
+  const index = blocks.findIndex((block) => block.id === id)
+  const block = blocks[index]
+  if (!block?.mergedParts?.length) return blocks
+  const restored = block.mergedParts.map((part) => ({ ...part, mergedParts: undefined, contentElements: part.contentElements ? [...part.contentElements] : undefined }))
+  return [...blocks.slice(0, index), ...restored, ...blocks.slice(index + 1)]
+}

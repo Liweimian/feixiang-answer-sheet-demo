@@ -87,6 +87,7 @@ export interface AnswerBlock {
   scoreStep?: number
   locked?: boolean
   hint?: string
+  mergedParts?: AnswerBlock[]
 }
 
 export interface AnswerSheetSettings {

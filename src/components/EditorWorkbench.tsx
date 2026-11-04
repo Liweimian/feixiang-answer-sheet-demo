@@ -3,6 +3,7 @@ import type {
   AnswerBlockKind,
   AnswerSheetDocument,
   AnswerSheetSettings,
+  ContentElement,
   RulePack,
 } from '../features/answer-sheet/types'
 import { AnswerSheetCanvas } from './AnswerSheetCanvas'
@@ -31,6 +32,10 @@ interface EditorWorkbenchProps {
   onMerge: () => void
   onConsolidate: (kind: 'objective' | 'subjective') => void
   onMergeObjectiveModules: () => void
+  onResizeBlock: (id: string, height: number) => void
+  onToggleBlockContent: (id: string, element: ContentElement) => void
+  onMergeBlocks: (ids: string[]) => void
+  onSplitMerged: (id: string) => void
 }
 
 export function EditorWorkbench(props: EditorWorkbenchProps) {
@@ -49,15 +54,7 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           onPageChange={props.onPageChange}
           onSelect={props.onSelect}
           onUpdateBlock={props.onUpdate}
-          onMove={(direction) => props.onMove(props.selectedBlockId, direction)}
-          onReorder={props.onReorder}
-          onDelete={props.onDelete}
           onAdd={props.onAdd}
-          onRenumber={props.onRenumber}
-          onSplit={props.onSplit}
-          onMerge={props.onMerge}
-          onConsolidate={props.onConsolidate}
-          onMergeObjectiveModules={props.onMergeObjectiveModules}
         />
         <AnswerSheetCanvas
           paper={paper}
@@ -72,6 +69,11 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           onSelectBlock={props.onSelect}
           onTitleCommit={props.onTitleCommit}
           onBlockTitleCommit={props.onBlockTitleCommit}
+          onResizeBlock={props.onResizeBlock}
+          onToggleBlockContent={props.onToggleBlockContent}
+          onReorderBlock={props.onReorder}
+          onMergeBlocks={props.onMergeBlocks}
+          onSplitMerged={props.onSplitMerged}
           printDocument={props.printDocument}
           printRulePack={printRulePack}
         />
