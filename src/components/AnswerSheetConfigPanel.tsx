@@ -160,10 +160,12 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           />
         </section>
 
-        <section className="config-flat-section">
-          <div className="config-flat-title">考生信息</div>
+        <section className="config-flat-section candidate-info-section">
+          <div className="candidate-info-row">
+            <div className="config-flat-title">考生信息</div>
+            <div className="candidate-field-options">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field === '学校' ? '学校名称' : field}</MetisCheckbox>)}</div>
+          </div>
           <div className="config-flat-body">
-            <div className="config-check-list">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field}</MetisCheckbox>)}</div>
             {settings.identityFields.includes('准考证号') && <Field label="考号呈现">
               <div className="config-check-list">{candidateLayoutOptions.map((option) => (
                 <MetisCheckbox key={option.value} checked={settings.candidateNumberLayouts.includes(option.value)} onChange={() => toggleCandidateLayout(option.value)}>{option.label}</MetisCheckbox>
