@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { MetisDropdown } from '@yuanfudao/metis-web-component'
+import { MetisDropdown, MetisInputNumber } from '@yuanfudao/metis-web-component'
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Scissors, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type ObjectiveSortMode } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
@@ -59,13 +59,14 @@ function AnswerMarks({ block }: { block: AnswerBlock }) {
   return <div className="answer-marks">{numbers.map((number) => <span key={number}><b>{number}.</b>{mark}</span>)}</div>
 }
 
-function GridPaper({ rows = 8, variant = 'grid' }: { rows?: number; variant?: 'grid' | 'tian' | 'mi' }) {
-  return <div className={`writing-grid writing-grid-${variant}`}>{Array.from({ length: Math.max(12, rows * 12) }, (_, index) => <i key={index} />)}</div>
+function GridPaper({ rows = 8, cells, variant = 'grid' }: { rows?: number; cells?: number; variant?: 'grid' | 'tian' | 'mi' }) {
+  const count = Math.max(12, Math.min(2000, cells ?? rows * 12))
+  return <div className={`writing-grid writing-grid-${variant} ${cells ? 'writing-grid-composition' : ''}`}>{Array.from({ length: count }, (_, index) => <i key={index} />)}</div>
 }
 
 function ShortAnswerContent({ block }: { block: AnswerBlock }) {
   if (block.responseStyle === 'bracket' || block.responseStyle === 'square') return <AnswerMarks block={block} />
-  if (block.responseStyle === 'grid' || block.responseStyle === 'tian' || block.responseStyle === 'mi') return <GridPaper rows={Math.max(4, block.lineCount ?? 4)} variant={block.responseStyle === 'grid' ? 'grid' : block.responseStyle} />
+  if (block.responseStyle === 'grid' || block.responseStyle === 'tian' || block.responseStyle === 'mi') return <GridPaper rows={Math.max(4, block.lineCount ?? 4)} cells={block.responseStyle === 'grid' ? block.wordCount : undefined} variant={block.responseStyle === 'grid' ? 'grid' : block.responseStyle} />
   if (block.responseStyle === 'four-line') return <div className="four-line-grid">{Array.from({ length: Math.max(2, block.lineCount ?? 4) }, (_, index) => <span key={index}>{Array.from({ length: 4 }, (_, line) => <i key={line} />)}</span>)}</div>
   if (block.responseStyle === 'blank') return <div className="blank-response-area" />
   const count = block.lineCount ?? 4
@@ -211,6 +212,10 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       onUpdateBlock?.({ contentText: `${block.contentText ?? ''}Ω、√、∠`.trim() })
       return
     }
+    if (key === 'composition-grid') {
+      onUpdateBlock?.({ responseStyle: 'grid', wordCount: block.wordCount ?? 600 })
+      return
+    }
     onUpdateBlock?.({ responseStyle: key as AnswerBlock['responseStyle'] })
   }
 
@@ -258,12 +263,27 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
                   { key: 'tian', label: '田字格' },
                   { key: 'mi', label: '米字格' },
                   { key: 'four-line', label: '四线三格' },
+                  { key: 'composition-grid', label: '作文格' },
                 ],
                 onClick: ({ key }) => insertContent(String(key)),
               }}
             >
               <button type="button"><Plus size={12} /> 插入 <ChevronDown size={11} /></button>
             </MetisDropdown>
+            {block.responseStyle === 'grid' && block.wordCount && (
+              <label className="composition-count-control">
+                <span>字数</span>
+                <MetisInputNumber
+                  size="small"
+                  min={100}
+                  max={2000}
+                  step={50}
+                  value={block.wordCount}
+                  addonAfter="字"
+                  onChange={(value) => onUpdateBlock?.({ wordCount: Number(value ?? 600) })}
+                />
+              </label>
+            )}
           </>}
           {block.mergedParts?.length && onSplitMerged && <button type="button" onClick={onSplitMerged}><Scissors size={12} /> 切割</button>}
         </div>
@@ -342,7 +362,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       {block.kind === 'essay' && (
         <div className={`essay-area ${block.writingLayout === 'separate' ? 'essay-separated' : ''}`}>
           <p>{block.hint ?? '请在指定区域内完成作文或综合作答，超出区域的答案无效。'}</p>
-          {block.responseStyle === 'grid' ? <GridPaper rows={block.lineCount ?? 10} /> : block.writingLayout === 'separate' ? (
+          {block.responseStyle === 'grid' ? <GridPaper rows={block.lineCount ?? 10} cells={block.wordCount} /> : block.writingLayout === 'separate' ? (
             <div className="essay-choice-areas">
               <section><b>选项 A 作答区</b><RuledLines dashed={block.lineStyle === 'dashed'} count={Math.max(4, Math.floor((block.lineCount ?? 12) / 2))} /></section>
               <section><b>选项 B 作答区</b><RuledLines dashed={block.lineStyle === 'dashed'} count={Math.max(4, Math.floor((block.lineCount ?? 12) / 2))} /></section>

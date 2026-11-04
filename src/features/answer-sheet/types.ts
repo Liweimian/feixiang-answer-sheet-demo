@@ -80,6 +80,7 @@ export interface AnswerBlock {
   canvasY?: number
   canvasWidth?: number
   lineCount?: number
+  wordCount?: number
   optionCount?: 4 | 5
   itemsPerColumn?: number
   objectiveLayout?: ObjectiveLayout
