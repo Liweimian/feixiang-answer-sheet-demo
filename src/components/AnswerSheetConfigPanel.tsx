@@ -68,10 +68,21 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const [candidatePreset, setCandidatePreset] = useState<'quiz' | 'exam'>('quiz')
 
   const toggleIdentity = (field: IdentityField) => {
+    const enabling = !settings.identityFields.includes(field)
     const next = settings.identityFields.includes(field)
       ? settings.identityFields.filter((item) => item !== field)
       : [...settings.identityFields, field]
-    props.onSettingsChange({ identityFields: next })
+    props.onSettingsChange({
+      identityFields: next,
+      ...(field === '准考证号'
+        ? {
+            candidateNumberType: enabling ? '准考证号' : '学号',
+            candidateNumberLayouts: enabling
+              ? settings.candidateNumberLayouts.length ? settings.candidateNumberLayouts : ['fill']
+              : [],
+          }
+        : {}),
+    })
   }
 
   const toggleCandidateLayout = (layout: CandidateNumberLayout) => {
@@ -137,31 +148,16 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             <Field label="身份字段">
               <div className="config-check-list">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field}</MetisCheckbox>)}</div>
             </Field>
-            {settings.candidateNumberType === '准考证号' && <Field label="考号呈现">
+            {settings.identityFields.includes('准考证号') && <Field label="考号呈现">
               <div className="config-check-list">{candidateLayoutOptions.map((option) => (
                 <MetisCheckbox key={option.value} checked={settings.candidateNumberLayouts.includes(option.value)} onChange={() => toggleCandidateLayout(option.value)}>{option.label}</MetisCheckbox>
               ))}</div>
             </Field>}
-            <div className="config-grid-two">
-              <Field label="考号类型">
-                <MetisSelect
-                  value={settings.candidateNumberType}
-                  options={['准考证号', '学籍号', '学号', '考号'].map((value) => ({ value, label: value }))}
-                  onChange={(value) => {
-                    const candidateNumberType = value as AnswerSheetSettings['candidateNumberType']
-                    props.onSettingsChange({
-                      candidateNumberType,
-                      candidateNumberLayouts: candidateNumberType === '准考证号'
-                        ? settings.candidateNumberLayouts.length ? settings.candidateNumberLayouts : ['fill']
-                        : [],
-                    })
-                  }}
-                />
-              </Field>
+            {settings.identityFields.includes('准考证号') && <div className="config-grid-two">
               <Field label="考号位数">
                 <MetisInputNumber className="config-number" value={settings.candidateNumberDigits} min={4} max={18} addonAfter="位" onChange={(value) => props.onSettingsChange({ candidateNumberDigits: Number(value ?? 10) })} />
               </Field>
-            </div>
+            </div>}
           </div>
         </section>
 

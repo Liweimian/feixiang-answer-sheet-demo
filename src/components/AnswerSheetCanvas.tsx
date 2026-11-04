@@ -56,7 +56,7 @@ interface PaperPageProps {
 }
 
 function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
-  if (settings.candidateNumberType !== '准考证号') return null
+  if (!settings.identityFields.includes('准考证号')) return null
   const label = `${settings.candidateNumberType}（${settings.candidateNumberDigits} 位）`
   return <>{settings.candidateNumberLayouts.map((layout) => {
     if (layout === 'barcode') return <div key={layout} className="barcode-box"><span>{label}条形码粘贴处</span><div className="barcode-lines" /></div>
