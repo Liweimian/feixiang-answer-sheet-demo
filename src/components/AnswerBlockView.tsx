@@ -237,7 +237,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
             <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'tian' })}>田字格</button>
             <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'mi' })}>米字格</button>
             <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'four-line' })}>四线三格</button>
-            <button type="button" title="插入符号"><Braces size={12} /> 符号</button>
+            <button type="button" title="插入符号" onClick={() => onUpdateBlock?.({ contentText: `${block.contentText ?? ''}Ω、√、∠`.trim() })}><Braces size={12} /> 符号</button>
           </>}
           {block.mergedParts?.length && onSplitMerged && <button type="button" onClick={onSplitMerged}><Scissors size={12} /> 切割</button>}
         </div>
