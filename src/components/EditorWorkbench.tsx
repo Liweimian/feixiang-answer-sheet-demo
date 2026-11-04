@@ -35,6 +35,10 @@ interface EditorWorkbenchProps {
   onMoveBlock: (id: string, x: number, y: number) => void
   onResizeBlock: (id: string, height: number, width: number) => void
   onToggleBlockContent: (id: string, element: ContentElement) => void
+  onUpdateCanvasBlock: (id: string, patch: Partial<AnswerBlock>) => void
+  onInsertAfter: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => void
+  onUndo: () => void
+  onRedo: () => void
   onMergeBlocks: (ids: string[]) => void
   onSplitMerged: (id: string) => void
 }
@@ -73,6 +77,10 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           onMoveBlock={props.onMoveBlock}
           onResizeBlock={props.onResizeBlock}
           onToggleBlockContent={props.onToggleBlockContent}
+          onUpdateBlock={props.onUpdateCanvasBlock}
+          onInsertAfter={props.onInsertAfter}
+          onUndo={props.onUndo}
+          onRedo={props.onRedo}
           onMergeBlocks={props.onMergeBlocks}
           onSplitMerged={props.onSplitMerged}
           printDocument={props.printDocument}

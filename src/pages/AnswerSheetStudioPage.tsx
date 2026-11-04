@@ -198,6 +198,7 @@ export function AnswerSheetStudioPage() {
       drawing: '新增作图区',
       table: '新增表格区',
       notice: '作答说明',
+      'response-area': '新增作答组件',
     }
     const nextBlock: AnswerBlock = {
       id: `${kind}-${Date.now()}`,
@@ -321,6 +322,31 @@ export function AnswerSheetStudioPage() {
     MetisMessage.success('已恢复合并前的题块')
   }
 
+  const insertAfterBlock = (afterId: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => {
+    const anchorIndex = blocks.findIndex((block) => block.id === afterId)
+    const anchor = blocks[anchorIndex]
+    if (!anchor) return
+    const title = kind === 'forbidden' ? '禁答区' : responseStyle === 'blank' ? '空行' : responseStyle === 'tian' ? '田字格作答区' : responseStyle === 'mi' ? '米字格作答区' : responseStyle === 'four-line' ? '四线三格作答区' : '作答横线'
+    const inserted: AnswerBlock = {
+      id: `insert-${kind}-${Date.now()}`,
+      page: anchor.page,
+      title,
+      kind,
+      height: kind === 'forbidden' ? 72 : 100,
+      lineCount: 4,
+      responseStyle,
+      showScore: false,
+      showQuestionCount: false,
+      canvasX: anchor.canvasX,
+      canvasY: (anchor.canvasY ?? 0) + anchor.height + 8,
+      canvasWidth: anchor.canvasWidth,
+    }
+    const next = [...blocks.slice(0, anchorIndex + 1), inserted, ...blocks.slice(anchorIndex + 1)]
+    commitBlocks(next)
+    setSelectedBlockId(inserted.id)
+    MetisMessage.success(`已在当前模块后插入${title}`)
+  }
+
   const updateTitle = (title: string) => {
     if (title === paper.title) return
     commitDocument({ ...document, paper: { ...paper, title } })
@@ -439,6 +465,10 @@ export function AnswerSheetStudioPage() {
               onMoveBlock={(id, canvasX, canvasY) => updateBlock(id, { canvasX, canvasY })}
               onResizeBlock={(id, height, canvasWidth) => updateBlock(id, { height, canvasWidth })}
               onToggleBlockContent={toggleBlockContent}
+              onUpdateCanvasBlock={updateBlock}
+              onInsertAfter={insertAfterBlock}
+              onUndo={undo}
+              onRedo={redo}
               onMergeBlocks={mergeCanvasBlocks}
               onSplitMerged={splitCanvasBlock}
               printDocument={printDocument}

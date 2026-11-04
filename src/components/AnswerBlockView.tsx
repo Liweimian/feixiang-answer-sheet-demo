@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { GripVertical, Image, LockKeyhole, Pencil, Scissors, Sigma, Table2 } from 'lucide-react'
-import { isQuestionBlockKind, type AnswerBlock, type ContentElement } from '../features/answer-sheet/types'
+import { AlignCenter, AlignLeft, AlignRight, Bold, Braces, GripVertical, Image, Italic, LockKeyhole, Pencil, Plus, Redo2, Scissors, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
+import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
 
 interface AnswerBlockViewProps {
@@ -14,6 +14,10 @@ interface AnswerBlockViewProps {
   onMoveCommit?: (x: number, y: number) => void
   onResizeCommit?: (height: number, width: number) => void
   onToggleContent?: (element: ContentElement) => void
+  onUpdateBlock?: (patch: Partial<AnswerBlock>) => void
+  onInsertAfter?: (kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => void
+  onUndo?: () => void
+  onRedo?: () => void
   onSplitMerged?: () => void
   questionAnswer?: boolean
   questionContext?: string
@@ -49,13 +53,14 @@ function AnswerMarks({ block }: { block: AnswerBlock }) {
   return <div className="answer-marks">{numbers.map((number) => <span key={number}><b>{number}.</b>{mark}</span>)}</div>
 }
 
-function GridPaper({ rows = 8 }: { rows?: number }) {
-  return <div className="writing-grid">{Array.from({ length: Math.max(12, rows * 12) }, (_, index) => <i key={index} />)}</div>
+function GridPaper({ rows = 8, variant = 'grid' }: { rows?: number; variant?: 'grid' | 'tian' | 'mi' }) {
+  return <div className={`writing-grid writing-grid-${variant}`}>{Array.from({ length: Math.max(12, rows * 12) }, (_, index) => <i key={index} />)}</div>
 }
 
 function ShortAnswerContent({ block }: { block: AnswerBlock }) {
   if (block.responseStyle === 'bracket' || block.responseStyle === 'square') return <AnswerMarks block={block} />
-  if (block.responseStyle === 'grid') return <GridPaper rows={Math.max(4, block.lineCount ?? 4)} />
+  if (block.responseStyle === 'grid' || block.responseStyle === 'tian' || block.responseStyle === 'mi') return <GridPaper rows={Math.max(4, block.lineCount ?? 4)} variant={block.responseStyle === 'grid' ? 'grid' : block.responseStyle} />
+  if (block.responseStyle === 'four-line') return <div className="four-line-grid">{Array.from({ length: Math.max(2, block.lineCount ?? 4) }, (_, index) => <span key={index}>{Array.from({ length: 4 }, (_, line) => <i key={line} />)}</span>)}</div>
   if (block.responseStyle === 'blank') return <div className="blank-response-area" />
   const count = block.lineCount ?? 4
   const numbers = questionNumbers(block.range)
@@ -90,7 +95,7 @@ function ScoreBox({ block }: { block: AnswerBlock }) {
   return <div className="score-box"><b>评分栏</b>{Array.from({ length: cells }, (_, index) => <span key={index} />)}</div>
 }
 
-export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onSplitMerged, questionAnswer = false, questionContext }: AnswerBlockViewProps) {
+export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onSplitMerged, questionAnswer = false, questionContext }: AnswerBlockViewProps) {
   const [resizeHeight, setResizeHeight] = useState(block.height)
   const [draftLayout, setDraftLayout] = useState(layout)
   const style = {
@@ -212,11 +217,40 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       {selected && (block.kind !== 'objective' || block.mergedParts?.length) && (
         <div className="block-floating-tools" onClick={(event) => event.stopPropagation()}>
           {block.kind !== 'objective' && onToggleContent && <>
+            <button type="button" onClick={onUndo} title="撤销"><Undo2 size={12} /></button>
+            <button type="button" onClick={onRedo} title="重做"><Redo2 size={12} /></button>
+            <button type="button" onClick={() => onUpdateBlock?.({ fontSize: block.fontSize === 'small' ? 'medium' : block.fontSize === 'medium' ? 'large' : 'small' })}>字号：{block.fontSize === 'large' ? '大' : block.fontSize === 'small' ? '小' : '中'}</button>
+            <button type="button" onClick={() => onUpdateBlock?.({ lineSpacing: block.lineSpacing === 'compact' ? 'normal' : block.lineSpacing === 'normal' ? 'loose' : 'compact' })}>行距：{block.lineSpacing === 'loose' ? '宽' : block.lineSpacing === 'compact' ? '窄' : '标准'}</button>
+            <button type="button" aria-pressed={block.textBold} onClick={() => onUpdateBlock?.({ textBold: !block.textBold })} title="粗体"><Bold size={12} /></button>
+            <button type="button" aria-pressed={block.textItalic} onClick={() => onUpdateBlock?.({ textItalic: !block.textItalic })} title="斜体"><Italic size={12} /></button>
+            <button type="button" aria-pressed={block.textUnderline} onClick={() => onUpdateBlock?.({ textUnderline: !block.textUnderline })} title="下划线"><Underline size={12} /></button>
+            <button type="button" aria-pressed={block.textScript === 'sub'} onClick={() => onUpdateBlock?.({ textScript: block.textScript === 'sub' ? 'normal' : 'sub' })}>x₂</button>
+            <button type="button" aria-pressed={block.textScript === 'super'} onClick={() => onUpdateBlock?.({ textScript: block.textScript === 'super' ? 'normal' : 'super' })}>x²</button>
+            <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'left' })} title="左对齐"><AlignLeft size={12} /></button>
+            <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'center' })} title="居中"><AlignCenter size={12} /></button>
+            <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'right' })} title="右对齐"><AlignRight size={12} /></button>
             <button type="button" aria-pressed={block.contentElements?.includes('table')} onClick={() => onToggleContent('table')}><Table2 size={12} /> 表格</button>
             <button type="button" aria-pressed={block.contentElements?.includes('formula')} onClick={() => onToggleContent('formula')}><Sigma size={12} /> 公式</button>
             <button type="button" aria-pressed={block.contentElements?.includes('image')} onClick={() => onToggleContent('image')}><Image size={12} /> 图片</button>
+            <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'lines' })}>横线</button>
+            <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'bracket' })}>括号</button>
+            <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'tian' })}>田字格</button>
+            <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'mi' })}>米字格</button>
+            <button type="button" onClick={() => onUpdateBlock?.({ responseStyle: 'four-line' })}>四线三格</button>
+            <button type="button" title="插入符号"><Braces size={12} /> 符号</button>
           </>}
           {block.mergedParts?.length && onSplitMerged && <button type="button" onClick={onSplitMerged}><Scissors size={12} /> 切割</button>}
+        </div>
+      )}
+      {selected && onInsertAfter && (
+        <div className="block-insert-tools" onClick={(event) => event.stopPropagation()}>
+          <span><Plus size={11} /> 在模块后插入</span>
+          <button type="button" onClick={() => onInsertAfter('response-area', 'blank')}>空行</button>
+          <button type="button" onClick={() => onInsertAfter('forbidden')}>禁答区</button>
+          <button type="button" onClick={() => onInsertAfter('response-area', 'lines')}>作答横线</button>
+          <button type="button" onClick={() => onInsertAfter('response-area', 'tian')}>田字格</button>
+          <button type="button" onClick={() => onInsertAfter('response-area', 'mi')}>米字格</button>
+          <button type="button" onClick={() => onInsertAfter('response-area', 'four-line')}>四线三格</button>
         </div>
       )}
       <span className="answer-block-heading">
@@ -258,7 +292,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
         {locked && <span><LockKeyhole size={11} /> 已锁定</span>}
       </span>
 
-      {block.contentText && !['notice', 'forbidden'].includes(block.kind) && <p className="block-custom-text">{block.contentText}</p>}
+      {block.contentText && !['notice', 'forbidden'].includes(block.kind) && <p className={`block-custom-text text-${block.fontSize ?? 'medium'} spacing-${block.lineSpacing ?? 'normal'}`} style={{ fontWeight: block.textBold ? 700 : undefined, fontStyle: block.textItalic ? 'italic' : undefined, textDecoration: block.textUnderline ? 'underline' : undefined, textAlign: block.textAlign ?? 'left' }}>{block.textScript === 'sub' ? <sub>{block.contentText}</sub> : block.textScript === 'super' ? <sup>{block.contentText}</sup> : block.contentText}</p>}
       {questionAnswer && isQuestionBlockKind(block.kind) && (
         <div className="question-stem-preview"><b>原卷题目</b><span>{questionContext || block.title}{block.range ? ` · ${block.range}` : ''}</span></div>
       )}
@@ -299,6 +333,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
         <div className="table-area">{Array.from({ length: 8 }, (_, index) => <span key={index} />)}</div>
       )}
       {block.kind === 'notice' && <div className="notice-area">{block.contentText || '请在指定区域内作答，超出边框的答案无效。'}</div>}
+      {block.kind === 'response-area' && <ShortAnswerContent block={block} />}
       {!locked && onResizeCommit && <button type="button" className="block-resize-handle" aria-label={`调整${block.title}宽度和高度`} onPointerDown={beginResize} onClick={(event) => event.stopPropagation()} />}
     </div>
   )

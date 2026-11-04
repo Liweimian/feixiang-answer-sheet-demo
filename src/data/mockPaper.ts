@@ -169,4 +169,5 @@ export const blockKindLabels: Record<AnswerBlock['kind'], string> = {
   drawing: '作图区',
   table: '表格区',
   notice: '说明文字',
+  'response-area': '作答组件',
 }

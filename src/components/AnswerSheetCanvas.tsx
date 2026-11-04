@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisButton, MetisInput } from '@yuanfudao/metis-web-component'
 import { Combine, LockKeyhole, Pencil } from 'lucide-react'
-import type { AnswerBlock, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, RulePack } from '../features/answer-sheet/types'
+import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, RulePack } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { questionNumbers } from '../features/answer-sheet/range'
 import { AnswerBlockView } from './AnswerBlockView'
@@ -22,6 +22,10 @@ interface AnswerSheetCanvasProps {
   onMoveBlock: (id: string, x: number, y: number) => void
   onResizeBlock: (id: string, height: number, width: number) => void
   onToggleBlockContent: (id: string, element: ContentElement) => void
+  onUpdateBlock: (id: string, patch: Partial<AnswerBlock>) => void
+  onInsertAfter: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => void
+  onUndo: () => void
+  onRedo: () => void
   onMergeBlocks: (ids: string[]) => void
   onSplitMerged: (id: string) => void
   printDocument?: AnswerSheetDocument
@@ -43,6 +47,10 @@ interface PaperPageProps {
   onMoveBlock?: (id: string, x: number, y: number) => void
   onResizeBlock?: (id: string, height: number, width: number) => void
   onToggleBlockContent?: (id: string, element: ContentElement) => void
+  onUpdateBlock?: (id: string, patch: Partial<AnswerBlock>) => void
+  onInsertAfter?: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => void
+  onUndo?: () => void
+  onRedo?: () => void
   onSplitMerged?: (id: string) => void
   onSelectionChange?: (id: string, additive: boolean) => void
 }
@@ -58,7 +66,7 @@ function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
   return <div className="candidate-fill-box"><span>{label}填涂区</span><div style={{ gridTemplateColumns: `repeat(${settings.candidateNumberDigits}, 1fr)` }}>{Array.from({ length: settings.candidateNumberDigits }, (_, index) => <i key={index}>0—9</i>)}</div></div>
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onSplitMerged, onSelectionChange }: PaperPageProps) {
+function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onSplitMerged, onSelectionChange }: PaperPageProps) {
   const standard = mode === 'standard'
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
@@ -195,6 +203,10 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
             onMoveCommit={onMoveBlock ? (x, y) => onMoveBlock(block.id, x, y) : undefined}
             onResizeCommit={onResizeBlock ? (height, width) => onResizeBlock(block.id, height, width) : undefined}
             onToggleContent={onToggleBlockContent ? (element) => onToggleBlockContent(block.id, element) : undefined}
+            onUpdateBlock={onUpdateBlock ? (patch) => onUpdateBlock(block.id, patch) : undefined}
+            onInsertAfter={onInsertAfter ? (kind, responseStyle) => onInsertAfter(block.id, kind, responseStyle) : undefined}
+            onUndo={onUndo}
+            onRedo={onRedo}
             onSplitMerged={onSplitMerged ? () => onSplitMerged(block.id) : undefined}
             questionAnswer={settings.cardStyle === 'question-answer'}
             questionContext={paper.sections.filter((section) => {
@@ -264,6 +276,10 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
             onMoveBlock={props.onMoveBlock}
             onResizeBlock={props.onResizeBlock}
             onToggleBlockContent={props.onToggleBlockContent}
+            onUpdateBlock={props.onUpdateBlock}
+            onInsertAfter={props.onInsertAfter}
+            onUndo={props.onUndo}
+            onRedo={props.onRedo}
             onSplitMerged={props.onSplitMerged}
           />
           <button type="button" className="paper-page-badge" onClick={() => props.onPageChange(props.activePage >= props.pageCount ? 1 : props.activePage + 1)} aria-label="切换下一页">{props.activePage}/{props.pageCount}</button>

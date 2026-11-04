@@ -13,7 +13,7 @@ export type CandidateNumberType = '准考证号' | '学籍号' | '学号' | '考
 export type IdentityField = '学校' | '姓名' | '班级' | '学号' | '准考证号' | '考场号' | '座位号'
 export type ObjectiveLayout = 'horizontal' | 'vertical' | 'merged'
 export type LineStyle = 'solid' | 'dashed'
-export type ResponseStyle = 'lines' | 'grid' | 'bracket' | 'square' | 'blank'
+export type ResponseStyle = 'lines' | 'grid' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
 export type ContentElement = 'table' | 'formula' | 'image'
 export type AnswerBlockKind =
   | 'objective'
@@ -24,6 +24,7 @@ export type AnswerBlockKind =
   | 'drawing'
   | 'table'
   | 'notice'
+  | 'response-area'
 
 export const questionBlockKinds: AnswerBlockKind[] = [
   'objective',
@@ -84,6 +85,13 @@ export interface AnswerBlock {
   responseStyle?: ResponseStyle
   contentText?: string
   contentElements?: ContentElement[]
+  textBold?: boolean
+  textItalic?: boolean
+  textUnderline?: boolean
+  textScript?: 'normal' | 'sub' | 'super'
+  textAlign?: 'left' | 'center' | 'right'
+  fontSize?: 'small' | 'medium' | 'large'
+  lineSpacing?: 'compact' | 'normal' | 'loose'
   showScore: boolean
   showQuestionCount?: boolean
   showScoreBox?: boolean
