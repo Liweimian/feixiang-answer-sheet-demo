@@ -222,9 +222,12 @@
 .identity-and-code { display: flex; align-items: stretch; gap: var(--fx_sp_3); }
 .identity-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--fx_sp_2) var(--fx_sp_3); padding-top: var(--fx_sp_2); }
 .identity-grid { min-width: 0; flex: 1; }
+.daily-identity-grid { grid-template-columns: 1.2fr 1.2fr 1fr; align-items: end; }
 .identity-grid span { display: flex; align-items: flex-end; gap: var(--fx_sp_1); font-size: 9px; }
 .identity-grid b { white-space: nowrap; }
 .identity-grid i { height: 1px; flex: 1; background: var(--fx_paper_ink); }
+.identity-grid .grade-class-field { gap: 3px; }
+.grade-class-field em { font-style: normal; font-weight: 700; white-space: nowrap; }
 .barcode-box { height: 48px; display: grid; align-content: center; justify-items: center; gap: var(--fx_sp_1); border: 1px solid var(--fx_paper_ink); font-size: 8px; }
 .barcode-box, .candidate-number-box, .candidate-fill-box { width: 126px; flex: 0 0 126px; box-sizing: border-box; }
 .barcode-secondary { width: 96px; flex-basis: 96px; }
@@ -233,6 +236,7 @@
 .candidate-number-box i { min-width: 0; height: 13px; display: block; border: 1px solid var(--fx_paper_rule); }
 .candidate-fill-box i { color: var(--fx_text_3); font-size: 5px; font-style: normal; writing-mode: vertical-rl; }
 .barcode-lines { width: 88px; height: 18px; background: repeating-linear-gradient(90deg, var(--fx_paper_ink) 0 1px, transparent 1px 3px, var(--fx_paper_ink) 3px 5px, transparent 5px 7px); }
+.daily-qr { width: 62px; flex: 0 0 62px; display: grid; place-items: center; color: var(--fx_paper_ink); }
 .locked-zone-label { position: absolute; top: -18px; right: 0; display: inline-flex; align-items: center; gap: 3px; color: var(--fx_brand); font-size: 8px; }
 .candidate-notice { display: grid; grid-template-columns: 34px minmax(0, 1.7fr) 34px minmax(150px, .9fr); align-items: stretch; min-height: 112px; margin-top: var(--fx_sp_2); border: 1px solid var(--fx_paper_ink); font-size: 8px; line-height: 1.55; }
 .candidate-notice > * { min-width: 0; padding: var(--fx_sp_2); }

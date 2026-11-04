@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisButton, MetisInput } from '@yuanfudao/metis-web-component'
-import { Combine, LockKeyhole, Pencil } from 'lucide-react'
+import { Combine, LockKeyhole, Pencil, QrCode } from 'lucide-react'
 import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, RulePack } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { questionNumbers } from '../features/answer-sheet/range'
@@ -91,6 +91,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
   const reviewModeLabel = settings.reviewMode === 'online' ? '网阅' : settings.reviewMode === 'manual' ? '手批' : '混合阅卷'
   const scanEnabled = settings.reviewMode !== 'manual'
   const manualScoreEnabled = settings.reviewMode !== 'online'
+  const dailyQuizIdentity = settings.identityFields.includes('学号') && !settings.identityFields.includes('准考证号')
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(paper.title)
   const cancellingTitle = useRef(false)
@@ -156,12 +157,15 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
           <p>{paper.subject}答题卡 · {reviewModeLabel} · 第 {page} 页 / 共 {pageCount} 页</p>
         </div>
         <div className="identity-and-code">
-          <div className="identity-grid">
+          <div className={`identity-grid ${dailyQuizIdentity ? 'daily-identity-grid' : ''}`}>
             {settings.identityFields.map((field) => (
-              <span key={field}><b>{field}</b><i /></span>
+              field === '班级' && dailyQuizIdentity
+                ? <span key={field} className="grade-class-field"><i /><em>年级</em><i /><em>班</em></span>
+                : <span key={field}><b>{field}</b><i /></span>
             ))}
           </div>
           <CandidateNumberArea settings={settings} />
+          {dailyQuizIdentity && <div className="daily-qr" aria-label="答题卡二维码"><QrCode size={54} strokeWidth={2.4} /></div>}
         </div>
         {(standard || scanEnabled) && <span className="locked-zone-label"><LockKeyhole size={10} /> {standard ? rulePack.shortName : '网阅定位'} · 身份与考号区</span>}
       </header>
