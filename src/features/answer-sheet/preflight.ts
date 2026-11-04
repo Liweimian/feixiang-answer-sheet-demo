@@ -79,7 +79,7 @@ export function buildPreflightChecks(
   const pageCountMatches = mode === 'smart' || safePageCount === rulePack.pageCount
   const paperSizeMatches = mode === 'smart' || settings.paperSize === rulePack.paperSize
   const standardLayoutMatches = pageCountMatches && paperSizeMatches
-  const identityReady = settings.identityFields.length > 0
+  const identityReady = settings.identityFields.length > 0 && (settings.candidateNumberType !== '准考证号' || settings.candidateNumberLayouts.length > 0)
     && settings.candidateNumberDigits >= 4
     && settings.candidateNumberDigits <= 18
 
@@ -215,7 +215,9 @@ export function buildPreflightChecks(
       label: '考生信息与考号',
       detail: !identityReady
         ? '至少保留 1 个考生信息字段，并将考号位数设置为 4–18 位'
-        : `${settings.identityFields.join('、')} · ${settings.candidateNumberType}${settings.candidateNumberDigits} 位 · ${settings.candidateNumberLayout === 'fill' ? '填涂' : settings.candidateNumberLayout === 'barcode' ? '条形码' : '手写'}`,
+        : settings.candidateNumberType === '准考证号'
+          ? `${settings.identityFields.join('、')} · ${settings.candidateNumberType}${settings.candidateNumberDigits} 位 · ${settings.candidateNumberLayouts.map((layout) => layout === 'fill' ? '填涂' : layout === 'barcode' ? '条形码' : '手写').join(' + ')}`
+          : `${settings.identityFields.join('、')} · ${settings.candidateNumberType}`,
       severity: identityReady ? 'pass' : 'blocking',
     },
     {

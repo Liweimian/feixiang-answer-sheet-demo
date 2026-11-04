@@ -41,7 +41,9 @@ function cloneDefaultDocument(): AnswerSheetDocument {
     blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block, locked: false, contentElements: block.contentElements ? [...block.contentElements] : undefined })),
     settings: {
       ...defaultAnswerSheetDocument.settings,
-      identityFields: [...defaultAnswerSheetDocument.settings.identityFields],
+      identityFields: ['学号', '姓名', '班级'],
+      candidateNumberType: '学号',
+      candidateNumberLayouts: [],
     },
   }
 }
@@ -356,6 +358,7 @@ export function AnswerSheetStudioPage() {
   const updateSettings = (patch: Partial<AnswerSheetSettings>) => {
     const nextSettings = { ...settings, ...patch }
     if (patch.identityFields) nextSettings.identityFields = [...patch.identityFields]
+    if (patch.candidateNumberLayouts) nextSettings.candidateNumberLayouts = [...patch.candidateNumberLayouts]
     commitDocument({ ...document, settings: nextSettings })
   }
 

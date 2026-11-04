@@ -108,11 +108,10 @@ export interface AnswerSheetSettings {
   printSide: PrintSide
   frontColumns: PaperColumns
   backColumns: PaperColumns
-  candidateNumberLayout: CandidateNumberLayout
+  candidateNumberLayouts: CandidateNumberLayout[]
   candidateNumberType: CandidateNumberType
   candidateNumberDigits: number
   identityFields: IdentityField[]
-  showBarcode: boolean
   showNotice: boolean
   noticeText: string
   showFooter: boolean

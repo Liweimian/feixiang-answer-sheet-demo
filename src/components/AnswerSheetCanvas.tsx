@@ -56,14 +56,13 @@ interface PaperPageProps {
 }
 
 function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
+  if (settings.candidateNumberType !== '准考证号') return null
   const label = `${settings.candidateNumberType}（${settings.candidateNumberDigits} 位）`
-  if (settings.candidateNumberLayout === 'barcode') {
-    return <div className="barcode-box"><span>{label}条形码粘贴处</span><div className="barcode-lines" /></div>
-  }
-  if (settings.candidateNumberLayout === 'handwrite') {
-    return <div className="candidate-number-box"><span>{label}手写区</span><div style={{ gridTemplateColumns: `repeat(${settings.candidateNumberDigits}, 1fr)` }}>{Array.from({ length: settings.candidateNumberDigits }, (_, index) => <i key={index} />)}</div></div>
-  }
-  return <div className="candidate-fill-box"><span>{label}填涂区</span><div style={{ gridTemplateColumns: `repeat(${settings.candidateNumberDigits}, 1fr)` }}>{Array.from({ length: settings.candidateNumberDigits }, (_, index) => <i key={index}>0—9</i>)}</div></div>
+  return <>{settings.candidateNumberLayouts.map((layout) => {
+    if (layout === 'barcode') return <div key={layout} className="barcode-box"><span>{label}条形码粘贴处</span><div className="barcode-lines" /></div>
+    if (layout === 'handwrite') return <div key={layout} className="candidate-number-box"><span>{label}手写区</span><div style={{ gridTemplateColumns: `repeat(${settings.candidateNumberDigits}, 1fr)` }}>{Array.from({ length: settings.candidateNumberDigits }, (_, index) => <i key={index} />)}</div></div>
+    return <div key={layout} className="candidate-fill-box"><span>{label}填涂区</span><div style={{ gridTemplateColumns: `repeat(${settings.candidateNumberDigits}, 1fr)` }}>{Array.from({ length: settings.candidateNumberDigits }, (_, index) => <i key={index}>0—9</i>)}</div></div>
+  })}</>
 }
 
 function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onSplitMerged, onSelectionChange }: PaperPageProps) {
@@ -163,9 +162,6 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
             ))}
           </div>
           <CandidateNumberArea settings={settings} />
-          {settings.showBarcode && settings.candidateNumberLayout !== 'barcode' && (
-            <div className="barcode-box barcode-secondary"><span>条形码粘贴处</span><div className="barcode-lines" /></div>
-          )}
         </div>
         {(standard || scanEnabled) && <span className="locked-zone-label"><LockKeyhole size={10} /> {standard ? rulePack.shortName : '网阅定位'} · 身份与考号区</span>}
       </header>
@@ -174,7 +170,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
         <div className="candidate-notice">
           <strong className="notice-vertical-title">注意事项</strong>
           <ol>
-            <li>答题前请将学号、姓名、班级填写清楚。</li>
+            <li>答题前请将{settings.identityFields.join('、')}填写清楚。</li>
             <li>客观题答题，必须使用 2B 铅笔填涂，修改时用橡皮擦干净。</li>
             <li>主观题必须使用黑色字迹签字笔书写。</li>
             <li>必须在题号对应的答题区域内作答，超出答题区域书写无效。</li>

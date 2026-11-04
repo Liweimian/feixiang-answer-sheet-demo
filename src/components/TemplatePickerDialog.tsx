@@ -172,7 +172,7 @@ export function TemplatePickerDialog(props: TemplatePickerDialogProps) {
 
             <div className="template-facts">
               <span><small>纸张与面数</small><strong>{selected.document.settings.paperSize} · {selected.document.pageCount} 面</strong></span>
-              <span><small>考号方式</small><strong>{selected.document.settings.candidateNumberLayout === 'fill' ? '填涂' : selected.document.settings.candidateNumberLayout === 'barcode' ? '条形码' : '手写'}{selected.document.settings.showBarcode ? ' + 条码区' : ''}</strong></span>
+              <span><small>考号方式</small><strong>{selected.document.settings.candidateNumberLayouts.map((layout) => layout === 'fill' ? '填涂' : layout === 'barcode' ? '条形码' : '手写').join(' + ')}</strong></span>
               <span><small>默认模式</small><strong>{selected.document.mode === 'standard' ? '大考规范' : '飞象模式'}</strong></span>
               <span><small>参考结构</small><strong>{selected.document.blocks.length ? `${selected.document.blocks.length} 个题块` : '纯空白'}</strong></span>
             </div>

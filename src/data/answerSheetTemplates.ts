@@ -17,11 +17,10 @@ function createSettings(overrides: Partial<AnswerSheetSettings> = {}): AnswerShe
     printSide: 'double',
     frontColumns: 2,
     backColumns: 2,
-    candidateNumberLayout: 'barcode',
+    candidateNumberLayouts: ['barcode'],
     candidateNumberType: '准考证号',
     candidateNumberDigits: 10,
     identityFields: ['学校', '姓名', '班级', '准考证号'],
-    showBarcode: false,
     showNotice: true,
     noticeText: defaultNotice,
     showFooter: true,
@@ -32,6 +31,7 @@ function createSettings(overrides: Partial<AnswerSheetSettings> = {}): AnswerShe
     ...defaults,
     ...overrides,
     identityFields: overrides.identityFields ? [...overrides.identityFields] : [...defaults.identityFields],
+    candidateNumberLayouts: overrides.candidateNumberLayouts ? [...overrides.candidateNumberLayouts] : [...defaults.candidateNumberLayouts],
   }
 }
 
@@ -158,7 +158,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
     columns: 2,
     identityMode: 'both',
     highlights: ['扫描安全区锁定', '短答与作文专用区', '印前规则校验'],
-    document: { paper: beijingEnglishPaper, blocks: initialAnswerBlocks, settings: createSettings({ candidateNumberLayout: 'fill', showBarcode: true, linkedPaperId: beijingEnglishPaper.id }), mode: 'standard', rulePackId: 'beijing-middle-2026', templateId: 'beijing-english-standard', pageCount: 2 },
+    document: { paper: beijingEnglishPaper, blocks: initialAnswerBlocks, settings: createSettings({ candidateNumberLayouts: ['fill', 'barcode'], linkedPaperId: beijingEnglishPaper.id }), mode: 'standard', rulePackId: 'beijing-middle-2026', templateId: 'beijing-english-standard', pageCount: 2 },
   },
   {
     id: 'shenzhen-physchem-standard',
@@ -179,7 +179,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
         printSide: 'double',
         frontColumns: 2,
         backColumns: 2,
-        candidateNumberLayout: 'barcode',
+        candidateNumberLayouts: ['barcode', 'handwrite'],
         candidateNumberType: '考号',
         identityFields: ['姓名', '准考证号', '考场号', '座位号'],
         linkedPaperId: shenzhenPaper.id,
@@ -222,7 +222,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
         printSide: 'single',
         frontColumns: 1,
         backColumns: 1,
-        candidateNumberLayout: 'handwrite',
+        candidateNumberLayouts: ['handwrite'],
         candidateNumberType: '学号',
         identityFields: ['学校', '姓名', '班级', '学号'],
       }),
@@ -248,6 +248,7 @@ export function instantiateTemplate(template: AnswerSheetTemplate): AnswerSheetD
     settings: {
       ...template.document.settings,
       identityFields: [...template.document.settings.identityFields],
+      candidateNumberLayouts: [...template.document.settings.candidateNumberLayouts],
     },
   }
 }

@@ -16,6 +16,7 @@ import {
   type AnswerBlockKind,
   type AnswerSheetDocument,
   type AnswerSheetSettings,
+  type CandidateNumberLayout,
   type IdentityField,
 } from '../features/answer-sheet/types'
 
@@ -32,6 +33,11 @@ interface AnswerSheetConfigPanelProps {
 }
 
 const identityFields: IdentityField[] = ['学校', '姓名', '班级', '学号', '准考证号', '考场号', '座位号']
+const candidateLayoutOptions: Array<{ value: CandidateNumberLayout; label: string }> = [
+  { value: 'fill', label: '填涂' },
+  { value: 'barcode', label: '条形码' },
+  { value: 'handwrite', label: '手写' },
+]
 const addableKinds: AnswerBlockKind[] = ['objective', 'short-answer', 'essay', 'mixed', 'drawing', 'table', 'forbidden', 'notice']
 
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
@@ -59,12 +65,30 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const questionBlock = selected && isQuestionBlockKind(selected.kind)
   const blankCard = document.paper.sections.length === 0
   const [addKind, setAddKind] = useState<AnswerBlockKind>('short-answer')
+  const [candidatePreset, setCandidatePreset] = useState<'quiz' | 'exam'>('quiz')
 
   const toggleIdentity = (field: IdentityField) => {
     const next = settings.identityFields.includes(field)
       ? settings.identityFields.filter((item) => item !== field)
       : [...settings.identityFields, field]
     props.onSettingsChange({ identityFields: next })
+  }
+
+  const toggleCandidateLayout = (layout: CandidateNumberLayout) => {
+    const current = settings.candidateNumberLayouts
+    if (current.includes(layout) && current.length === 1) return
+    props.onSettingsChange({
+      candidateNumberLayouts: current.includes(layout)
+        ? current.filter((item) => item !== layout)
+        : [...current, layout],
+    })
+  }
+
+  const applyCandidatePreset = (preset: 'quiz' | 'exam') => {
+    setCandidatePreset(preset)
+    props.onSettingsChange(preset === 'quiz'
+      ? { identityFields: ['学号', '姓名', '班级'], candidateNumberType: '学号', candidateNumberLayouts: [] }
+      : { identityFields: ['学校', '姓名', '准考证号'], candidateNumberType: '准考证号', candidateNumberLayouts: ['fill', 'handwrite'] })
   }
 
   return (
@@ -102,36 +126,42 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         <section className="config-flat-section">
           <div className="config-flat-title">考生信息</div>
           <div className="config-flat-body">
+            <Field label="快捷设置">
+              <MetisRadio.Group
+                className="config-inline-options"
+                value={candidatePreset}
+                options={[{ value: 'quiz', label: '日常测验' }, { value: 'exam', label: '大型考试' }]}
+                onChange={(event) => applyCandidatePreset(event.target.value as 'quiz' | 'exam')}
+              />
+            </Field>
             <Field label="身份字段">
               <div className="config-check-list">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field}</MetisCheckbox>)}</div>
             </Field>
-            <Field label="考号版式">
-              <MetisRadio.Group
-                className="config-inline-options"
-                value={settings.candidateNumberLayout}
-                options={[{ value: 'fill', label: '填涂' }, { value: 'barcode', label: '条形码' }, { value: 'handwrite', label: '手写' }]}
-                onChange={(event) => { const value = event.target.value; props.onSettingsChange({ candidateNumberLayout: value as AnswerSheetSettings['candidateNumberLayout'], ...(value === 'barcode' ? { showBarcode: false } : {}) }) }}
-              />
-            </Field>
+            {settings.candidateNumberType === '准考证号' && <Field label="考号呈现">
+              <div className="config-check-list">{candidateLayoutOptions.map((option) => (
+                <MetisCheckbox key={option.value} checked={settings.candidateNumberLayouts.includes(option.value)} onChange={() => toggleCandidateLayout(option.value)}>{option.label}</MetisCheckbox>
+              ))}</div>
+            </Field>}
             <div className="config-grid-two">
               <Field label="考号类型">
                 <MetisSelect
                   value={settings.candidateNumberType}
                   options={['准考证号', '学籍号', '学号', '考号'].map((value) => ({ value, label: value }))}
-                  onChange={(value) => props.onSettingsChange({ candidateNumberType: value as AnswerSheetSettings['candidateNumberType'] })}
+                  onChange={(value) => {
+                    const candidateNumberType = value as AnswerSheetSettings['candidateNumberType']
+                    props.onSettingsChange({
+                      candidateNumberType,
+                      candidateNumberLayouts: candidateNumberType === '准考证号'
+                        ? settings.candidateNumberLayouts.length ? settings.candidateNumberLayouts : ['fill']
+                        : [],
+                    })
+                  }}
                 />
               </Field>
               <Field label="考号位数">
                 <MetisInputNumber className="config-number" value={settings.candidateNumberDigits} min={4} max={18} addonAfter="位" onChange={(value) => props.onSettingsChange({ candidateNumberDigits: Number(value ?? 10) })} />
               </Field>
             </div>
-            <ToggleField
-              title="附加条形码粘贴区"
-              description={settings.candidateNumberLayout === 'barcode' ? '条形码版式已自带粘贴区' : '可与填涂或手写考号并存'}
-              checked={settings.showBarcode || settings.candidateNumberLayout === 'barcode'}
-              disabled={settings.candidateNumberLayout === 'barcode'}
-              onChange={(checked) => props.onSettingsChange({ showBarcode: checked })}
-            />
           </div>
         </section>
 
