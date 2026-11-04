@@ -70,7 +70,8 @@
     "d535334 Stage 4 v1.5.14: add objective layout settings",
     "1bd8df8 Stage 4 v1.5.15: refine objective arrangement controls",
     "89cbb09 Stage 4 v1.5.16: consolidate subjective insert menu",
-    "173d2ad Stage 4 v1.5.17: replace script controls with insert shortcuts"
+    "173d2ad Stage 4 v1.5.17: replace script controls with insert shortcuts",
+    "9280f48 Stage 4 v1.5.18: promote table insert shortcut"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-04T12:00:00+08:00"
