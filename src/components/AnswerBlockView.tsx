@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisDropdown } from '@yuanfudao/metis-web-component'
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Italic, LockKeyhole, Pencil, Plus, Redo2, Scissors, Sigma, Table2, Underline, Undo2, Image } from 'lucide-react'
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Scissors, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type ObjectiveSortMode } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
 
@@ -242,8 +242,9 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
             <button type="button" aria-pressed={block.textBold} onClick={() => onUpdateBlock?.({ textBold: !block.textBold })} title="粗体"><Bold size={12} /></button>
             <button type="button" aria-pressed={block.textItalic} onClick={() => onUpdateBlock?.({ textItalic: !block.textItalic })} title="斜体"><Italic size={12} /></button>
             <button type="button" aria-pressed={block.textUnderline} onClick={() => onUpdateBlock?.({ textUnderline: !block.textUnderline })} title="下划线"><Underline size={12} /></button>
-            <button type="button" aria-pressed={block.textScript === 'sub'} onClick={() => onUpdateBlock?.({ textScript: block.textScript === 'sub' ? 'normal' : 'sub' })}>x₂</button>
-            <button type="button" aria-pressed={block.textScript === 'super'} onClick={() => onUpdateBlock?.({ textScript: block.textScript === 'super' ? 'normal' : 'super' })}>x²</button>
+            <button type="button" aria-label="插入图片" aria-pressed={block.contentElements?.includes('image')} onClick={() => onToggleContent('image')} title="图片"><Image size={13} /></button>
+            <button type="button" aria-label="插入公式" aria-pressed={block.contentElements?.includes('formula')} onClick={() => onToggleContent('formula')} title="公式"><Sigma size={13} /></button>
+            <button type="button" aria-label="插入符号" onClick={() => insertContent('symbol')} title="符号"><Omega size={13} /></button>
             <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'left' })} title="左对齐"><AlignLeft size={12} /></button>
             <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'center' })} title="居中"><AlignCenter size={12} /></button>
             <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'right' })} title="右对齐"><AlignRight size={12} /></button>
@@ -251,10 +252,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
               trigger={['click']}
               menu={{
                 items: [
-                  { key: 'image', label: '图片', icon: <Image size={12} /> },
                   { key: 'table', label: '表格', icon: <Table2 size={12} /> },
-                  { key: 'formula', label: '公式', icon: <Sigma size={12} /> },
-                  { key: 'symbol', label: '符号' },
                   { type: 'divider' },
                   { key: 'lines', label: '作答横线' },
                   { key: 'bracket', label: '括号' },
