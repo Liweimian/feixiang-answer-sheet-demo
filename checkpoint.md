@@ -141,6 +141,7 @@
 - v1.5.16 主观题插入入口收敛提交：`89cbb09 Stage 4 v1.5.16: consolidate subjective insert menu`。
 - v1.5.17 主观题工具条图标替换提交：`173d2ad Stage 4 v1.5.17: replace script controls with insert shortcuts`。
 - v1.5.18 表格快捷图标提交：`9280f48 Stage 4 v1.5.18: promote table insert shortcut`。
+- v1.5.19 作文格与字数设置提交：`6dc2ff4 Stage 4 v1.5.19: add composition grid word count`。
 
 ## 下一检查点
 - 用户确认 v1.4.1 自由拖动交互后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
