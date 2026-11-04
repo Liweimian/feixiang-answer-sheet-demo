@@ -115,6 +115,7 @@
 - v1.5.10 版面设置单行提交：`a1d92ea Stage 4 v1.5.10: align layout selector inline`。
 - v1.5.11 题量与分值提交：`234f7f6 Stage 4 v1.5.11: add question and score labels`。
 - v1.5.12 注意事项显隐与样式提交：`f42e314 Stage 4 v1.5.12: separate notice visibility and style`。
+- v1.5.13 考生信息紧凑布局提交：`a7a79aa Stage 4 v1.5.13: compact candidate fields`。
 
 ## 下一检查点
 - 用户确认 v1.4.1 自由拖动交互后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
