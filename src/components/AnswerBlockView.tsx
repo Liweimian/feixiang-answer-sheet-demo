@@ -243,6 +243,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
             <button type="button" aria-pressed={block.textItalic} onClick={() => onUpdateBlock?.({ textItalic: !block.textItalic })} title="斜体"><Italic size={12} /></button>
             <button type="button" aria-pressed={block.textUnderline} onClick={() => onUpdateBlock?.({ textUnderline: !block.textUnderline })} title="下划线"><Underline size={12} /></button>
             <button type="button" aria-label="插入图片" aria-pressed={block.contentElements?.includes('image')} onClick={() => onToggleContent('image')} title="图片"><Image size={13} /></button>
+            <button type="button" aria-label="插入表格" aria-pressed={block.contentElements?.includes('table')} onClick={() => onToggleContent('table')} title="表格"><Table2 size={13} /></button>
             <button type="button" aria-label="插入公式" aria-pressed={block.contentElements?.includes('formula')} onClick={() => onToggleContent('formula')} title="公式"><Sigma size={13} /></button>
             <button type="button" aria-label="插入符号" onClick={() => insertContent('symbol')} title="符号"><Omega size={13} /></button>
             <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'left' })} title="左对齐"><AlignLeft size={12} /></button>
@@ -252,8 +253,6 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
               trigger={['click']}
               menu={{
                 items: [
-                  { key: 'table', label: '表格', icon: <Table2 size={12} /> },
-                  { type: 'divider' },
                   { key: 'lines', label: '作答横线' },
                   { key: 'bracket', label: '括号' },
                   { key: 'tian', label: '田字格' },
