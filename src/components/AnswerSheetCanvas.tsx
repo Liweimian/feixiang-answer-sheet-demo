@@ -163,7 +163,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
             ))}
           </div>
           <CandidateNumberArea settings={settings} />
-          {dailyQuizIdentity && <div className="daily-qr" aria-label="答题卡二维码"><QrCode size={54} strokeWidth={2.4} /></div>}
+          {dailyQuizIdentity && <div className="daily-qr" aria-label="答题卡二维码"><QrCode size={46} strokeWidth={2.4} /></div>}
         </div>
         {(standard || scanEnabled) && <span className="locked-zone-label"><LockKeyhole size={10} /> {standard ? rulePack.shortName : '网阅定位'} · 身份与考号区</span>}
       </header>

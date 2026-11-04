@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   MetisButton,
+  MetisCascader,
   MetisCheckbox,
   MetisInput,
   MetisInputNumber,
@@ -38,6 +39,11 @@ const candidateLayoutOptions: Array<{ value: CandidateNumberLayout; label: strin
   { value: 'barcode', label: '条形码' },
   { value: 'handwrite', label: '手写' },
 ]
+const layoutOptions = (['A3', '8K', 'A4', '16K'] as const).map((paperSize) => ({
+  value: paperSize,
+  label: paperSize,
+  children: ([1, 2, 3] as const).map((columns) => ({ value: columns, label: `${columns} 栏` })),
+}))
 const addableKinds: AnswerBlockKind[] = ['objective', 'short-answer', 'essay', 'mixed', 'drawing', 'table', 'forbidden', 'notice']
 
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
@@ -138,34 +144,24 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
 
         <section className="config-flat-section">
           <div className="config-flat-title">版面设置</div>
-          <div className="layout-setting-row">
-            <Field label="纸张">
-              <MetisSelect
-                value={settings.paperSize}
-                options={['A4', 'A3', '8K', '16K'].map((value) => ({ value, label: value }))}
-                onChange={(value) => props.onSettingsChange({ paperSize: value as AnswerSheetSettings['paperSize'] })}
-              />
-            </Field>
-            <Field label="栏数">
-              <MetisRadio.Group
-                className="config-inline-options"
-                value={settings.frontColumns}
-                options={[1, 2, 3].map((value) => ({ value, label: `${value} 栏` }))}
-                onChange={(event) => {
-                  const columns = Number(event.target.value) as 1 | 2 | 3
-                  props.onSettingsChange({ frontColumns: columns, backColumns: columns })
-                }}
-              />
-            </Field>
-          </div>
+          <MetisCascader
+            className="layout-cascader"
+            value={[settings.paperSize, settings.frontColumns]}
+            options={layoutOptions}
+            allowClear={false}
+            displayRender={() => `版面设置：${settings.paperSize} - ${settings.frontColumns}栏`}
+            onChange={(value) => {
+              const [paperSize, rawColumns] = value as [AnswerSheetSettings['paperSize'], number]
+              const columns = Number(rawColumns) as 1 | 2 | 3
+              props.onSettingsChange({ paperSize, frontColumns: columns, backColumns: columns })
+            }}
+          />
         </section>
 
         <section className="config-flat-section">
           <div className="config-flat-title">考生信息</div>
           <div className="config-flat-body">
-            <Field label="身份字段">
-              <div className="config-check-list">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field}</MetisCheckbox>)}</div>
-            </Field>
+            <div className="config-check-list">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field}</MetisCheckbox>)}</div>
             {settings.identityFields.includes('准考证号') && <Field label="考号呈现">
               <div className="config-check-list">{candidateLayoutOptions.map((option) => (
                 <MetisCheckbox key={option.value} checked={settings.candidateNumberLayouts.includes(option.value)} onChange={() => toggleCandidateLayout(option.value)}>{option.label}</MetisCheckbox>
