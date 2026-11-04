@@ -61,7 +61,8 @@
 - v1.3.4 折叠配置提交：`6ed418b Stage 4 v1.3.4: add summarized accordion settings`。
 - v1.3.5 版面单行提交：`f5618fa Stage 4 v1.3.5: condense layout settings to one row`。
 - v1.4.0 画布直接编辑提交：`9573695 Stage 4 v1.4: move block editing onto canvas`。
+- v1.4.1 自由拖动提交：`38719f6 Stage 4 v1.4.1: enable free canvas block movement`。
 
 ## 下一检查点
-- 用户确认 v1.4.0 画布交互方向后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
+- 用户确认 v1.4.1 自由拖动交互后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
 - 正式接入时需由组卷页传入完整 `ExamPaper` 与原题题干，不能只传 `paperId` 后套用样例数据。
