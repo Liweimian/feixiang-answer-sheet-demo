@@ -110,6 +110,10 @@
 .config-panel-head > div { display: grid; }
 .config-panel-head strong { font-size: 14px; }
 .config-scroll { height: calc(100vh - 164px); min-height: 600px; overflow-y: auto; padding-bottom: var(--fx_sp_6); }
+.config-flat-section { display: grid; gap: var(--fx_sp_3); padding: var(--fx_sp_4); border-bottom: 1px solid var(--fx_border); }
+.config-flat-title { min-height: 20px; display: flex; align-items: center; justify-content: space-between; gap: var(--fx_sp_2); color: var(--fx_text_1); font-size: 12px; font-weight: 700; }
+.config-flat-title small { min-width: 0; overflow: hidden; color: var(--fx_text_3); font-size: 9px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.config-flat-body { display: grid; gap: var(--fx_sp_3); }
 .config-section { border-bottom: 1px solid var(--fx_border); }
 .config-section > summary { min-height: 44px; display: flex; align-items: center; gap: var(--fx_sp_2); padding: 0 var(--fx_sp_4); color: var(--fx_text_1); cursor: pointer; list-style: none; }
 .config-section > summary::-webkit-details-marker { display: none; }
