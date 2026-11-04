@@ -76,6 +76,7 @@
 - v1.4.2 客观题间距提交：`c39cb6b Stage 4 v1.4.2: fix objective option spacing`。
 - v1.5.0 题块插入与主观题工具提交：`7b1fe7f Stage 4 v1.5: add canvas insert and subjective editing tools`。
 - v1.5.1 左侧配置平铺提交：`e1d0bce Stage 4 v1.5.1: flatten left configuration panel`。
+- v1.5.2 控件语义提交：`a0eb237 Stage 4 v1.5.2: use visible radio and checkbox settings`。
 
 ## 下一检查点
 - 用户确认 v1.4.1 自由拖动交互后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
