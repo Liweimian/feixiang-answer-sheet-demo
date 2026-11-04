@@ -64,7 +64,8 @@
     "1643aca Stage 4 v1.5.7: promote presets and tighten header",
     "e7b225c Stage 4 v1.5.9: add cascading layout settings",
     "a1d92ea Stage 4 v1.5.10: align layout selector inline",
-    "234f7f6 Stage 4 v1.5.11: add question and score labels"
+    "234f7f6 Stage 4 v1.5.11: add question and score labels",
+    "f42e314 Stage 4 v1.5.12: separate notice visibility and style"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-04T12:00:00+08:00"
