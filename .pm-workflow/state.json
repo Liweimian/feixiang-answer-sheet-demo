@@ -72,7 +72,8 @@
     "89cbb09 Stage 4 v1.5.16: consolidate subjective insert menu",
     "173d2ad Stage 4 v1.5.17: replace script controls with insert shortcuts",
     "9280f48 Stage 4 v1.5.18: promote table insert shortcut",
-    "6dc2ff4 Stage 4 v1.5.19: add composition grid word count"
+    "6dc2ff4 Stage 4 v1.5.19: add composition grid word count",
+    "ca3913d Stage 4 v1.5.20: expose block merge and split controls"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-04T12:00:00+08:00"

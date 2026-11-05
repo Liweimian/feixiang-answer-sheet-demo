@@ -146,6 +146,7 @@
 - v1.5.17 主观题工具条图标替换提交：`173d2ad Stage 4 v1.5.17: replace script controls with insert shortcuts`。
 - v1.5.18 表格快捷图标提交：`9280f48 Stage 4 v1.5.18: promote table insert shortcut`。
 - v1.5.19 作文格与字数设置提交：`6dc2ff4 Stage 4 v1.5.19: add composition grid word count`。
+- v1.5.20 模块合并与分割提交：`ca3913d Stage 4 v1.5.20: expose block merge and split controls`。
 
 ## 下一检查点
 - 用户确认 v1.4.1 自由拖动交互后，先核对当前 Demo 与 HANDOFF，再进入产品稿文字或下一轮版本。
