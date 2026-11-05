@@ -12,7 +12,7 @@ interface AnswerBlockViewProps {
   locked?: boolean
   onSelect: (additive?: boolean) => void
   onTitleCommit?: (title: string) => void
-  onMoveCommit?: (x: number, y: number) => void
+  onMoveCommit?: (x: number, y: number, page: number) => void
   onResizeCommit?: (height: number, width: number) => void
   onToggleContent?: (element: ContentElement) => void
   onUpdateBlock?: (patch: Partial<AnswerBlock>) => void
@@ -170,25 +170,80 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
     if (!container) return
     const containerRect = container.getBoundingClientRect()
     const scale = containerRect.width / container.offsetWidth || 1
+    const viewport = container.closest('.paper-viewport') as HTMLElement | null
+    const blockElement = event.currentTarget.closest('.answer-block') as HTMLElement | null
+    if (!blockElement) return
+    const blockRect = blockElement.getBoundingClientRect()
+    const pointerOffsetX = (event.clientX - blockRect.left) / scale
+    const pointerOffsetY = (event.clientY - blockRect.top) / scale
     const startX = event.clientX
     const startY = event.clientY
     const start = draftLayout
+    let highlightedTarget: HTMLElement | null = null
+    const targetAt = (clientX: number, clientY: number) => document.elementsFromPoint(clientX, clientY)
+      .map((element) => element.classList.contains('paper-blocks') ? element : element.closest('.paper-blocks'))
+      .find((element): element is HTMLElement => element instanceof HTMLElement) ?? null
+    const clearTarget = () => {
+      highlightedTarget?.classList.remove('drop-target')
+      highlightedTarget = null
+    }
+    const resolveFreePosition = (target: HTMLElement, clientX: number, clientY: number) => {
+      const targetRect = target.getBoundingClientRect()
+      const targetScale = targetRect.width / target.offsetWidth || 1
+      const width = target.offsetWidth * start.width / 100
+      const height = block.height
+      const desiredX = Math.max(0, Math.min(target.offsetWidth - width, (clientX - targetRect.left) / targetScale - pointerOffsetX))
+      const desiredY = Math.max(0, Math.min(target.offsetHeight - height, (clientY - targetRect.top) / targetScale - pointerOffsetY))
+      const gap = 4
+      const occupied = [...target.querySelectorAll<HTMLElement>('.answer-block')]
+        .filter((element) => element.dataset.blockId !== block.id)
+        .map((element) => ({ left: element.offsetLeft, top: element.offsetTop, right: element.offsetLeft + element.offsetWidth, bottom: element.offsetTop + element.offsetHeight }))
+      const xCandidates = [desiredX, 0, ...occupied.flatMap((rect) => [rect.right + gap, rect.left - width - gap])]
+      const yCandidates = [desiredY, 0, ...occupied.flatMap((rect) => [rect.bottom + gap, rect.top - height - gap])]
+      const candidates = xCandidates.flatMap((x) => yCandidates.map((y) => ({
+        x: Math.max(0, Math.min(target.offsetWidth - width, x)),
+        y: Math.max(0, Math.min(target.offsetHeight - height, y)),
+      })))
+      const available = candidates.filter((candidate) => occupied.every((rect) => (
+        candidate.x + width + gap <= rect.left
+        || candidate.x >= rect.right + gap
+        || candidate.y + height + gap <= rect.top
+        || candidate.y >= rect.bottom + gap
+      )))
+      available.sort((a, b) => Math.hypot(a.x - desiredX, a.y - desiredY) - Math.hypot(b.x - desiredX, b.y - desiredY))
+      return available[0] ? { x: available[0].x / target.offsetWidth * 100, y: available[0].y } : undefined
+    }
     const move = (pointerEvent: PointerEvent) => {
       const deltaX = (pointerEvent.clientX - startX) / scale / container.offsetWidth * 100
       const deltaY = (pointerEvent.clientY - startY) / scale
       const x = Math.max(0, Math.min(100 - start.width, start.x + deltaX))
       const y = Math.max(0, Math.min(container.offsetHeight - block.height, start.y + deltaY))
       setDraftLayout({ ...start, x, y })
+      if (viewport) {
+        const viewportRect = viewport.getBoundingClientRect()
+        if (pointerEvent.clientY > viewportRect.bottom - 48) viewport.scrollBy({ top: 24 })
+        if (pointerEvent.clientY < viewportRect.top + 48) viewport.scrollBy({ top: -24 })
+      }
+      const target = targetAt(pointerEvent.clientX, pointerEvent.clientY)
+      if (target !== highlightedTarget) {
+        clearTarget()
+        highlightedTarget = target
+        highlightedTarget?.classList.add('drop-target')
+      }
     }
     const finish = (pointerEvent: PointerEvent) => {
-      const deltaX = (pointerEvent.clientX - startX) / scale / container.offsetWidth * 100
-      const deltaY = (pointerEvent.clientY - startY) / scale
-      const x = Math.max(0, Math.min(100 - start.width, start.x + deltaX))
-      const y = Math.max(0, Math.min(container.offsetHeight - block.height, start.y + deltaY))
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', finish)
-      setDraftLayout({ ...start, x, y })
-      onMoveCommit(x, y)
+      const target = targetAt(pointerEvent.clientX, pointerEvent.clientY) ?? container
+      const position = resolveFreePosition(target, pointerEvent.clientX, pointerEvent.clientY)
+      clearTarget()
+      if (!position) {
+        setDraftLayout(start)
+        return
+      }
+      const targetPage = Number(target.closest('[data-paper-page]')?.getAttribute('data-paper-page') ?? block.page)
+      setDraftLayout({ ...start, ...position })
+      onMoveCommit(position.x, position.y, targetPage)
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', finish)
@@ -217,6 +272,21 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       const nextWidth = Math.max(18, Math.min(100 - draftLayout.x, layout.width + widthDelta))
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', finish)
+      const proposedWidth = container.offsetWidth * nextWidth / 100
+      const proposedLeft = container.offsetWidth * draftLayout.x / 100
+      const overlaps = [...container.querySelectorAll<HTMLElement>('.answer-block')]
+        .filter((element) => element.dataset.blockId !== block.id)
+        .some((element) => !(
+          proposedLeft + proposedWidth + 4 <= element.offsetLeft
+          || proposedLeft >= element.offsetLeft + element.offsetWidth + 4
+          || draftLayout.y + nextHeight + 4 <= element.offsetTop
+          || draftLayout.y >= element.offsetTop + element.offsetHeight + 4
+        ))
+      if (overlaps) {
+        setResizeHeight(block.height)
+        setDraftLayout(layout)
+        return
+      }
       setResizeHeight(nextHeight)
       setDraftLayout((current) => ({ ...current, width: nextWidth }))
       if (nextHeight !== block.height || nextWidth !== layout.width) onResizeCommit(nextHeight, nextWidth)
@@ -273,7 +343,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
     >
       <span className="block-drag-handle" aria-label={`自由拖动${block.title}`} role="button" tabIndex={0} onPointerDown={beginMove}><GripVertical size={13} /></span>
       <button type="button" className="block-select-toggle" title="选择模块，可与其他模块合并" aria-label={`${multiSelected ? '取消选择' : '选择'}${block.title}`} aria-pressed={multiSelected} onClick={(event) => { event.stopPropagation(); onSelect(true) }}>{multiSelected ? '✓' : ''}</button>
-      {selected && (block.kind !== 'objective' || block.mergedParts?.length) && (
+      {selected && block.kind !== 'forbidden' && (block.kind !== 'objective' || block.mergedParts?.length) && (
         <div className="block-floating-tools" onClick={(event) => event.stopPropagation()}>
           {block.kind !== 'objective' && onToggleContent && <>
             <button type="button" onClick={onUndo} title="撤销"><Undo2 size={12} /></button>
@@ -330,7 +400,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
           <button type="button" onClick={() => onInsertAfter('forbidden')}>禁答区</button>
         </div>
       )}
-      <span className="answer-block-heading">
+      {block.kind !== 'forbidden' && <span className="answer-block-heading">
         {editingTitle && onTitleCommit ? (
           <input
             className="block-title-input"
@@ -368,7 +438,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
         {block.showUnitScore && block.score !== undefined && questionCount > 0 && <small>{block.score % questionCount === 0 ? `每题 ${block.score / questionCount} 分` : '分值不等'}</small>}
         {block.showScore && block.score !== undefined && <small>共 {block.score} 分</small>}
         {locked && <span><LockKeyhole size={11} /> 已锁定</span>}
-      </span>
+      </span>}
 
       {block.contentText && !['notice', 'forbidden'].includes(block.kind) && <p className={`block-custom-text text-${block.fontSize ?? 'medium'} spacing-${block.lineSpacing ?? 'normal'}`} style={{ fontWeight: block.textBold ? 700 : undefined, fontStyle: block.textItalic ? 'italic' : undefined, textDecoration: block.textUnderline ? 'underline' : undefined, textAlign: block.textAlign ?? 'left' }}>{block.textScript === 'sub' ? <sub>{block.contentText}</sub> : block.textScript === 'super' ? <sup>{block.contentText}</sup> : block.contentText}</p>}
       {questionAnswer && isQuestionBlockKind(block.kind) && (

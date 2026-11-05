@@ -32,7 +32,7 @@ interface EditorWorkbenchProps {
   onMerge: () => void
   onConsolidate: (kind: 'objective' | 'subjective') => void
   onMergeObjectiveModules: () => void
-  onMoveBlock: (id: string, x: number, y: number) => void
+  onMoveBlock: (id: string, x: number, y: number, page: number) => void
   onResizeBlock: (id: string, height: number, width: number) => void
   onToggleBlockContent: (id: string, element: ContentElement) => void
   onUpdateCanvasBlock: (id: string, patch: Partial<AnswerBlock>) => void

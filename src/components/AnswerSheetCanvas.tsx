@@ -19,7 +19,7 @@ interface AnswerSheetCanvasProps {
   onSelectBlock: (id: string) => void
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
-  onMoveBlock: (id: string, x: number, y: number) => void
+  onMoveBlock: (id: string, x: number, y: number, page: number) => void
   onResizeBlock: (id: string, height: number, width: number) => void
   onToggleBlockContent: (id: string, element: ContentElement) => void
   onUpdateBlock: (id: string, patch: Partial<AnswerBlock>) => void
@@ -44,7 +44,7 @@ interface PaperPageProps {
   onSelectBlock?: (id: string) => void
   onTitleCommit?: (title: string) => void
   onBlockTitleCommit?: (id: string, title: string) => void
-  onMoveBlock?: (id: string, x: number, y: number) => void
+  onMoveBlock?: (id: string, x: number, y: number, page: number) => void
   onResizeBlock?: (id: string, height: number, width: number) => void
   onToggleBlockContent?: (id: string, element: ContentElement) => void
   onUpdateBlock?: (id: string, patch: Partial<AnswerBlock>) => void
@@ -199,7 +199,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
             locked={standard && Boolean(block.locked)}
             onSelect={(additive) => { onSelectBlock?.(block.id); onSelectionChange?.(block.id, Boolean(additive)) }}
             onTitleCommit={onBlockTitleCommit ? (title) => onBlockTitleCommit(block.id, title) : undefined}
-            onMoveCommit={onMoveBlock ? (x, y) => onMoveBlock(block.id, x, y) : undefined}
+            onMoveCommit={onMoveBlock ? (x, y, targetPage) => onMoveBlock(block.id, x, y, targetPage) : undefined}
             onResizeCommit={onResizeBlock ? (height, width) => onResizeBlock(block.id, height, width) : undefined}
             onToggleContent={onToggleBlockContent ? (element) => onToggleBlockContent(block.id, element) : undefined}
             onUpdateBlock={onUpdateBlock ? (patch) => onUpdateBlock(block.id, patch) : undefined}
