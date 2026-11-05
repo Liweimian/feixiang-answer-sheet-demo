@@ -39,7 +39,7 @@ interface EditorWorkbenchProps {
   onInsertAfter: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => void
   onUndo: () => void
   onRedo: () => void
-  onMergeBlocks: (ids: string[]) => void
+  onMergeBlocks: (ids: string[], layout?: { x: number; y: number; width: number; height: number }) => void
   onSplitMerged: (id: string) => void
 }
 

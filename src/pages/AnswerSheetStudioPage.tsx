@@ -304,8 +304,8 @@ export function AnswerSheetStudioPage() {
     updateBlock(blockId, { contentElements: current.includes(element) ? current.filter((item) => item !== element) : [...current, element] })
   }
 
-  const mergeCanvasBlocks = (ids: string[]) => {
-    const next = mergeSelectedBlocks(blocks, ids)
+  const mergeCanvasBlocks = (ids: string[], layout?: { x: number; y: number; width: number; height: number }) => {
+    const next = mergeSelectedBlocks(blocks, ids, layout)
     if (next === blocks) {
       MetisMessage.info('只能合并同页、题号有效且未锁定的题块')
       return

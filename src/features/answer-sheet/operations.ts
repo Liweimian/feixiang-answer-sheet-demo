@@ -313,7 +313,7 @@ export function mergeObjectiveModules(blocks: AnswerBlock[]): AnswerBlock[] {
 }
 
 /** Merge an explicit same-page, same-kind selection and keep its source parts reversible. */
-export function mergeSelectedBlocks(blocks: AnswerBlock[], ids: string[]): AnswerBlock[] {
+export function mergeSelectedBlocks(blocks: AnswerBlock[], ids: string[], layout?: { x: number; y: number; width: number; height: number }): AnswerBlock[] {
   const selectedIds = new Set(ids)
   const selected = blocks.filter((block) => selectedIds.has(block.id))
   if (selected.length < 2 || selected.some((block) => block.locked || !isQuestionBlockKind(block.kind))) return blocks
@@ -336,7 +336,10 @@ export function mergeSelectedBlocks(blocks: AnswerBlock[], ids: string[]): Answe
     score: scoreValues.every((score) => Number.isFinite(score))
       ? roundScore(scoreValues.reduce<number>((sum, score) => sum + Number(score), 0))
       : undefined,
-    height: selected.reduce((sum, block) => sum + block.height, 0),
+    height: layout?.height ?? selected.reduce((sum, block) => sum + block.height, 0),
+    canvasX: layout?.x ?? first.canvasX,
+    canvasY: layout?.y ?? first.canvasY,
+    canvasWidth: layout?.width ?? first.canvasWidth,
     lineCount: selected.every((block) => Number.isFinite(block.lineCount))
       ? selected.reduce((sum, block) => sum + Number(block.lineCount), 0)
       : first.lineCount,

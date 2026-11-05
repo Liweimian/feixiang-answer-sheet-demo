@@ -210,7 +210,7 @@
 .outline-summary strong { font-size: 10px; }
 .outline-summary div span { color: var(--fx_text_3); font-size: 9px; }
 
-.answer-canvas { background: var(--fx_surface_sunken); }
+.answer-canvas { position: relative; background: var(--fx_surface_sunken); }
 .canvas-toolbar { background: var(--fx_surface); }
 .page-switcher, .canvas-view-actions { display: flex; align-items: center; gap: var(--fx_sp_1); }
 .zoom-select { width: 78px; }
@@ -218,7 +218,7 @@
 .paper-frame { position: relative; display: inline-block; }
 .paper-page-badge { position: absolute; top: 50%; right: -54px; min-width: 42px; height: 34px; padding: 0 8px; border: 0; border-radius: var(--fx_radius_3); background: var(--fx_text_2); color: var(--fx_text_inverse); cursor: pointer; font-family: var(--fx_font_accent); font-size: 13px; font-weight: 700; transform: translateY(-50%); }
 .paper-page-badge::before { position: absolute; top: 9px; left: -8px; border-top: 8px solid transparent; border-right: 8px solid var(--fx_text_2); border-bottom: 8px solid transparent; content: ''; }
-.canvas-selection-toolbar { position: absolute; z-index: 12; top: -48px; left: 50%; display: flex; align-items: center; gap: var(--fx_sp_2); padding: var(--fx_sp_2) var(--fx_sp_3); border: 1px solid var(--fx_border); border-radius: var(--fx_radius_4); background: var(--fx_surface); box-shadow: var(--fx_shadow_md); color: var(--fx_text_2); font-size: 10px; transform: translateX(-50%); white-space: nowrap; }
+.canvas-selection-toolbar { position: absolute; z-index: 20; top: 12px; left: 50%; width: max-content; display: flex; align-items: center; gap: var(--fx_sp_2); padding: var(--fx_sp_2) var(--fx_sp_3); border: 1px solid var(--fx_border); border-radius: var(--fx_radius_4); background: var(--fx_surface); box-shadow: var(--fx_shadow_md); color: var(--fx_text_2); font-size: 10px; transform: translateX(-50%); white-space: nowrap; }
 .print-pages { display: none; }
 .answer-paper { position: relative; width: var(--fx_paper_width); min-height: var(--fx_paper_height); display: inline-block; padding: 28px 34px 24px; overflow: hidden; border: 1px solid var(--fx_paper_line); background: var(--fx_paper); box-shadow: var(--fx_shadow_paper); color: var(--fx_paper_ink); text-align: left; transform: scale(var(--canvas-zoom)); transform-origin: center top; }
 .standard-paper { padding-right: 46px; border-color: var(--fx_paper_ink); }
@@ -272,7 +272,10 @@
 .answer-block.multi-selected { outline: 2px solid var(--fx_brand); outline-offset: 1px; }
 .block-drag-handle, .block-select-toggle, .block-resize-handle { position: absolute; z-index: 5; display: grid; place-items: center; border: 1px solid var(--fx_brand); background: var(--fx_surface); color: var(--fx_brand); opacity: 0; transition: opacity 120ms ease; }
 .block-drag-handle { top: -9px; left: -9px; width: 22px; height: 22px; border-radius: var(--fx_radius_round); cursor: grab; }
-.block-select-toggle { top: -9px; right: -9px; width: 22px; height: 22px; border-radius: var(--fx_radius_round); cursor: pointer; font-size: 10px; font-weight: 700; }
+.block-select-toggle { top: -9px; right: -9px; width: 22px; height: 22px; border-radius: var(--fx_radius_round); cursor: pointer; font-size: 10px; font-weight: 700; opacity: .62; }
+.block-select-toggle::before { width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 2px; content: ''; }
+.block-select-toggle[aria-pressed='true'] { background: var(--fx_brand); color: var(--fx_text_inverse); opacity: 1; }
+.block-select-toggle[aria-pressed='true']::before { display: none; }
 .block-resize-handle { right: -6px; bottom: -6px; width: 13px; height: 13px; padding: 0; border-radius: 2px; cursor: nwse-resize; }
 .answer-block:hover > .block-drag-handle, .answer-block:hover > .block-select-toggle, .answer-block.selected > .block-drag-handle, .answer-block.selected > .block-select-toggle, .answer-block.selected > .block-resize-handle { opacity: 1; }
 .block-floating-tools { position: absolute; z-index: 8; bottom: calc(100% + 8px); left: 50%; width: max-content; max-width: 520px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; padding: 4px; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_3); background: var(--fx_surface); box-shadow: var(--fx_shadow_sm); transform: translateX(-50%); }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisButton, MetisInput } from '@yuanfudao/metis-web-component'
-import { Combine, LockKeyhole, Pencil, QrCode } from 'lucide-react'
+import { Combine, LockKeyhole, Pencil, QrCode, Scissors, X } from 'lucide-react'
 import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, RulePack } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { questionNumbers } from '../features/answer-sheet/range'
@@ -26,7 +26,7 @@ interface AnswerSheetCanvasProps {
   onInsertAfter: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => void
   onUndo: () => void
   onRedo: () => void
-  onMergeBlocks: (ids: string[]) => void
+  onMergeBlocks: (ids: string[], layout?: { x: number; y: number; width: number; height: number }) => void
   onSplitMerged: (id: string) => void
   printDocument?: AnswerSheetDocument
   printRulePack?: RulePack
@@ -51,8 +51,7 @@ interface PaperPageProps {
   onInsertAfter?: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => void
   onUndo?: () => void
   onRedo?: () => void
-  onSplitMerged?: (id: string) => void
-  onMergeBlocks?: (ids: string[]) => void
+  onMergeBlocks?: (ids: string[], layout?: { x: number; y: number; width: number; height: number }) => void
   onSelectionChange?: (id: string, additive: boolean) => void
 }
 
@@ -66,7 +65,7 @@ function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
   })}</>
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onSplitMerged, onMergeBlocks, onSelectionChange }: PaperPageProps) {
+function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onMergeBlocks, onSelectionChange }: PaperPageProps) {
   const standard = mode === 'standard'
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
@@ -189,15 +188,13 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
       {manualScoreEnabled && <div className="manual-score-strip"><b>手批评分栏</b><span>得分：________</span><span>阅卷人：________</span></div>}
 
       <div className={`paper-blocks columns-${columns}`} style={{ height: contentHeight }}>
-        {pageBlocks.map((block, index) => {
-          const nextBlock = pageBlocks[index + 1]
-          const canMergeWithNext = Boolean(onMergeBlocks && nextBlock && !block.locked && !nextBlock.locked && isQuestionBlockKind(block.kind) && isQuestionBlockKind(nextBlock.kind))
+        {pageBlocks.map((block) => {
           return (
           <AnswerBlockView
             key={block.id}
             block={block}
             layout={blockLayouts.get(block.id) ?? { x: 0, y: 0, width: 100 }}
-            selected={selectedBlockIds.includes(block.id)}
+            selected={selectedBlockIds.length === 1 && selectedBlockIds.includes(block.id)}
             multiSelected={selectedBlockIds.includes(block.id)}
             locked={standard && Boolean(block.locked)}
             onSelect={(additive) => { onSelectBlock?.(block.id); onSelectionChange?.(block.id, Boolean(additive)) }}
@@ -209,8 +206,6 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
             onInsertAfter={onInsertAfter ? (kind, responseStyle) => onInsertAfter(block.id, kind, responseStyle) : undefined}
             onUndo={onUndo}
             onRedo={onRedo}
-            onSplitMerged={onSplitMerged ? () => onSplitMerged(block.id) : undefined}
-            onMergeWithNext={canMergeWithNext ? () => onMergeBlocks?.([block.id, nextBlock.id]) : undefined}
             questionAnswer={settings.cardStyle === 'question-answer'}
             objectiveSortMode={settings.objectiveSortMode}
             objectiveMerge={settings.objectiveMerge}
@@ -247,28 +242,71 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   const selectedBlocks = props.blocks.filter((block) => selectedIds.includes(block.id))
   const canMerge = selectedBlocks.length > 1
     && selectedBlocks.every((block) => block.page === selectedBlocks[0].page && isQuestionBlockKind(block.kind) && !block.locked)
+  const selectedMergedBlock = selectedBlocks.length === 1 && selectedBlocks[0].mergedParts?.length ? selectedBlocks[0] : undefined
+
+  const mergeSelection = () => {
+    const paperBlocks = document.querySelector('.paper-frame .paper-blocks') as HTMLElement | null
+    if (!paperBlocks) {
+      props.onMergeBlocks([...selectedIds])
+      return
+    }
+    const rects = selectedIds.map((id) => {
+      const element = paperBlocks.querySelector(`[data-block-id="${CSS.escape(id)}"]`) as HTMLElement | null
+      if (!element) return undefined
+      return {
+        left: element.offsetLeft,
+        top: element.offsetTop,
+        right: element.offsetLeft + element.offsetWidth,
+        bottom: element.offsetTop + element.offsetHeight,
+      }
+    }).filter((rect): rect is NonNullable<typeof rect> => Boolean(rect))
+    if (rects.length !== selectedIds.length) {
+      props.onMergeBlocks([...selectedIds])
+      return
+    }
+    const left = Math.min(...rects.map((rect) => rect.left))
+    const top = Math.min(...rects.map((rect) => rect.top))
+    const right = Math.max(...rects.map((rect) => rect.right))
+    const bottom = Math.max(...rects.map((rect) => rect.bottom))
+    props.onMergeBlocks([...selectedIds], {
+      x: left / paperBlocks.offsetWidth * 100,
+      y: top,
+      width: (right - left) / paperBlocks.offsetWidth * 100,
+      height: bottom - top,
+    })
+    setSelectedIds([selectedIds[0]])
+  }
 
   return (
     <section className="answer-canvas" data-sec="5">
-      <div className="paper-viewport" style={canvasStyle}>
-        <div className="paper-frame">
-          {selectedIds.length > 1 && (
-            <div className="canvas-selection-toolbar">
-              <span>已选 {selectedIds.length} 个题块</span>
+      {(selectedIds.length > 1 || selectedMergedBlock) && (
+        <div className="canvas-selection-toolbar">
+            <span>{selectedMergedBlock ? `已选合并模块（${selectedMergedBlock.mergedParts?.length} 个）` : `已选 ${selectedIds.length} 个模块`}</span>
+            {selectedMergedBlock ? (
+              <MetisButton
+                type="primary"
+                size="s"
+                icon={<Scissors size={13} />}
+                onClick={() => props.onSplitMerged(selectedMergedBlock.id)}
+              >
+                分割模块
+              </MetisButton>
+            ) : (
               <MetisButton
                 type="primary"
                 size="s"
                 icon={<Combine size={13} />}
                 disabled={!canMerge}
-                onClick={() => {
-                  props.onMergeBlocks([...selectedIds])
-                  setSelectedIds([selectedIds[0]])
-                }}
+                onClick={mergeSelection}
               >
                 合并模块
               </MetisButton>
-            </div>
-          )}
+            )}
+            <MetisButton size="s" icon={<X size={13} />} onClick={() => setSelectedIds([])}>取消选择</MetisButton>
+        </div>
+      )}
+      <div className="paper-viewport" style={canvasStyle}>
+        <div className="paper-frame">
           <PaperPage
             paper={props.paper}
             blocks={props.blocks}
@@ -289,7 +327,6 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
             onInsertAfter={props.onInsertAfter}
             onUndo={props.onUndo}
             onRedo={props.onRedo}
-            onSplitMerged={props.onSplitMerged}
             onMergeBlocks={props.onMergeBlocks}
           />
           <button type="button" className="paper-page-badge" onClick={() => props.onPageChange(props.activePage >= props.pageCount ? 1 : props.activePage + 1)} aria-label="切换下一页">{props.activePage}/{props.pageCount}</button>
