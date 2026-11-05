@@ -178,8 +178,8 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               </Field>
             </div>}
           </div>
-          <div className="config-meta-row candidate-notice-setting">
-            <span>注意事项</span>
+          <div className="candidate-info-row">
+            <div className="config-flat-title">注意事项</div>
             <MetisRadio.Group
               className="config-inline-options"
               value={settings.showNotice ? 'show' : 'hide'}
@@ -187,8 +187,8 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               onChange={(event) => props.onSettingsChange({ showNotice: event.target.value === 'show' })}
             />
           </div>
-          {settings.showNotice && <div className="config-meta-row">
-            <span>样式</span>
+          {settings.showNotice && <div className="candidate-info-row">
+            <div className="config-flat-title">样式</div>
             <MetisSelect
               className="notice-style-select"
               value={settings.noticeStyle}
