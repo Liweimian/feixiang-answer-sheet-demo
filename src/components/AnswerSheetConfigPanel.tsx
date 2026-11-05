@@ -238,12 +238,25 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </div>
           <div className="config-meta-row">
             <span>解答题作答</span>
-            <MetisRadio.Group
-              className="config-inline-options"
-              value={settings.subjectiveAnswerStyle}
-              options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '下划线' }]}
-              onChange={(event) => props.onSettingsChange({ subjectiveAnswerStyle: event.target.value as AnswerSheetSettings['subjectiveAnswerStyle'] })}
-            />
+            <div className="subjective-answer-controls">
+              <MetisRadio.Group
+                className="config-inline-options"
+                value={settings.subjectiveAnswerStyle}
+                options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '下划线' }]}
+                onChange={(event) => props.onSettingsChange({ subjectiveAnswerStyle: event.target.value as AnswerSheetSettings['subjectiveAnswerStyle'] })}
+              />
+              {settings.subjectiveAnswerStyle === 'lines' && (
+                <MetisInputNumber
+                  className="subjective-line-height"
+                  value={settings.subjectiveLineHeight}
+                  min={12}
+                  max={40}
+                  addonAfter="px"
+                  onChange={(value) => props.onSettingsChange({ subjectiveLineHeight: Number(value ?? 16) })}
+                  aria-label="下划线行高"
+                />
+              )}
+            </div>
           </div>
         </section>
 

@@ -27,6 +27,7 @@ function createSettings(overrides: Partial<AnswerSheetSettings> = {}): AnswerShe
     objectiveSortMode: 'number-horizontal-option-horizontal',
     objectiveMerge: true,
     subjectiveAnswerStyle: 'lines',
+    subjectiveLineHeight: 16,
     noticeText: defaultNotice,
     showFooter: true,
     footerText: '请按 100% 原尺寸打印',

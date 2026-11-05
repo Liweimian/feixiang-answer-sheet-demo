@@ -125,6 +125,7 @@ export interface AnswerSheetSettings {
   objectiveSortMode: ObjectiveSortMode
   objectiveMerge: boolean
   subjectiveAnswerStyle: SubjectiveAnswerStyle
+  subjectiveLineHeight: number
   noticeText: string
   showFooter: boolean
   footerText: string

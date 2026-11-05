@@ -210,6 +210,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
             objectiveSortMode={settings.objectiveSortMode}
             objectiveMerge={settings.objectiveMerge}
             subjectiveAnswerStyle={settings.subjectiveAnswerStyle}
+            subjectiveLineHeight={settings.subjectiveLineHeight}
             questionContext={paper.sections.filter((section) => {
               const blockNumbers = new Set(questionNumbers(block.range))
               return questionNumbers(section.range).some((number) => blockNumbers.has(number))
