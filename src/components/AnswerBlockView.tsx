@@ -60,7 +60,20 @@ function AnswerMarks({ block }: { block: AnswerBlock }) {
 
 function GridPaper({ rows = 8, cells, variant = 'grid' }: { rows?: number; cells?: number; variant?: 'grid' | 'tian' | 'mi' }) {
   const count = Math.max(12, Math.min(2000, cells ?? rows * 12))
-  return <div className={`writing-grid writing-grid-${variant} ${cells ? 'writing-grid-composition' : ''}`}>{Array.from({ length: count }, (_, index) => <i key={index} />)}</div>
+  const countMarkers = cells ? Array.from({ length: Math.floor(count / 200) }, (_, index) => (index + 1) * 200) : []
+  return (
+    <div className={`writing-grid writing-grid-${variant} ${cells ? 'writing-grid-composition' : ''}`}>
+      {Array.from({ length: count }, (_, index) => <i key={index} />)}
+      {countMarkers.map((marker) => (
+        <span
+          key={marker}
+          className="writing-count-marker"
+          style={{ top: `${marker / count * 100}%` }}
+          aria-label={`已到 ${marker} 字`}
+        >▲ {marker}字</span>
+      ))}
+    </div>
+  )
 }
 
 function ShortAnswerContent({ block }: { block: AnswerBlock }) {
