@@ -196,7 +196,7 @@ export function AnswerSheetStudioPage() {
       'short-answer': '新增短答区域',
       essay: '新增作文 / 综合题区',
       mixed: '新增混合题区域',
-      forbidden: '禁答区，请勿书写',
+      forbidden: '禁答区',
       drawing: '新增作图区',
       table: '新增表格区',
       notice: '作答说明',
@@ -218,6 +218,7 @@ export function AnswerSheetStudioPage() {
       showQuestionCount: false,
       showScoreBox: false,
       contentElements: [],
+      contentText: kind === 'forbidden' ? '请勿在此区域作答' : undefined,
       locked: false,
     }
     const next = [...blocks]
@@ -337,6 +338,7 @@ export function AnswerSheetStudioPage() {
       height: kind === 'forbidden' ? 72 : 100,
       lineCount: 4,
       responseStyle,
+      contentText: kind === 'forbidden' ? '请勿在此区域作答' : undefined,
       showScore: false,
       showQuestionCount: false,
       canvasX: anchor.canvasX,

@@ -372,7 +372,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
           ) : <RuledLines dashed={block.lineStyle === 'dashed'} count={block.lineCount ?? 10} />}
         </div>
       )}
-      {block.kind === 'forbidden' && <div className="forbidden-area">{block.contentText || '禁答区，请勿书写'}</div>}
+      {block.kind === 'forbidden' && <div className="forbidden-area">{block.contentText || '请勿在此区域作答'}</div>}
       {block.kind === 'drawing' && <div className="drawing-area"><span>作图区</span><i /><i /></div>}
       {block.kind === 'table' && (
         <div className="table-area">{Array.from({ length: 8 }, (_, index) => <span key={index} />)}</div>

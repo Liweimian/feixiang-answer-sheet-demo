@@ -125,7 +125,8 @@ export const initialAnswerBlocks: AnswerBlock[] = [
   {
     id: 'forbidden-page-2',
     page: 2,
-    title: '禁答区，请勿书写',
+    title: '禁答区',
+    contentText: '请勿在此区域作答',
     kind: 'forbidden',
     height: 56,
     showScore: false,

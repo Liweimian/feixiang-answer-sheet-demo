@@ -63,7 +63,7 @@ const generalBlocks: AnswerBlock[] = [
   { id: 'general-short-a', sectionId: 'g2', page: 1, title: '二、解答题 21–23', range: '21–23', score: 18, kind: 'short-answer', height: 186, lineCount: 9, showScore: true },
   { id: 'general-short-b', sectionId: 'g2', page: 2, title: '二、解答题 24–25', range: '24–25', score: 12, kind: 'short-answer', height: 190, lineCount: 8, showScore: true },
   { id: 'general-essay', sectionId: 'g3', page: 2, title: '三、综合题 26', range: '26', score: 30, kind: 'essay', height: 292, lineCount: 12, showScore: true, hint: '请在指定区域内完成综合作答。' },
-  { id: 'general-forbidden', page: 2, title: '禁答区，请勿书写', kind: 'forbidden', height: 56, showScore: false, locked: true },
+  { id: 'general-forbidden', page: 2, title: '禁答区', kind: 'forbidden', height: 56, showScore: false, locked: true, contentText: '请勿在此区域作答' },
 ]
 
 const sciencePaper: ExamPaper = {
@@ -91,7 +91,7 @@ const scienceBlocks: AnswerBlock[] = [
   { id: 'science-short', sectionId: 'p2', page: 1, title: '二、实验与计算 13–15', range: '13–15', score: 24, kind: 'short-answer', height: 246, lineCount: 12, showScore: true },
   { id: 'science-drawing', sectionId: 'p3', page: 2, title: '三、作图题 16', range: '16', score: 20, kind: 'drawing', height: 230, showScore: true, hint: '坐标、光路或受力作图区域' },
   { id: 'science-table', sectionId: 'p4', page: 2, title: '四、数据分析 17', range: '17', score: 20, kind: 'table', height: 230, showScore: true, hint: '可继续在右侧面板调整表格区域高度' },
-  { id: 'science-forbidden', page: 2, title: '禁答区，请勿书写', kind: 'forbidden', height: 56, showScore: false, locked: true },
+  { id: 'science-forbidden', page: 2, title: '禁答区', kind: 'forbidden', height: 56, showScore: false, locked: true, contentText: '请勿在此区域作答' },
 ]
 
 const blankPaper: ExamPaper = {
