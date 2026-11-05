@@ -226,12 +226,16 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
 }
 
 export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
-  const canvasStyle = { '--canvas-zoom': .85 } as CSSProperties
   const [selectedIds, setSelectedIds] = useState<string[]>(props.selectedBlockId ? [props.selectedBlockId] : [])
 
   useEffect(() => {
     if (props.selectedBlockId && !selectedIds.includes(props.selectedBlockId)) setSelectedIds([props.selectedBlockId])
   }, [props.selectedBlockId])
+
+  useEffect(() => {
+    const page = document.querySelector(`.paper-stack [data-paper-page="${props.activePage}"]`)
+    page?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [props.activePage])
 
   const selectBlock = (id: string, additive: boolean) => {
     setSelectedIds((current) => additive
@@ -245,7 +249,8 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   const selectedMergedBlock = selectedBlocks.length === 1 && selectedBlocks[0].mergedParts?.length ? selectedBlocks[0] : undefined
 
   const mergeSelection = () => {
-    const paperBlocks = document.querySelector('.paper-frame .paper-blocks') as HTMLElement | null
+    const firstSelected = document.querySelector(`.paper-stack [data-block-id="${CSS.escape(selectedIds[0] ?? '')}"]`) as HTMLElement | null
+    const paperBlocks = firstSelected?.closest('.paper-blocks') as HTMLElement | null
     if (!paperBlocks) {
       props.onMergeBlocks([...selectedIds])
       return
@@ -305,31 +310,35 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
             <MetisButton size="s" icon={<X size={13} />} onClick={() => setSelectedIds([])}>取消选择</MetisButton>
         </div>
       )}
-      <div className="paper-viewport" style={canvasStyle}>
-        <div className="paper-frame">
-          <PaperPage
-            paper={props.paper}
-            blocks={props.blocks}
-            mode={props.mode}
-            rulePack={props.rulePack}
-            settings={props.settings}
-            page={props.activePage}
-            pageCount={props.pageCount}
-            selectedBlockIds={selectedIds}
-            onSelectBlock={props.onSelectBlock}
-            onSelectionChange={selectBlock}
-            onTitleCommit={props.onTitleCommit}
-            onBlockTitleCommit={props.onBlockTitleCommit}
-            onMoveBlock={props.onMoveBlock}
-            onResizeBlock={props.onResizeBlock}
-            onToggleBlockContent={props.onToggleBlockContent}
-            onUpdateBlock={props.onUpdateBlock}
-            onInsertAfter={props.onInsertAfter}
-            onUndo={props.onUndo}
-            onRedo={props.onRedo}
-            onMergeBlocks={props.onMergeBlocks}
-          />
-          <button type="button" className="paper-page-badge" onClick={() => props.onPageChange(props.activePage >= props.pageCount ? 1 : props.activePage + 1)} aria-label="切换下一页">{props.activePage}/{props.pageCount}</button>
+      <div className="paper-viewport">
+        <div className="paper-stack">
+          {Array.from({ length: props.pageCount }, (_, index) => index + 1).map((page) => (
+            <div className="paper-frame" key={page}>
+              <PaperPage
+                paper={props.paper}
+                blocks={props.blocks}
+                mode={props.mode}
+                rulePack={props.rulePack}
+                settings={props.settings}
+                page={page}
+                pageCount={props.pageCount}
+                selectedBlockIds={selectedIds}
+                onSelectBlock={props.onSelectBlock}
+                onSelectionChange={selectBlock}
+                onTitleCommit={props.onTitleCommit}
+                onBlockTitleCommit={props.onBlockTitleCommit}
+                onMoveBlock={props.onMoveBlock}
+                onResizeBlock={props.onResizeBlock}
+                onToggleBlockContent={props.onToggleBlockContent}
+                onUpdateBlock={props.onUpdateBlock}
+                onInsertAfter={props.onInsertAfter}
+                onUndo={props.onUndo}
+                onRedo={props.onRedo}
+                onMergeBlocks={props.onMergeBlocks}
+              />
+              <button type="button" className={`paper-page-badge ${page === props.activePage ? 'active' : ''}`} onClick={() => props.onPageChange(page)} aria-label={`定位第 ${page} 面`}>{page}/{props.pageCount}</button>
+            </div>
+          ))}
         </div>
       </div>
 
