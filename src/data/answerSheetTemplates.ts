@@ -154,15 +154,15 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
   {
     id: 'beijing-english-standard',
     name: '北京英语 · 大考规范演示',
-    description: '逐页身份与条码、连续客观题、英文短答和作文区的标准模式示例。',
+    description: '从试卷大题自动生成三页答题卡，客观题可按模块合并，主观题保留横线与作文格。',
     origin: 'system',
     category: 'standard',
     tags: ['北京', '英语', '大考规范'],
     paperSize: 'A4',
     columns: 2,
     identityMode: 'both',
-    highlights: ['扫描安全区锁定', '短答与作文专用区', '印前规则校验'],
-    document: { paper: beijingEnglishPaper, blocks: initialAnswerBlocks, settings: createSettings({ candidateNumberLayouts: ['fill', 'barcode'], linkedPaperId: beijingEnglishPaper.id }), mode: 'standard', rulePackId: 'beijing-middle-2026', templateId: 'beijing-english-standard', pageCount: 2 },
+    highlights: ['客观题按大题拆分', '多选合并与可逆分割', '横线与作文格作答区'],
+    document: { paper: beijingEnglishPaper, blocks: initialAnswerBlocks, settings: createSettings({ frontColumns: 1, backColumns: 1, candidateNumberLayouts: ['fill', 'barcode'], linkedPaperId: beijingEnglishPaper.id }), mode: 'standard', rulePackId: 'beijing-middle-2026', templateId: 'beijing-english-standard', pageCount: 3 },
   },
   {
     id: 'shenzhen-physchem-standard',
