@@ -178,11 +178,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               </Field>
             </div>}
           </div>
-        </section>
-
-        <section className="config-flat-section">
-          <div className="config-flat-title">显示内容</div>
-          <div className="config-meta-row">
+          <div className="config-meta-row candidate-notice-setting">
             <span>注意事项</span>
             <MetisRadio.Group
               className="config-inline-options"
@@ -200,6 +196,9 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               onChange={(value) => props.onSettingsChange({ noticeStyle: value as AnswerSheetSettings['noticeStyle'] })}
             />
           </div>}
+        </section>
+
+        <section className="config-flat-section">
           <div className="config-meta-row">
             <span>题量与分值</span>
             <div className="config-check-list">
