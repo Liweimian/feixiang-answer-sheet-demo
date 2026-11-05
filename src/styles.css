@@ -157,7 +157,7 @@
 .config-meta-row > .mc-switch { justify-self: start; }
 .subjective-answer-controls { min-width: 0; display: flex; align-items: center; gap: var(--fx_sp_2); }
 .subjective-answer-controls .config-inline-options { flex: none; }
-.subjective-line-height { width: 92px !important; }
+.subjective-line-height { width: 132px !important; }
 .template-entry { width: 100%; min-height: 54px; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: var(--fx_sp_2); padding: var(--fx_sp_2) var(--fx_sp_3); border: 1px solid var(--fx_border); border-radius: var(--fx_radius_3); background: var(--fx_brand_subtle); color: var(--fx_brand); cursor: pointer; text-align: left; }
 .template-entry > span { min-width: 0; display: grid; gap: 2px; }
 .template-entry b, .template-entry small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
