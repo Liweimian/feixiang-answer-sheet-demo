@@ -38,7 +38,7 @@ function cloneDefaultDocument(): AnswerSheetDocument {
       ...defaultAnswerSheetDocument.paper,
       sections: defaultAnswerSheetDocument.paper.sections.map((section) => ({ ...section })),
     },
-    blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block, locked: false, contentElements: block.contentElements ? [...block.contentElements] : undefined })),
+    blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block, locked: false, answerSlotCounts: block.answerSlotCounts ? [...block.answerSlotCounts] : undefined, contentElements: block.contentElements ? [...block.contentElements] : undefined })),
     settings: {
       ...defaultAnswerSheetDocument.settings,
       identityFields: ['学号', '姓名', '班级'],

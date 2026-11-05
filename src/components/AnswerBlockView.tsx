@@ -71,6 +71,23 @@ function ShortAnswerContent({ block }: { block: AnswerBlock }) {
   const count = block.lineCount ?? 4
   const numbers = questionNumbers(block.range)
   const dashed = block.lineStyle === 'dashed'
+  if (block.answerSlotCounts?.length && numbers.length > 0) {
+    return (
+      <div className="short-answer-slots">
+        {numbers.map((no, questionIndex) => {
+          const slotCount = Math.max(1, block.answerSlotCounts?.[questionIndex] ?? 1)
+          return (
+            <div key={no} className="short-answer-slot-row">
+              <b>{no}.</b>
+              {Array.from({ length: slotCount }, (_, slotIndex) => (
+                <span key={slotIndex}><em>{slotCount > 1 ? `(${slotIndex + 1})` : ''}</em><i /></span>
+              ))}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
   if (numbers.length > 1) {
     const linesPerQuestion = Math.max(2, Math.floor(count / numbers.length))
     return (
