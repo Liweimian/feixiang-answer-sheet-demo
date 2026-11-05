@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisDropdown, MetisInputNumber } from '@yuanfudao/metis-web-component'
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Scissors, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, Combine, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Scissors, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type ObjectiveSortMode } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
 
@@ -20,6 +20,7 @@ interface AnswerBlockViewProps {
   onUndo?: () => void
   onRedo?: () => void
   onSplitMerged?: () => void
+  onMergeWithNext?: () => void
   questionAnswer?: boolean
   questionContext?: string
   objectiveSortMode?: ObjectiveSortMode
@@ -102,7 +103,7 @@ function ScoreBox({ block }: { block: AnswerBlock }) {
   return <div className="score-box"><b>评分栏</b>{Array.from({ length: cells }, (_, index) => <span key={index} />)}</div>
 }
 
-export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onSplitMerged, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true }: AnswerBlockViewProps) {
+export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onSplitMerged, onMergeWithNext, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true }: AnswerBlockViewProps) {
   const [resizeHeight, setResizeHeight] = useState(block.height)
   const [draftLayout, setDraftLayout] = useState(layout)
   const style = {
@@ -236,8 +237,8 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       aria-label={`编辑${block.title}`}
     >
       <span className="block-drag-handle" aria-label={`自由拖动${block.title}`} role="button" tabIndex={0} onPointerDown={beginMove}><GripVertical size={13} /></span>
-      <button type="button" className="block-select-toggle" aria-label={`${multiSelected ? '取消选择' : '多选'}${block.title}`} onClick={(event) => { event.stopPropagation(); onSelect(true) }}>{multiSelected ? '✓' : '+'}</button>
-      {selected && (block.kind !== 'objective' || block.mergedParts?.length) && (
+      <button type="button" className="block-select-toggle" title="加入多选后可合并模块" aria-label={`${multiSelected ? '取消选择' : '多选'}${block.title}`} onClick={(event) => { event.stopPropagation(); onSelect(true) }}>{multiSelected ? '✓' : '+'}</button>
+      {selected && (block.kind !== 'objective' || block.mergedParts?.length || onMergeWithNext) && (
         <div className="block-floating-tools" onClick={(event) => event.stopPropagation()}>
           {block.kind !== 'objective' && onToggleContent && <>
             <button type="button" onClick={onUndo} title="撤销"><Undo2 size={12} /></button>
@@ -285,7 +286,8 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
               </label>
             )}
           </>}
-          {block.mergedParts?.length && onSplitMerged && <button type="button" onClick={onSplitMerged}><Scissors size={12} /> 切割</button>}
+          {!block.mergedParts?.length && onMergeWithNext && <button type="button" onClick={onMergeWithNext}><Combine size={12} /> 与下一模块合并</button>}
+          {block.mergedParts?.length && onSplitMerged && <button type="button" onClick={onSplitMerged}><Scissors size={12} /> 分割模块</button>}
         </div>
       )}
       {selected && onInsertAfter && (

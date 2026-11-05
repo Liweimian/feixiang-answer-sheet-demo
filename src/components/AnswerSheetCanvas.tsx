@@ -52,6 +52,7 @@ interface PaperPageProps {
   onUndo?: () => void
   onRedo?: () => void
   onSplitMerged?: (id: string) => void
+  onMergeBlocks?: (ids: string[]) => void
   onSelectionChange?: (id: string, additive: boolean) => void
 }
 
@@ -65,7 +66,7 @@ function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
   })}</>
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onSplitMerged, onSelectionChange }: PaperPageProps) {
+function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onSplitMerged, onMergeBlocks, onSelectionChange }: PaperPageProps) {
   const standard = mode === 'standard'
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
@@ -188,7 +189,10 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
       {manualScoreEnabled && <div className="manual-score-strip"><b>手批评分栏</b><span>得分：________</span><span>阅卷人：________</span></div>}
 
       <div className={`paper-blocks columns-${columns}`} style={{ height: contentHeight }}>
-        {pageBlocks.map((block) => (
+        {pageBlocks.map((block, index) => {
+          const nextBlock = pageBlocks[index + 1]
+          const canMergeWithNext = Boolean(onMergeBlocks && nextBlock && !block.locked && !nextBlock.locked && isQuestionBlockKind(block.kind) && isQuestionBlockKind(nextBlock.kind))
+          return (
           <AnswerBlockView
             key={block.id}
             block={block}
@@ -206,6 +210,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
             onUndo={onUndo}
             onRedo={onRedo}
             onSplitMerged={onSplitMerged ? () => onSplitMerged(block.id) : undefined}
+            onMergeWithNext={canMergeWithNext ? () => onMergeBlocks?.([block.id, nextBlock.id]) : undefined}
             questionAnswer={settings.cardStyle === 'question-answer'}
             objectiveSortMode={settings.objectiveSortMode}
             objectiveMerge={settings.objectiveMerge}
@@ -214,7 +219,8 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
               return questionNumbers(section.range).some((number) => blockNumbers.has(number))
             }).map((section) => section.title).join(' / ')}
           />
-        ))}
+          )
+        })}
       </div>
       {standard && <div className="right-warning-strip">请在黑色框内作答，超出区域的答案无效</div>}
       {settings.showFooter && (
@@ -254,9 +260,12 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
                 size="s"
                 icon={<Combine size={13} />}
                 disabled={!canMerge}
-                onClick={() => props.onMergeBlocks([...selectedIds])}
+                onClick={() => {
+                  props.onMergeBlocks([...selectedIds])
+                  setSelectedIds([selectedIds[0]])
+                }}
               >
-                合并
+                合并模块
               </MetisButton>
             </div>
           )}
@@ -281,6 +290,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
             onUndo={props.onUndo}
             onRedo={props.onRedo}
             onSplitMerged={props.onSplitMerged}
+            onMergeBlocks={props.onMergeBlocks}
           />
           <button type="button" className="paper-page-badge" onClick={() => props.onPageChange(props.activePage >= props.pageCount ? 1 : props.activePage + 1)} aria-label="切换下一页">{props.activePage}/{props.pageCount}</button>
         </div>
