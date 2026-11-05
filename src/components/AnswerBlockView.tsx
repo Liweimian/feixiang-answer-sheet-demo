@@ -142,6 +142,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
   const [draftLayout, setDraftLayout] = useState(layout)
   const style = {
     '--block-height': `${resizeHeight}px`,
+    '--answer-line-height': `${subjectiveLineHeight}px`,
     left: `${draftLayout.x}%`,
     top: `${draftLayout.y}px`,
     width: `${draftLayout.width}%`,
