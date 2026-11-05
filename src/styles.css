@@ -334,6 +334,9 @@
 .writing-grid-composition i:nth-child(12n + 1) { border-left: 0; }
 .writing-grid-composition i { border: 1px solid var(--fx_paper_rule); border-right: 0; }
 .writing-grid-composition i:nth-child(20n) { border-right: 1px solid var(--fx_paper_rule); }
+.writing-grid-composition::before, .writing-grid-composition::after { position: absolute; z-index: 1; top: 8px; bottom: 8px; width: 1px; background: var(--fx_paper_rule); content: ''; }
+.writing-grid-composition::before { left: 10px; }
+.writing-grid-composition::after { right: 10px; }
 .writing-count-marker { position: absolute; z-index: 2; right: 12px; padding-left: 4px; background: var(--fx_paper); color: var(--fx_paper_ink); font-size: 7px; font-weight: 700; line-height: 12px; transform: translateY(-100%); white-space: nowrap; }
 .writing-grid-tian i { background: linear-gradient(90deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%), linear-gradient(0deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%); }
 .writing-grid-mi i { background: linear-gradient(45deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%), linear-gradient(-45deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%), linear-gradient(90deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%), linear-gradient(0deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%); }
