@@ -16,6 +16,7 @@ export type LineStyle = 'solid' | 'dashed'
 export type NoticeStyle = 'daily' | 'exam'
 export type QuestionNumberOrder = 'major' | 'minor'
 export type ObjectiveSortMode = 'number-vertical-option-horizontal' | 'number-horizontal-option-vertical' | 'number-horizontal-option-horizontal'
+export type SubjectiveAnswerStyle = 'blank' | 'lines'
 export type ResponseStyle = 'lines' | 'grid' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
 export type ContentElement = 'table' | 'formula' | 'image'
 export type AnswerBlockKind =
@@ -123,6 +124,7 @@ export interface AnswerSheetSettings {
   questionNumberOrder: QuestionNumberOrder
   objectiveSortMode: ObjectiveSortMode
   objectiveMerge: boolean
+  subjectiveAnswerStyle: SubjectiveAnswerStyle
   noticeText: string
   showFooter: boolean
   footerText: string

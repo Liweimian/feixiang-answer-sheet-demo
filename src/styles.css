@@ -315,6 +315,9 @@
 .short-answer-groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--fx_sp_3); }
 .short-answer-groups > div, .single-short-answer { font-size: 9px; }
 .single-short-answer { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: var(--fx_sp_1); }
+.full-module-answer { height: calc(100% - 24px); min-height: 48px; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 2px; box-sizing: border-box; padding: 6px 10px 10px; }
+.answer-number-strip { display: flex; gap: 24px; font-size: 9px; }
+.full-module-answer .ruled-lines { height: 100%; align-content: stretch; grid-auto-rows: 1fr; gap: 0; margin-top: 0; }
 .short-answer-slots { display: grid; gap: 14px; padding: 12px; }
 .short-answer-slot-row { display: grid; grid-template-columns: 22px repeat(3, minmax(0, 1fr)); align-items: end; gap: 10px; font-size: 9px; }
 .short-answer-slot-row > b { text-align: right; }

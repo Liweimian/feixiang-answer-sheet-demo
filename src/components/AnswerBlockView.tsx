@@ -23,6 +23,7 @@ interface AnswerBlockViewProps {
   questionContext?: string
   objectiveSortMode?: ObjectiveSortMode
   objectiveMerge?: boolean
+  subjectiveAnswerStyle?: 'blank' | 'lines'
 }
 
 function ObjectiveGrid({ block, compact = false, sortMode = 'number-horizontal-option-horizontal', merged = true }: { block: AnswerBlock; compact?: boolean; sortMode?: ObjectiveSortMode; merged?: boolean }) {
@@ -76,7 +77,7 @@ function GridPaper({ rows = 8, cells, variant = 'grid' }: { rows?: number; cells
   )
 }
 
-function ShortAnswerContent({ block }: { block: AnswerBlock }) {
+function ShortAnswerContent({ block, fillModule = false }: { block: AnswerBlock; fillModule?: boolean }) {
   if (block.responseStyle === 'bracket' || block.responseStyle === 'square') return <AnswerMarks block={block} />
   if (block.responseStyle === 'grid' || block.responseStyle === 'tian' || block.responseStyle === 'mi') return <GridPaper rows={Math.max(4, block.lineCount ?? 4)} cells={block.responseStyle === 'grid' ? block.wordCount : undefined} variant={block.responseStyle === 'grid' ? 'grid' : block.responseStyle} />
   if (block.responseStyle === 'four-line') return <div className="four-line-grid">{Array.from({ length: Math.max(2, block.lineCount ?? 4) }, (_, index) => <span key={index}>{Array.from({ length: 4 }, (_, line) => <i key={line} />)}</span>)}</div>
@@ -84,6 +85,10 @@ function ShortAnswerContent({ block }: { block: AnswerBlock }) {
   const count = block.lineCount ?? 4
   const numbers = questionNumbers(block.range)
   const dashed = block.lineStyle === 'dashed'
+  if (fillModule && !block.answerSlotCounts?.length) {
+    const fullLineCount = Math.max(count, Math.floor((block.height - 48) / 16))
+    return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b key={number}>{number}.</b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
+  }
   if (block.answerSlotCounts?.length && numbers.length > 0) {
     return (
       <div className="short-answer-slots">
@@ -131,7 +136,7 @@ function ScoreBox({ block }: { block: AnswerBlock }) {
   return <div className="score-box"><b>评分栏</b>{Array.from({ length: cells }, (_, index) => <span key={index} />)}</div>
 }
 
-export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true }: AnswerBlockViewProps) {
+export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true, subjectiveAnswerStyle = 'lines' }: AnswerBlockViewProps) {
   const [resizeHeight, setResizeHeight] = useState(block.height)
   const [draftLayout, setDraftLayout] = useState(layout)
   const style = {
@@ -370,7 +375,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       <RichElements elements={block.contentElements} />
       <ScoreBox block={block} />
       {block.kind === 'objective' && <ObjectiveGrid block={block} sortMode={objectiveSortMode} merged={objectiveMerge} />}
-      {block.kind === 'short-answer' && <ShortAnswerContent block={block} />}
+      {block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: subjectiveAnswerStyle }} fillModule={subjectiveAnswerStyle === 'lines'} />}
       {block.kind === 'mixed' && (
         <div className="mixed-area">
           {(() => {
@@ -381,7 +386,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
             return (
               <>
                 <section><b>客观小题 {objectiveRange}</b><ObjectiveGrid block={{ ...block, range: objectiveRange }} compact sortMode={objectiveSortMode} merged={objectiveMerge} /></section>
-                <section><b>主观小题 {subjectiveRange || objectiveRange}</b><ShortAnswerContent block={{ ...block, range: subjectiveRange || objectiveRange, responseStyle: block.responseStyle ?? 'lines', lineCount: Math.min(4, block.lineCount ?? 4) }} /></section>
+                <section><b>主观小题 {subjectiveRange || objectiveRange}</b><ShortAnswerContent block={{ ...block, range: subjectiveRange || objectiveRange, responseStyle: subjectiveAnswerStyle, lineCount: Math.min(4, block.lineCount ?? 4) }} fillModule={subjectiveAnswerStyle === 'lines'} /></section>
               </>
             )
           })()}
@@ -404,7 +409,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
         <div className="table-area">{Array.from({ length: 8 }, (_, index) => <span key={index} />)}</div>
       )}
       {block.kind === 'notice' && <div className="notice-area">{block.contentText || '请在指定区域内作答，超出边框的答案无效。'}</div>}
-      {block.kind === 'response-area' && <ShortAnswerContent block={block} />}
+      {block.kind === 'response-area' && <ShortAnswerContent block={{ ...block, responseStyle: subjectiveAnswerStyle }} fillModule={subjectiveAnswerStyle === 'lines'} />}
       {!locked && onResizeCommit && <button type="button" className="block-resize-handle" aria-label={`调整${block.title}宽度和高度`} onPointerDown={beginResize} onClick={(event) => event.stopPropagation()} />}
     </div>
   )

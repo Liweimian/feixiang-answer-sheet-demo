@@ -236,6 +236,15 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             <span>客观题合并</span>
             <MetisSwitch size="small" checked={settings.objectiveMerge} onChange={(checked) => props.onSettingsChange({ objectiveMerge: checked })} />
           </div>
+          <div className="config-meta-row">
+            <span>解答题作答</span>
+            <MetisRadio.Group
+              className="config-inline-options"
+              value={settings.subjectiveAnswerStyle}
+              options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '下划线' }]}
+              onChange={(event) => props.onSettingsChange({ subjectiveAnswerStyle: event.target.value as AnswerSheetSettings['subjectiveAnswerStyle'] })}
+            />
+          </div>
         </section>
 
         <section className="config-flat-section config-block-section">
