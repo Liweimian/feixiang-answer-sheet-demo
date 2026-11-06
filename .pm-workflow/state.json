@@ -87,7 +87,8 @@
     "616437c Stage 4 v2.0.0: add standalone answer sheet tool",
     "8b64827 Stage 4 v2.0.1: remove sidebar and return home",
     "d171c2b Stage 4 v2.1.0: add question groups and objective answers",
-    "dc0e22c Stage 4 v2.1.1: split answer sheet entry paths"
+    "dc0e22c Stage 4 v2.1.1: split answer sheet entry paths",
+    "07d4588 Stage 4 v2.1.2: simplify paper entry toolbar"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-06T22:05:00+08:00"
