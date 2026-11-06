@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { MetisButton, MetisInput } from '@yuanfudao/metis-web-component'
 import { Combine, LockKeyhole, Pencil, QrCode, Scissors, X } from 'lucide-react'
 import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, HeaderLayout, RulePack } from '../features/answer-sheet/types'
@@ -58,6 +58,7 @@ interface PaperPageProps {
   onMergeBlocks?: (ids: string[], layout?: { x: number; y: number; width: number; height: number }) => void
   onSelectionChange?: (id: string, additive: boolean) => void
   onHeaderChange?: (header: HeaderLayout) => void
+  selectionToolbar?: ReactNode
 }
 
 function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
@@ -70,7 +71,7 @@ function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
   })}</>
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onMergeBlocks, onSelectionChange, onHeaderChange }: PaperPageProps) {
+function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onMergeBlocks, onSelectionChange, onHeaderChange, selectionToolbar }: PaperPageProps) {
   const standard = mode === 'standard'
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
@@ -93,6 +94,41 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
     const layout = blockLayouts.get(block.id)
     return (layout?.y ?? 0) + block.height
   }))
+  const selectedRects = pageBlocks
+    .filter((block) => selectedBlockIds.includes(block.id))
+    .map((block) => {
+      const layout = blockLayouts.get(block.id) ?? { x: 0, y: 0, width: 100 }
+      return { left: layout.x, right: layout.x + layout.width, top: layout.y, bottom: layout.y + block.height }
+    })
+  const selectionToolbarStyle = (() => {
+    if (!selectionToolbar || selectedRects.length === 0) return undefined
+    const left = Math.min(...selectedRects.map((rect) => rect.left))
+    const right = Math.max(...selectedRects.map((rect) => rect.right))
+    const top = Math.min(...selectedRects.map((rect) => rect.top))
+    if (selectedRects.length === 2) {
+      const [upper, lower] = [...selectedRects].sort((a, b) => a.top - b.top)
+      const [leftRect, rightRect] = [...selectedRects].sort((a, b) => a.left - b.left)
+      const verticallySeparated = upper.bottom <= lower.top
+      const horizontallySeparated = leftRect.right <= rightRect.left
+      if (horizontallySeparated && !verticallySeparated) {
+        return {
+          left: `${(leftRect.right + rightRect.left) / 2}%`,
+          top: (Math.min(leftRect.top, rightRect.top) + Math.max(leftRect.bottom, rightRect.bottom)) / 2,
+          transform: 'translate(-50%, -50%)',
+        } as CSSProperties
+      }
+      return {
+        left: `${(left + right) / 2}%`,
+        top: (upper.bottom + lower.top) / 2,
+        transform: 'translate(-50%, -50%)',
+      } as CSSProperties
+    }
+    return {
+      left: `${(left + right) / 2}%`,
+      top: top - 7,
+      transform: 'translate(-50%, -100%)',
+    } as CSSProperties
+  })()
   const scanEnabled = settings.reviewMode !== 'manual'
   const manualScoreEnabled = settings.reviewMode !== 'online'
   const dailyQuizIdentity = settings.identityFields.includes('学号') && !settings.identityFields.includes('准考证号')
@@ -204,6 +240,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
       {manualScoreEnabled && <div className="manual-score-strip"><b>手批评分栏</b><span>得分：________</span><span>阅卷人：________</span></div>}
 
       <div className={`paper-blocks columns-${columns}`} style={{ height: contentHeight }}>
+        {selectionToolbarStyle && <div className="canvas-selection-toolbar" style={selectionToolbarStyle}>{selectionToolbar}</div>}
         {pageBlocks.map((block) => {
           return (
           <AnswerBlockView
@@ -247,7 +284,8 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>(props.selectedBlockId ? [props.selectedBlockId] : [])
 
   useEffect(() => {
-    if (props.selectedBlockId && !selectedIds.includes(props.selectedBlockId)) setSelectedIds([props.selectedBlockId])
+    if (!props.selectedBlockId) return
+    setSelectedIds((current) => current.includes(props.selectedBlockId) ? current : [props.selectedBlockId])
   }, [props.selectedBlockId])
 
   useEffect(() => {
@@ -265,6 +303,9 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   const canMerge = selectedBlocks.length > 1
     && selectedBlocks.every((block) => block.page === selectedBlocks[0].page && isQuestionBlockKind(block.kind) && !block.locked)
   const selectedMergedBlock = selectedBlocks.length === 1 && selectedBlocks[0].mergedParts?.length ? selectedBlocks[0] : undefined
+  const toolbarPage = selectedBlocks.length > 0 && selectedBlocks.every((block) => block.page === selectedBlocks[0].page)
+    ? selectedBlocks[0].page
+    : undefined
 
   const mergeSelection = () => {
     const firstSelected = document.querySelector(`.paper-stack [data-block-id="${CSS.escape(selectedIds[0] ?? '')}"]`) as HTMLElement | null
@@ -300,34 +341,33 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
     setSelectedIds([selectedIds[0]])
   }
 
+  const selectionToolbar = (selectedIds.length > 1 || selectedMergedBlock) ? <>
+    <span>{selectedMergedBlock ? `已选合并模块（${selectedMergedBlock.mergedParts?.length} 个）` : `已选 ${selectedIds.length} 个模块`}</span>
+    {selectedMergedBlock ? (
+      <MetisButton
+        type="primary"
+        size="s"
+        icon={<Scissors size={13} />}
+        onClick={() => props.onSplitMerged(selectedMergedBlock.id)}
+      >
+        分割模块
+      </MetisButton>
+    ) : (
+      <MetisButton
+        type="primary"
+        size="s"
+        icon={<Combine size={13} />}
+        disabled={!canMerge}
+        onClick={mergeSelection}
+      >
+        合并模块
+      </MetisButton>
+    )}
+    <MetisButton size="s" icon={<X size={13} />} onClick={() => setSelectedIds([])}>取消选择</MetisButton>
+  </> : undefined
+
   return (
     <section className="answer-canvas" data-sec="5">
-      {(selectedIds.length > 1 || selectedMergedBlock) && (
-        <div className="canvas-selection-toolbar">
-            <span>{selectedMergedBlock ? `已选合并模块（${selectedMergedBlock.mergedParts?.length} 个）` : `已选 ${selectedIds.length} 个模块`}</span>
-            {selectedMergedBlock ? (
-              <MetisButton
-                type="primary"
-                size="s"
-                icon={<Scissors size={13} />}
-                onClick={() => props.onSplitMerged(selectedMergedBlock.id)}
-              >
-                分割模块
-              </MetisButton>
-            ) : (
-              <MetisButton
-                type="primary"
-                size="s"
-                icon={<Combine size={13} />}
-                disabled={!canMerge}
-                onClick={mergeSelection}
-              >
-                合并模块
-              </MetisButton>
-            )}
-            <MetisButton size="s" icon={<X size={13} />} onClick={() => setSelectedIds([])}>取消选择</MetisButton>
-        </div>
-      )}
       <div className="paper-viewport">
         <div className="paper-stack">
           {Array.from({ length: props.pageCount }, (_, index) => index + 1).map((page) => (
@@ -355,6 +395,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
                 onRedo={props.onRedo}
                 onMergeBlocks={props.onMergeBlocks}
                 onHeaderChange={props.onHeaderChange}
+                selectionToolbar={page === toolbarPage ? selectionToolbar : undefined}
               />
               <button type="button" className={`paper-page-badge ${page === props.activePage ? 'active' : ''}`} onClick={() => props.onPageChange(page)} aria-label={`定位第 ${page} 面`}>{page}/{props.pageCount}</button>
             </div>
