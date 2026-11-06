@@ -3,11 +3,14 @@ import type {
   AnswerSheetSettings,
   CardMode,
   ExamPaper,
+  HeaderLayout,
+  HeaderModuleKind,
   PreflightCheck,
   RulePack,
 } from './types'
 import { isQuestionBlockKind } from './types'
 import { parseQuestionRange, questionNumbers } from './range'
+import { validateHeaderGeometry, visibleHeaderModules } from './headerGeometry'
 
 export function minimumContentHeight(block: AnswerBlock): number {
   const questionCount = questionNumbers(block.range).length
@@ -38,6 +41,7 @@ export function buildPreflightChecks(
   rulePack: RulePack,
   pageCount: number,
   settings: AnswerSheetSettings,
+  header: HeaderLayout,
 ): PreflightCheck[] {
   const questionBlocks = blocks.filter((block) => isQuestionBlockKind(block.kind))
   const invalidRangeBlock = questionBlocks.find((block) => !parseQuestionRange(block.range).valid)
@@ -70,19 +74,44 @@ export function buildPreflightChecks(
       const row = Math.floor(index / columns)
       rowHeights[row] = Math.max(rowHeights[row] ?? 0, block.height)
     })
-    return rowHeights.reduce((total, height) => total + height, 0) + Math.max(0, rowHeights.length - 1) * 4
+    const flowHeight = rowHeights.reduce((total, height) => total + height, 0) + Math.max(0, rowHeights.length - 1) * 4
+    const freeHeight = pageBlocks.reduce((maximum, block) => Math.max(maximum, (block.canvasY ?? 0) + block.height), 0)
+    return Math.max(flowHeight, freeHeight)
   })
-  const overflowingPage = pageHeights.findIndex((height) => height > 620)
+  const printableBodyHeight = settings.paperSize === 'A3' ? 390 : settings.paperSize === '8K' ? 650 : settings.paperSize === '16K' ? 450 : 720
+  const overflowingPage = pageHeights.findIndex((height) => height > printableBodyHeight)
   const outOfRangeBlock = blocks.find((block) => block.page < 1 || block.page > safePageCount)
   const emptyPages = Array.from({ length: safePageCount }, (_, index) => index + 1)
     .filter((page) => !blocks.some((block) => block.page === page))
   const pageCountMatches = mode === 'smart' || safePageCount === rulePack.pageCount
   const paperSizeMatches = mode === 'smart' || settings.paperSize === rulePack.paperSize
   const standardLayoutMatches = pageCountMatches && paperSizeMatches
-  const hasCandidateNumber = settings.identityFields.includes('准考证号')
-  const identityReady = settings.identityFields.length > 0 && (!hasCandidateNumber || settings.candidateNumberLayouts.length > 0)
+  const renderedHeaderModules = visibleHeaderModules(header, settings)
+  const templateIdentityFields = renderedHeaderModules
+    .filter((module) => module.kind === 'identity')
+    .flatMap((module) => module.fields ?? [])
+  const effectiveIdentityFields = header.preset === 'exam' && templateIdentityFields.length
+    ? templateIdentityFields
+    : settings.identityFields
+  const hasCandidateNumber = effectiveIdentityFields.includes('准考证号') || effectiveIdentityFields.includes('考生号')
+  const identityReady = effectiveIdentityFields.length > 0 && (!hasCandidateNumber || settings.candidateNumberLayouts.length > 0)
     && settings.candidateNumberDigits >= 4
     && settings.candidateNumberDigits <= 18
+  const headerIssues = validateHeaderGeometry(header, settings)
+  const headerKinds = new Set(renderedHeaderModules.map((module) => module.kind))
+  const requiredHeaderKinds: HeaderModuleKind[] = ['title', 'identity']
+  if (settings.showNotice) requiredHeaderKinds.push('notice')
+  if (settings.candidateNumberLayouts.includes('barcode')) requiredHeaderKinds.push('barcode')
+  if (settings.candidateNumberLayouts.some((layout) => layout === 'fill' || layout === 'handwrite')) requiredHeaderKinds.push('candidate-number')
+  const requiredTemplateFields = header.templateId.startsWith('shenzhen-exam-reference')
+    ? ['考生号', '姓名', '考点', '考场号', '座位号']
+    : []
+  const missingTemplateFields = requiredTemplateFields.filter((field) => !templateIdentityFields.includes(field))
+  const missingHeaderKind = requiredHeaderKinds.find((kind) => !headerKinds.has(kind))
+  const examHeaderComplete = header.preset !== 'exam' || (!missingHeaderKind && missingTemplateFields.length === 0)
+  const headerReady = examHeaderComplete && headerIssues.length === 0
+  const firstHeaderIssue = headerIssues[0]
+  const firstHeaderModule = firstHeaderIssue ? header.modules.find((module) => module.id === firstHeaderIssue.moduleId) : undefined
 
   const crampedContentBlock = questionBlocks.find((block) => {
     const minimumHeight = minimumContentHeight(block)
@@ -217,17 +246,27 @@ export function buildPreflightChecks(
       detail: !identityReady
         ? '至少保留 1 个考生信息字段，并将考号位数设置为 4–18 位'
         : hasCandidateNumber
-          ? `${settings.identityFields.join('、')} · ${settings.candidateNumberType}${settings.candidateNumberDigits} 位 · ${settings.candidateNumberLayouts.map((layout) => layout === 'fill' ? '填涂' : layout === 'barcode' ? '条形码' : '手写').join(' + ')}`
-          : `${settings.identityFields.join('、')} · ${settings.candidateNumberType}`,
+          ? `${effectiveIdentityFields.join('、')} · ${effectiveIdentityFields.includes('考生号') ? '考生号' : settings.candidateNumberType}${settings.candidateNumberDigits} 位 · ${settings.candidateNumberLayouts.map((layout) => layout === 'fill' ? '填涂' : layout === 'barcode' ? '条形码' : '手写').join(' + ')}`
+          : effectiveIdentityFields.join('、'),
       severity: identityReady ? 'pass' : 'blocking',
     },
     {
       id: 'safe-zone',
       label: '定位与扫描安全区',
-      detail: mode === 'standard'
-        ? '定位点、条码框、右侧禁写条均未被题块覆盖'
-        : '二维码与题块边缘距离正常',
-      severity: 'pass',
+      detail: header.preset !== 'exam'
+        ? '二维码、身份字段与题块边缘距离正常'
+        : missingTemplateFields.length
+          ? `${header.templateName}缺少${missingTemplateFields.join('、')}字段`
+          : missingHeaderKind
+            ? `${header.templateName}缺少当前设置需要的${missingHeaderKind === 'candidate-number' ? '考号格' : missingHeaderKind === 'barcode' ? '条码' : missingHeaderKind === 'notice' ? '注意事项' : '表头'}模块`
+          : firstHeaderIssue?.type === 'overlap'
+            ? `${firstHeaderModule?.label ?? '表头模块'}与其他模块重叠，请在画布中重新摆放`
+            : firstHeaderIssue?.type === 'out-of-bounds'
+              ? `${firstHeaderModule?.label ?? '表头模块'}超出表头安全区`
+              : firstHeaderIssue?.type === 'minimum-size'
+                ? `${firstHeaderModule?.label ?? '扫描模块'}小于可识别的最小尺寸`
+                : `${header.templateName}的模块均位于表头安全区内，条码与考号区尺寸正常`,
+      severity: headerReady ? 'pass' : 'blocking',
     },
     {
       id: 'print',

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisButton, MetisInput } from '@yuanfudao/metis-web-component'
 import { Combine, LockKeyhole, Pencil, QrCode, Scissors, X } from 'lucide-react'
-import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, RulePack } from '../features/answer-sheet/types'
+import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, HeaderLayout, RulePack } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { questionNumbers } from '../features/answer-sheet/range'
 import { AnswerBlockView } from './AnswerBlockView'
+import { AnswerSheetHeader } from './AnswerSheetHeader'
 
 interface AnswerSheetCanvasProps {
   paper: ExamPaper
@@ -12,6 +13,7 @@ interface AnswerSheetCanvasProps {
   mode: CardMode
   rulePack: RulePack
   settings: AnswerSheetSettings
+  header: HeaderLayout
   pageCount: number
   activePage: number
   selectedBlockId: string
@@ -28,6 +30,7 @@ interface AnswerSheetCanvasProps {
   onRedo: () => void
   onMergeBlocks: (ids: string[], layout?: { x: number; y: number; width: number; height: number }) => void
   onSplitMerged: (id: string) => void
+  onHeaderChange: (header: HeaderLayout) => void
   printDocument?: AnswerSheetDocument
   printRulePack?: RulePack
 }
@@ -38,6 +41,7 @@ interface PaperPageProps {
   mode: CardMode
   rulePack: RulePack
   settings: AnswerSheetSettings
+  header: HeaderLayout
   page: number
   pageCount: number
   selectedBlockIds?: string[]
@@ -53,6 +57,7 @@ interface PaperPageProps {
   onRedo?: () => void
   onMergeBlocks?: (ids: string[], layout?: { x: number; y: number; width: number; height: number }) => void
   onSelectionChange?: (id: string, additive: boolean) => void
+  onHeaderChange?: (header: HeaderLayout) => void
 }
 
 function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
@@ -65,7 +70,7 @@ function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
   })}</>
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onMergeBlocks, onSelectionChange }: PaperPageProps) {
+function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, onMergeBlocks, onSelectionChange, onHeaderChange }: PaperPageProps) {
   const standard = mode === 'standard'
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
@@ -116,7 +121,18 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
   return (
     <article className={`answer-paper paper-size-${paperSize} ${standard ? 'standard-paper' : 'smart-paper'} review-${settings.reviewMode}`} data-paper-page={page}>
       {scanEnabled && <><i className="corner-mark top-left" /><i className="corner-mark top-right" /><i className="corner-mark bottom-left" /><i className="corner-mark bottom-right" /></>}
-      <header className={`paper-header ${dailyQuizIdentity ? 'daily-quiz-header' : ''}`}>
+      {header.preset === 'exam' ? (
+        <AnswerSheetHeader
+          header={header}
+          paper={paper}
+          settings={settings}
+          page={page}
+          pageCount={pageCount}
+          editable={Boolean(onHeaderChange)}
+          onChange={onHeaderChange}
+          onTitleCommit={onTitleCommit}
+        />
+      ) : <header className={`paper-header ${dailyQuizIdentity ? 'daily-quiz-header' : ''}`}>
         <div className="paper-title">
           {editingTitle && onTitleCommit ? (
             <MetisInput
@@ -166,9 +182,9 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, page, pageCount, s
           <CandidateNumberArea settings={settings} />
         </div>
         {(standard || scanEnabled) && <span className="locked-zone-label"><LockKeyhole size={10} /> {standard ? rulePack.shortName : '网阅定位'} · 身份与考号区</span>}
-      </header>
+      </header>}
 
-      {page === 1 && settings.showNotice && (
+      {header.preset === 'quiz' && page === 1 && settings.showNotice && (
         <div className={`candidate-notice notice-style-${settings.noticeStyle}`}>
           <strong className="notice-vertical-title">注意事项</strong>
           <ol>
@@ -322,6 +338,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
                 mode={props.mode}
                 rulePack={props.rulePack}
                 settings={props.settings}
+                header={props.header}
                 page={page}
                 pageCount={props.pageCount}
                 selectedBlockIds={selectedIds}
@@ -337,6 +354,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
                 onUndo={props.onUndo}
                 onRedo={props.onRedo}
                 onMergeBlocks={props.onMergeBlocks}
+                onHeaderChange={props.onHeaderChange}
               />
               <button type="button" className={`paper-page-badge ${page === props.activePage ? 'active' : ''}`} onClick={() => props.onPageChange(page)} aria-label={`定位第 ${page} 面`}>{page}/{props.pageCount}</button>
             </div>
@@ -353,6 +371,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
             mode={props.printDocument?.mode ?? props.mode}
             rulePack={props.printRulePack ?? props.rulePack}
             settings={props.printDocument?.settings ?? props.settings}
+            header={props.printDocument?.header ?? props.header}
             page={page}
             pageCount={props.printDocument?.pageCount ?? props.pageCount}
           />

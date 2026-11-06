@@ -4,6 +4,9 @@ import type {
   AnswerSheetDocument,
   AnswerSheetSettings,
   ContentElement,
+  HeaderLayout,
+  HeaderPreset,
+  HeaderTemplateId,
   RulePack,
 } from '../features/answer-sheet/types'
 import { AnswerSheetCanvas } from './AnswerSheetCanvas'
@@ -26,6 +29,10 @@ interface EditorWorkbenchProps {
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void
+  onPresetChange: (preset: HeaderPreset) => void
+  onHeaderTemplateChange: (templateId: HeaderTemplateId) => void
+  onRestoreHeaderTemplate: () => void
+  onHeaderChange: (header: HeaderLayout) => void
   onMetaVisibilityChange: (field: 'showQuestionCount' | 'showUnitScore' | 'showScore', visible: boolean) => void
   onRenumber: (start: number) => void
   onSplit: () => void
@@ -55,6 +62,9 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           activePage={props.activePage}
           selectedBlockId={props.selectedBlockId}
           onSettingsChange={props.onSettingsChange}
+          onPresetChange={props.onPresetChange}
+          onHeaderTemplateChange={props.onHeaderTemplateChange}
+          onRestoreHeaderTemplate={props.onRestoreHeaderTemplate}
           onMetaVisibilityChange={props.onMetaVisibilityChange}
           onPageChange={props.onPageChange}
           onSelect={props.onSelect}
@@ -67,6 +77,7 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           mode={mode}
           rulePack={props.rulePack}
           settings={settings}
+          header={props.document.header}
           pageCount={pageCount}
           activePage={props.activePage}
           selectedBlockId={props.selectedBlockId}
@@ -83,6 +94,7 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           onRedo={props.onRedo}
           onMergeBlocks={props.onMergeBlocks}
           onSplitMerged={props.onSplitMerged}
+          onHeaderChange={props.onHeaderChange}
           printDocument={props.printDocument}
           printRulePack={printRulePack}
         />

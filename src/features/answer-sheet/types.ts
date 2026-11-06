@@ -17,6 +17,10 @@ export type NoticeStyle = 'daily' | 'exam'
 export type QuestionNumberOrder = 'major' | 'minor'
 export type ObjectiveSortMode = 'number-vertical-option-horizontal' | 'number-horizontal-option-vertical' | 'number-horizontal-option-horizontal'
 export type SubjectiveAnswerStyle = 'blank' | 'lines'
+export type HeaderPreset = 'quiz' | 'exam'
+export type HeaderTemplateId = 'daily-quiz' | 'exam-general' | 'beijing-exam-reference' | 'shenzhen-exam-reference-a' | 'shenzhen-exam-reference-b'
+export type HeaderEvidence = 'product-default' | 'official-sample' | 'official-rules' | 'reference-layout'
+export type HeaderModuleKind = 'title' | 'identity' | 'candidate-number' | 'barcode' | 'notice' | 'fill-sample' | 'absence-mark'
 export type ResponseStyle = 'lines' | 'grid' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
 export type ContentElement = 'table' | 'formula' | 'image'
 export type AnswerBlockKind =
@@ -132,6 +136,35 @@ export interface AnswerSheetSettings {
   linkedPaperId: string
 }
 
+export interface HeaderModule {
+  id: string
+  kind: HeaderModuleKind
+  label: string
+  x: number
+  y: number
+  width: number
+  height: number
+  minWidth: number
+  minHeight: number
+  fields?: string[]
+  variant?: 'lines' | 'boxes' | 'compact' | 'detailed'
+  protected?: boolean
+}
+
+export interface HeaderLayout {
+  preset: HeaderPreset
+  templateId: HeaderTemplateId
+  templateName: string
+  evidence: HeaderEvidence
+  evidenceLabel: string
+  sourceNote: string
+  customized: boolean
+  height: number
+  continuationHeight: number
+  continuationFields: string[]
+  modules: HeaderModule[]
+}
+
 export interface RulePack {
   id: string
   name: string
@@ -149,6 +182,7 @@ export interface AnswerSheetDocument {
   paper: ExamPaper
   blocks: AnswerBlock[]
   settings: AnswerSheetSettings
+  header: HeaderLayout
   mode: CardMode
   rulePackId: string
   templateId: string

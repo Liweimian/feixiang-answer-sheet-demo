@@ -30,12 +30,12 @@
       "status": "completed",
       "startedAt": "2026-11-03T17:10:00+08:00",
       "completedAt": "2026-11-04T12:00:00+08:00",
-      "version": "1.5.34",
-      "iterationCount": 46,
+      "version": "1.6.1",
+      "iterationCount": 48,
       "awaitingUserConfirmation": true,
-      "scope": ["单一飞象模式", "画布直接编辑", "题块自由坐标拖动", "题块宽高缩放", "A3横向三栏", "浮动分页", "多选合并与切割", "主观题浮动工具", "左侧通用配置", "单选复选与下拉语义", "考生信息快捷预设", "准考证号组合呈现", "版面设置单行化", "注意事项显隐与样式", "整卡分值展示", "打印设置归口"],
-      "outputs": ["src/components/AnswerSheetConfigPanel.tsx", "src/components/AnswerSheetCanvas.tsx", "src/features/answer-sheet/operations.ts", "src/features/answer-sheet/export.ts", "docs/changelog.md"],
-      "validation": ["npm run typecheck", "npm run build", "browser direct-editor regression"]
+      "scope": ["单一飞象模式", "大型考试表头模板", "北京官方样例结构", "深圳官方字段规则抽象", "首面与续面表头", "表头块级拖动缩放", "表头碰撞与安全区", "完整文档快照", "画布直接编辑", "题块自由坐标拖动", "多选合并与切割", "左侧通用配置", "打印发布"],
+      "outputs": ["src/data/headerTemplates.ts", "src/components/AnswerSheetHeader.tsx", "src/features/answer-sheet/headerGeometry.ts", "src/components/AnswerSheetConfigPanel.tsx", "src/components/AnswerSheetCanvas.tsx", "src/features/answer-sheet/preflight.ts", "docs/changelog.md"],
+      "validation": ["npm run typecheck", "npm run build", "browser header template regression"]
     }
   },
   "gitCommits": [
@@ -76,5 +76,5 @@
     "ca3913d Stage 4 v1.5.20: expose block merge and split controls"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-05T12:00:00+08:00"
+  "updatedAt": "2026-11-06T10:51:35+08:00"
 }

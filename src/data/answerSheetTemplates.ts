@@ -6,6 +6,7 @@ import type {
   ExamPaper,
 } from '../features/answer-sheet/types'
 import { beijingEnglishPaper, initialAnswerBlocks } from './mockPaper'
+import { cloneHeaderLayout, instantiateHeaderTemplate } from './headerTemplates'
 
 const defaultNotice = '客观题用 2B 铅笔填涂；主观题使用黑色字迹签字笔，在对应题号区域内作答。'
 
@@ -151,7 +152,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
     columns: 2,
     identityMode: 'barcode',
     highlights: ['客观题自动分栏', '主观题空间已预估', '可自由增删题块'],
-    document: { paper: generalPaper, blocks: generalBlocks, settings: createSettings({ linkedPaperId: generalPaper.id }), mode: 'smart', rulePackId: 'beijing-middle-2026', templateId: 'general-a4-smart', pageCount: 2 },
+    document: { paper: generalPaper, blocks: generalBlocks, settings: createSettings({ linkedPaperId: generalPaper.id }), header: instantiateHeaderTemplate('daily-quiz'), mode: 'smart', rulePackId: 'beijing-middle-2026', templateId: 'general-a4-smart', pageCount: 2 },
   },
   {
     id: 'beijing-english-standard',
@@ -164,7 +165,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
     columns: 2,
     identityMode: 'both',
     highlights: ['客观题按大题拆分', '多选合并与可逆分割', '横线与作文格作答区'],
-    document: { paper: beijingEnglishPaper, blocks: initialAnswerBlocks, settings: createSettings({ frontColumns: 1, backColumns: 1, candidateNumberLayouts: ['fill', 'barcode'], linkedPaperId: beijingEnglishPaper.id }), mode: 'standard', rulePackId: 'beijing-middle-2026', templateId: 'beijing-english-standard', pageCount: 3 },
+    document: { paper: beijingEnglishPaper, blocks: initialAnswerBlocks, settings: createSettings({ frontColumns: 1, backColumns: 1, candidateNumberLayouts: ['fill', 'barcode'], linkedPaperId: beijingEnglishPaper.id }), header: instantiateHeaderTemplate('beijing-exam-reference'), mode: 'standard', rulePackId: 'beijing-middle-2026', templateId: 'beijing-english-standard', pageCount: 3 },
   },
   {
     id: 'shenzhen-physchem-standard',
@@ -190,6 +191,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
         identityFields: ['学校', '姓名', '准考证号'],
         linkedPaperId: shenzhenPaper.id,
       }),
+      header: instantiateHeaderTemplate('shenzhen-exam-reference-a'),
       mode: 'standard',
       rulePackId: 'shenzhen-physchem-2026',
       templateId: 'shenzhen-physchem-standard',
@@ -207,7 +209,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
     columns: 2,
     identityMode: 'barcode',
     highlights: ['作图框', '实验长答区', '数据表格区'],
-    document: { paper: sciencePaper, blocks: scienceBlocks, settings: createSettings({ linkedPaperId: sciencePaper.id }), mode: 'smart', rulePackId: 'beijing-middle-2026', templateId: 'science-lab-school', pageCount: 2 },
+    document: { paper: sciencePaper, blocks: scienceBlocks, settings: createSettings({ linkedPaperId: sciencePaper.id }), header: instantiateHeaderTemplate('daily-quiz'), mode: 'smart', rulePackId: 'beijing-middle-2026', templateId: 'science-lab-school', pageCount: 2 },
   },
   {
     id: 'true-blank',
@@ -232,6 +234,7 @@ export const answerSheetTemplates: AnswerSheetTemplate[] = [
         candidateNumberType: '学号',
         identityFields: ['学校', '姓名', '班级', '学号'],
       }),
+      header: instantiateHeaderTemplate('daily-quiz'),
       mode: 'smart',
       rulePackId: 'beijing-middle-2026',
       templateId: 'true-blank',
@@ -257,6 +260,7 @@ export function instantiateTemplate(template: AnswerSheetTemplate): AnswerSheetD
       identityFields: [...template.document.settings.identityFields],
       candidateNumberLayouts: [...template.document.settings.candidateNumberLayouts],
     },
+    header: cloneHeaderLayout(template.document.header),
   }
 }
 

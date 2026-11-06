@@ -12,6 +12,7 @@ import {
 } from '@yuanfudao/metis-web-component'
 import { Plus } from 'lucide-react'
 import { blockKindLabels } from '../data/mockPaper'
+import { examHeaderTemplates } from '../data/headerTemplates'
 import {
   isQuestionBlockKind,
   type AnswerBlock,
@@ -20,6 +21,8 @@ import {
   type AnswerSheetSettings,
   type CandidateNumberLayout,
   type IdentityField,
+  type HeaderPreset,
+  type HeaderTemplateId,
 } from '../features/answer-sheet/types'
 
 interface AnswerSheetConfigPanelProps {
@@ -27,6 +30,9 @@ interface AnswerSheetConfigPanelProps {
   activePage: number
   selectedBlockId: string
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void
+  onPresetChange: (preset: HeaderPreset) => void
+  onHeaderTemplateChange: (templateId: HeaderTemplateId) => void
+  onRestoreHeaderTemplate: () => void
   onMetaVisibilityChange: (field: 'showQuestionCount' | 'showUnitScore' | 'showScore', visible: boolean) => void
   onPageChange: (page: number) => void
   onSelect: (id: string) => void
@@ -71,8 +77,9 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const selected = blocks.find((block) => block.id === props.selectedBlockId)
   const questionBlock = selected && isQuestionBlockKind(selected.kind)
   const blankCard = document.paper.sections.length === 0
+  const headerIdentityFields = document.header.modules.find((module) => module.kind === 'identity')?.fields ?? []
   const [addKind, setAddKind] = useState<AnswerBlockKind>('short-answer')
-  const [candidatePreset, setCandidatePreset] = useState<'quiz' | 'exam'>('quiz')
+  const candidatePreset = document.header.preset
 
   const toggleIdentity = (field: IdentityField) => {
     const enabling = !settings.identityFields.includes(field)
@@ -103,28 +110,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   }
 
   const applyCandidatePreset = (preset: 'quiz' | 'exam') => {
-    setCandidatePreset(preset)
-    props.onSettingsChange(preset === 'quiz'
-      ? {
-          paperSize: 'A4',
-          frontColumns: 2,
-          backColumns: 2,
-          identityFields: ['学号', '姓名', '班级'],
-          candidateNumberType: '学号',
-          candidateNumberLayouts: [],
-          showNotice: true,
-          noticeStyle: 'daily',
-        }
-      : {
-          paperSize: 'A4',
-          frontColumns: 2,
-          backColumns: 2,
-          identityFields: ['学校', '姓名', '准考证号'],
-          candidateNumberType: '准考证号',
-          candidateNumberLayouts: ['fill', 'handwrite'],
-          showNotice: true,
-          noticeStyle: 'daily',
-        })
+    props.onPresetChange(preset)
   }
 
   return (
@@ -145,6 +131,23 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           />
         </section>
 
+        {candidatePreset === 'exam' && <section className="config-flat-section config-header-template-section">
+          <div className="config-flat-title">表头模板</div>
+          <div className="header-template-control">
+            <MetisSelect
+              className="header-template-select"
+              value={document.header.templateId}
+              options={examHeaderTemplates.map((template) => ({
+                value: template.id,
+                label: `${template.shortName} · ${template.evidenceLabel}`,
+              }))}
+              onChange={(value) => props.onHeaderTemplateChange(value as HeaderTemplateId)}
+            />
+            {document.header.customized && <MetisButton size="s" onClick={props.onRestoreHeaderTemplate}>恢复</MetisButton>}
+          </div>
+          <p className="header-template-source">{document.header.sourceNote}</p>
+        </section>}
+
         <section className="config-flat-section config-layout-inline">
           <div className="config-flat-title">版面设置</div>
           <MetisCascader
@@ -164,7 +167,9 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         <section className="config-flat-section candidate-info-section">
           <div className="candidate-info-row">
             <div className="config-flat-title">考生信息</div>
-            <div className="candidate-field-options">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field === '学校' ? '学校名称' : field}</MetisCheckbox>)}</div>
+            {candidatePreset === 'exam'
+              ? <div className="header-required-fields">{headerIdentityFields.map((field) => <MetisTag key={field}>{field}</MetisTag>)}</div>
+              : <div className="candidate-field-options">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field === '学校' ? '学校名称' : field}</MetisCheckbox>)}</div>}
           </div>
           <div className="config-flat-body">
             {settings.identityFields.includes('准考证号') && <Field label="考号呈现">
@@ -192,7 +197,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             <MetisSelect
               className="notice-style-select"
               value={settings.noticeStyle}
-              options={[{ value: 'daily', label: '日常样式' }]}
+              options={[{ value: 'daily', label: '日常样式' }, { value: 'exam', label: '大型考试样式' }]}
               onChange={(value) => props.onSettingsChange({ noticeStyle: value as AnswerSheetSettings['noticeStyle'] })}
             />
           </div>}

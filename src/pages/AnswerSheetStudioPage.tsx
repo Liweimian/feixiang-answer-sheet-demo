@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MetisMessage } from '@yuanfudao/metis-web-component'
 import { defaultAnswerSheetDocument } from '../data/answerSheetTemplates'
+import { cloneHeaderLayout, instantiateHeaderTemplate } from '../data/headerTemplates'
 import { rulePacks } from '../data/mockPaper'
 import { autoFixBlocks, buildPreflightChecks } from '../features/answer-sheet/preflight'
 import { downloadAnnotatedAnswerSheet } from '../features/answer-sheet/export'
@@ -22,6 +23,9 @@ import type {
   AnswerSheetSettings,
   ContentElement,
   DraftSnapshot,
+  HeaderLayout,
+  HeaderPreset,
+  HeaderTemplateId,
   PublishedVersion,
 } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
@@ -45,6 +49,7 @@ function cloneDefaultDocument(): AnswerSheetDocument {
       candidateNumberType: '学号',
       candidateNumberLayouts: [],
     },
+    header: instantiateHeaderTemplate('daily-quiz'),
   }
 }
 
@@ -76,8 +81,8 @@ export function AnswerSheetStudioPage() {
   const { paper, blocks, settings, mode, rulePackId, pageCount } = document
   const rulePack = rulePacks.find((pack) => pack.id === rulePackId) ?? rulePacks[0]
   const checks = useMemo(
-    () => buildPreflightChecks(paper, blocks, mode, rulePack, pageCount, settings),
-    [blocks, mode, pageCount, paper, rulePack, settings],
+    () => buildPreflightChecks(paper, blocks, mode, rulePack, pageCount, settings, document.header),
+    [blocks, document.header, mode, pageCount, paper, rulePack, settings],
   )
 
   const ensureNextDraft = () => {
@@ -364,6 +369,65 @@ export function AnswerSheetStudioPage() {
     commitDocument({ ...document, settings: nextSettings })
   }
 
+  const applyPreset = (preset: HeaderPreset) => {
+    const nextHeader = instantiateHeaderTemplate(preset === 'quiz' ? 'daily-quiz' : 'exam-general')
+    const nextSettings: AnswerSheetSettings = preset === 'quiz'
+      ? {
+          ...settings,
+          paperSize: 'A4',
+          frontColumns: 2,
+          backColumns: 2,
+          identityFields: ['学号', '姓名', '班级'],
+          candidateNumberType: '学号',
+          candidateNumberLayouts: [],
+          showNotice: true,
+          noticeStyle: 'daily',
+        }
+      : {
+          ...settings,
+          paperSize: 'A4',
+          frontColumns: 1,
+          backColumns: 1,
+          identityFields: ['学校', '姓名', '准考证号'],
+          candidateNumberType: '准考证号',
+          candidateNumberLayouts: ['fill', 'barcode'],
+          showNotice: true,
+          noticeStyle: 'exam',
+        }
+    commitDocument({
+      ...document,
+      header: nextHeader,
+      settings: { ...nextSettings, identityFields: [...nextSettings.identityFields], candidateNumberLayouts: [...nextSettings.candidateNumberLayouts] },
+    })
+    MetisMessage.success(preset === 'quiz' ? '已切换为日常测验表头' : '已应用大型考试通用表头，题目结构保持不变')
+  }
+
+  const applyHeaderTemplate = (templateId: HeaderTemplateId) => {
+    const nextHeader = instantiateHeaderTemplate(templateId)
+    commitDocument({
+      ...document,
+      header: nextHeader,
+      settings: {
+        ...settings,
+        identityFields: ['学校', '姓名', '准考证号'],
+        candidateNumberType: '准考证号',
+        candidateNumberLayouts: templateId === 'beijing-exam-reference' ? ['fill', 'barcode'] : ['barcode', 'handwrite'],
+        showNotice: true,
+        noticeStyle: 'exam',
+      },
+    })
+    MetisMessage.success(`已应用${nextHeader.templateName}，原题块、分页与题号均已保留`)
+  }
+
+  const updateHeader = (header: HeaderLayout) => {
+    commitDocument({ ...document, header: cloneHeaderLayout(header) })
+  }
+
+  const restoreHeaderTemplate = () => {
+    commitDocument({ ...document, header: instantiateHeaderTemplate(document.header.templateId) })
+    MetisMessage.success('已恢复表头模板布局，考号呈现与注意事项设置保持不变')
+  }
+
   const updateMetaVisibility = (field: 'showQuestionCount' | 'showUnitScore' | 'showScore', visible: boolean) => {
     commitBlocks(blocks.map((block) => isQuestionBlockKind(block.kind) ? { ...block, [field]: visible } : block))
   }
@@ -439,7 +503,15 @@ export function AnswerSheetStudioPage() {
               onRedo={redo}
               onSave={() => void saveNow()}
               onPreflight={() => setPreflightOpen(true)}
-              onPrint={() => printSnapshot(document)}
+              onPrint={() => {
+                if (!published) {
+                  setPreflightOpen(true)
+                  MetisMessage.info('请先完成印前校验并生成印刷版')
+                  return
+                }
+                printSnapshot(published.snapshot)
+                if (published.version !== draftVersion) MetisMessage.info(`当前为 V${draftVersion} 草稿，已打开不可变的 V${published.version} 印刷版`)
+              }}
               onDownloadAnnotated={() => {
                 downloadAnnotatedAnswerSheet(document, draftVersion)
                 MetisMessage.success('已下载带批改痕迹版，可在浏览器中继续打印为 PDF')
@@ -460,6 +532,10 @@ export function AnswerSheetStudioPage() {
               onTitleCommit={updateTitle}
               onBlockTitleCommit={(id, title) => updateBlock(id, { title })}
               onSettingsChange={updateSettings}
+              onPresetChange={applyPreset}
+              onHeaderTemplateChange={applyHeaderTemplate}
+              onRestoreHeaderTemplate={restoreHeaderTemplate}
+              onHeaderChange={updateHeader}
               onMetaVisibilityChange={updateMetaVisibility}
               onReorder={dragBlock}
               onRenumber={renumberBlocks}
