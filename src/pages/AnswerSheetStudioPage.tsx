@@ -28,6 +28,7 @@ import type {
   HeaderTemplateId,
   PublishedVersion,
   QuestionGroupDraft,
+  QuestionGroupType,
 } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { answerSheetService } from '../services/answerSheetService'
@@ -80,6 +81,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
   const [publishing, setPublishing] = useState(false)
   const [printDocument, setPrintDocument] = useState<AnswerSheetDocument>()
   const [questionGroupOpen, setQuestionGroupOpen] = useState(false)
+  const [questionGroupType, setQuestionGroupType] = useState<QuestionGroupType>('single')
   const [objectiveAnswerOpen, setObjectiveAnswerOpen] = useState(false)
   const saveTimer = useRef<number>()
 
@@ -252,7 +254,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
 
   const addQuestionGroup = (draft: QuestionGroupDraft) => {
     const endNumber = draft.startNumber + draft.questionCount - 1
-    const kind: AnswerBlockKind = draft.type === 'objective' ? 'objective' : draft.type === 'essay' ? 'essay' : 'short-answer'
+    const kind: AnswerBlockKind = ['single', 'multiple', 'judge'].includes(draft.type) ? 'objective' : draft.type === 'comprehensive' ? 'mixed' : 'short-answer'
     const pageBlocks = blocks.filter((block) => block.page === activePage)
     const nextY = Math.min(88, pageBlocks.reduce((bottom, block) => Math.max(bottom, (block.canvasY ?? 0) + Math.max(10, block.height / 8)), 0) + 2)
     const nextBlock: AnswerBlock = {
@@ -262,17 +264,17 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
       range: draft.questionCount === 1 ? `${draft.startNumber}` : `${draft.startNumber}–${endNumber}`,
       score: draft.totalScore,
       kind,
-      height: kind === 'objective' ? Math.max(112, Math.ceil(draft.questionCount / 4) * 26 + 54) : kind === 'essay' ? 320 : draft.type === 'solution' ? 220 : 150,
+      height: kind === 'objective' ? Math.max(112, Math.ceil(draft.questionCount / 4) * 26 + 54) : draft.type === 'solution' ? 220 : draft.type === 'comprehensive' ? 200 : 150,
       canvasX: 0,
       canvasY: nextY,
       canvasWidth: 100,
-      lineCount: kind === 'objective' ? undefined : kind === 'essay' ? 16 : draft.type === 'solution' ? 8 : 3,
+      lineCount: kind === 'objective' ? undefined : draft.type === 'solution' ? 8 : draft.type === 'comprehensive' ? 6 : 3,
       answerVariant: draft.type === 'fill' ? 'fill' : draft.type === 'solution' ? 'solution' : undefined,
       optionCount: kind === 'objective' ? draft.optionCount : undefined,
+      objectiveMode: draft.type === 'single' || draft.type === 'multiple' || draft.type === 'judge' ? draft.type : undefined,
       itemsPerColumn: kind === 'objective' ? Math.min(10, draft.questionCount) : undefined,
       objectiveLayout: kind === 'objective' ? 'horizontal' : undefined,
-      responseStyle: kind === 'essay' ? 'grid' : kind === 'short-answer' ? 'lines' : undefined,
-      wordCount: kind === 'essay' ? 800 : undefined,
+      responseStyle: kind === 'short-answer' || kind === 'mixed' ? 'lines' : undefined,
       showScore: true,
       showQuestionCount: true,
       showUnitScore: true,
@@ -619,7 +621,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               onMove={moveBlock}
               onDelete={deleteSelected}
               onAdd={addBlock}
-              onAddQuestionGroup={() => setQuestionGroupOpen(true)}
+              onAddQuestionGroup={(type) => { setQuestionGroupType(type); setQuestionGroupOpen(true) }}
               onTitleCommit={updateTitle}
               onBlockTitleCommit={(id, title) => updateBlock(id, { title })}
               onSettingsChange={updateSettings}
@@ -667,7 +669,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
         onDownload={() => printSnapshot(published?.snapshot ?? document)}
         onDownloadPublished={() => printSnapshot(published?.snapshot ?? document)}
       />
-      <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} onClose={() => setQuestionGroupOpen(false)} onSubmit={addQuestionGroup} />
+      <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} type={questionGroupType} onClose={() => setQuestionGroupOpen(false)} onSubmit={addQuestionGroup} />
       <ObjectiveAnswerDialog open={objectiveAnswerOpen} blocks={blocks} onClose={() => setObjectiveAnswerOpen(false)} onSave={saveObjectiveAnswers} />
     </>
   )

@@ -21,6 +21,7 @@ import {
   type AnswerSheetSettings,
   type HeaderPreset,
   type HeaderTemplateId,
+  type QuestionGroupType,
 } from '../features/answer-sheet/types'
 
 interface AnswerSheetConfigPanelProps {
@@ -36,7 +37,7 @@ interface AnswerSheetConfigPanelProps {
   onSelect: (id: string) => void
   onUpdateBlock: (patch: Partial<AnswerBlock>) => void
   onAdd: (kind: AnswerBlockKind) => void
-  onAddQuestionGroup: () => void
+  onAddQuestionGroup: (type: QuestionGroupType) => void
 }
 
 const layoutOptions = (['A3', '8K', 'A4', '16K'] as const).map((paperSize) => ({
@@ -195,7 +196,9 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         <section className="config-flat-section config-block-section">
           <div className="config-flat-title"><span>题目结构</span><small>{pageCount} 面 · {blocks.length} 个题块</small></div>
           <div className="config-flat-body">
-            {standaloneCard && <MetisButton className="add-question-group-button" type="primary" icon={<Plus size={14} />} onClick={props.onAddQuestionGroup}>添加题组</MetisButton>}
+            {standaloneCard && <div className="question-type-actions">
+              {([['single', '单选题'], ['multiple', '多选题'], ['judge', '判断题'], ['fill', '填空题'], ['solution', '解答题'], ['comprehensive', '综合题']] as const).map(([type, label]) => <MetisButton key={type} type="bordered" icon={<Plus size={13} />} onClick={() => props.onAddQuestionGroup(type)}>{label}</MetisButton>)}
+            </div>}
             <div className="config-page-tabs">
               {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
                 <button key={page} type="button" className={props.activePage === page ? 'active' : ''} onClick={() => props.onPageChange(page)}>第 {page} 面</button>
@@ -234,7 +237,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
 
               {selected.kind === 'objective' && (
                 <div className="config-grid-two">
-                  <Field label="选项数量"><MetisSelect value={selected.optionCount ?? 4} options={[{ value: 4, label: 'A–D' }, { value: 5, label: 'A–E' }]} onChange={(value) => props.onUpdateBlock({ optionCount: Number(value) as 4 | 5 })} /></Field>
+                  <Field label="选项数量"><MetisSelect value={selected.optionCount ?? 4} options={[{ value: 2, label: 'T / F' }, { value: 4, label: 'A–D' }, { value: 5, label: 'A–E' }]} onChange={(value) => props.onUpdateBlock({ optionCount: Number(value) as 2 | 4 | 5 })} /></Field>
                 </div>
               )}
             </div>

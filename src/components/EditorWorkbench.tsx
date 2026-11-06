@@ -7,6 +7,7 @@ import type {
   HeaderLayout,
   HeaderPreset,
   HeaderTemplateId,
+  QuestionGroupType,
   RulePack,
 } from '../features/answer-sheet/types'
 import { AnswerSheetCanvas } from './AnswerSheetCanvas'
@@ -26,7 +27,7 @@ interface EditorWorkbenchProps {
   onReorder: (dragId: string, targetId: string) => void
   onDelete: () => void
   onAdd: (kind: AnswerBlockKind) => void
-  onAddQuestionGroup: () => void
+  onAddQuestionGroup: (type: QuestionGroupType) => void
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void

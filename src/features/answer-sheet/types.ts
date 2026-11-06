@@ -90,7 +90,8 @@ export interface AnswerBlock {
   answerSlotNumbers?: number[][]
   answerVariant?: 'fill' | 'solution'
   wordCount?: number
-  optionCount?: 4 | 5
+  optionCount?: 2 | 4 | 5
+  objectiveMode?: 'single' | 'multiple' | 'judge'
   objectiveAnswers?: Record<string, string[]>
   itemsPerColumn?: number
   objectiveLayout?: ObjectiveLayout
@@ -120,7 +121,7 @@ export interface AnswerBlock {
   mergedParts?: AnswerBlock[]
 }
 
-export type QuestionGroupType = 'objective' | 'fill' | 'solution' | 'essay'
+export type QuestionGroupType = 'single' | 'multiple' | 'judge' | 'fill' | 'solution' | 'comprehensive'
 
 export interface QuestionGroupDraft {
   title: string
@@ -128,7 +129,7 @@ export interface QuestionGroupDraft {
   startNumber: number
   questionCount: number
   totalScore: number
-  optionCount: 4 | 5
+  optionCount: 2 | 4 | 5
 }
 
 export interface AnswerSheetSettings {

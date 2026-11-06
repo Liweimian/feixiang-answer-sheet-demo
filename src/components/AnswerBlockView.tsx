@@ -31,7 +31,7 @@ interface AnswerBlockViewProps {
 function ObjectiveGrid({ block, compact = false, sortMode = 'number-horizontal-option-horizontal', merged = true }: { block: AnswerBlock; compact?: boolean; sortMode?: ObjectiveSortMode; merged?: boolean }) {
   const questions = questionNumbers(block.range)
   if (questions.length === 0) return <div className="unconfigured-block">请在左侧设置题号范围与分值</div>
-  const options = ['A', 'B', 'C', 'D', 'E'].slice(0, block.optionCount ?? 4)
+  const options = block.objectiveMode === 'judge' ? ['T', 'F'] : ['A', 'B', 'C', 'D', 'E'].slice(0, block.optionCount ?? 4)
   return (
     <div
       className={`objective-grid adaptive sort-${sortMode} ${merged ? 'layout-merged' : ''} ${compact ? 'compact' : ''}`}

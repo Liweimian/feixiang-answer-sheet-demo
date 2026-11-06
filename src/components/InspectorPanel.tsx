@@ -94,10 +94,11 @@ export function InspectorPanel(props: InspectorPanelProps) {
                   value={block.optionCount ?? 4}
                   disabled={locked}
                   options={[
+                    { value: 2, label: 'T / F（判断）' },
                     { value: 4, label: 'A–D（4 个）' },
                     { value: 5, label: 'A–E（5 个）' },
                   ]}
-                  onChange={(value) => props.onUpdate({ optionCount: Number(value) as 4 | 5 })}
+                  onChange={(value) => props.onUpdate({ optionCount: Number(value) as 2 | 4 | 5 })}
                 />
               </label>
               <label>
