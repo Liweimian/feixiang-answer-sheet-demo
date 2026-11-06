@@ -100,7 +100,8 @@
     "52267be Stage 4 v2.3.3: flatten question structure",
     "dddb4b3 Stage 4 v2.3.4: edit scores inline",
     "69c5222 Stage 4 v2.3.5: compact inline score layout",
-    "0da99c1 Stage 4 v2.3.6: hide forbidden zones from outline"
+    "0da99c1 Stage 4 v2.3.6: hide forbidden zones from outline",
+    "83481c5 Stage 4 v2.3.7: unify essay answer settings"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-07T01:10:00+08:00"
