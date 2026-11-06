@@ -164,12 +164,12 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         </section>}
 
         <section className="config-flat-section">
-          <div className="config-meta-row">
+          <div className="config-meta-row config-score-meta-row">
             <span>题量与分值</span>
             <div className="config-check-list">
-              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showQuestionCount)} onChange={(event) => props.onMetaVisibilityChange('showQuestionCount', event.target.checked)}>题量</MetisCheckbox>
-              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showUnitScore)} onChange={(event) => props.onMetaVisibilityChange('showUnitScore', event.target.checked)}>每题分值</MetisCheckbox>
-              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showScore)} onChange={(event) => props.onMetaVisibilityChange('showScore', event.target.checked)}>总分</MetisCheckbox>
+              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showQuestionCount)} onChange={(event) => props.onMetaVisibilityChange('showQuestionCount', event.target.checked)}>模块总题量</MetisCheckbox>
+              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showUnitScore)} onChange={(event) => props.onMetaVisibilityChange('showUnitScore', event.target.checked)}>单题分值</MetisCheckbox>
+              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showScore)} onChange={(event) => props.onMetaVisibilityChange('showScore', event.target.checked)}>模块总分</MetisCheckbox>
             </div>
           </div>
         </section>
@@ -245,7 +245,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                         <b>{block.title}</b>
                         <small>{isQuestion ? `（共 ${questionCount} 题，共 ${block.score ?? 0} 分）` : blockKindLabels[block.kind]}</small>
                       </button>
-                      {isQuestion && <label className="config-block-batch-score"><span>每题分值</span><MetisInputNumber value={uniformValue(Object.values(resolvedScores(block)))} min={0} max={100} precision={2} controls={false} placeholder="分值" addonAfter="分" aria-label={`${block.title}每题分值`} onChange={(value) => setAllScores(block, Number(value ?? 0))} /></label>}
+                      {isQuestion && <label className="config-block-batch-score"><span>单题分值</span><MetisInputNumber value={uniformValue(Object.values(resolvedScores(block)))} min={0} max={100} precision={2} controls={false} placeholder="分值" addonAfter="分" aria-label={`${block.title}单题分值`} onChange={(value) => setAllScores(block, Number(value ?? 0))} /></label>}
                     </div>
                     {isQuestion && <div className="config-question-tree">
                       {numbers.map((number, questionIndex) => {
