@@ -79,7 +79,8 @@
     "fbece72 Stage 4 v1.6.8: use fixed candidate headers",
     "8639272 Stage 4 v1.6.9: reposition header template controls",
     "e78b4cc Stage 4 v1.7.0: add recoverable header visibility",
-    "774e6c2 Stage 4 v1.7.1: simplify block headings"
+    "774e6c2 Stage 4 v1.7.1: simplify block headings",
+    "85cca00 Stage 4 v1.8.0: customize subquestion numbering"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-06T15:10:00+08:00"
