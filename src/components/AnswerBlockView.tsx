@@ -147,9 +147,6 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
     top: `${draftLayout.y}px`,
     width: `${draftLayout.width}%`,
   } as CSSProperties
-  const normalizedTitle = block.title.replace(/[–—]/g, '-').replace(/\s/g, '')
-  const normalizedRange = block.range?.replace(/[–—]/g, '-').replace(/\s/g, '')
-  const showRange = Boolean(block.range && normalizedRange && !normalizedTitle.includes(normalizedRange))
   const questionCount = questionNumbers(block.range).length
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(block.title)
@@ -466,7 +463,6 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
             <strong>{block.title}</strong><Pencil size={10} />
           </button>
         ) : <strong>{block.title}</strong>}
-        {showRange && <small>题号 {block.range}</small>}
         {block.showQuestionCount && questionCount > 0 && <small>共 {questionCount} 题</small>}
         {block.showUnitScore && block.score !== undefined && questionCount > 0 && <small>{block.score % questionCount === 0 ? `每题 ${block.score / questionCount} 分` : '分值不等'}</small>}
         {block.showScore && block.score !== undefined && <small>共 {block.score} 分</small>}
