@@ -346,8 +346,11 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   }
 
   const selectedBlocks = props.blocks.filter((block) => selectedIds.includes(block.id))
+  const selectedCategory = selectedBlocks[0]?.kind === 'objective' ? 'objective' : 'subjective'
   const canMerge = selectedBlocks.length > 1
     && selectedBlocks.every((block) => block.page === selectedBlocks[0].page && isQuestionBlockKind(block.kind) && !block.locked)
+    && selectedBlocks.every((block) => (block.kind === 'objective' ? 'objective' : 'subjective') === selectedCategory)
+    && (selectedCategory === 'objective' ? props.settings.objectiveMerge : props.settings.subjectiveMerge)
   const selectedMergedBlock = selectedBlocks.length === 1 && selectedBlocks[0].mergedParts?.length ? selectedBlocks[0] : undefined
   const toolbarPage = selectedBlocks.length > 0 && selectedBlocks.every((block) => block.page === selectedBlocks[0].page)
     ? selectedBlocks[0].page

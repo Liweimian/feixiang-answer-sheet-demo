@@ -113,8 +113,9 @@
     "42520ba Stage 4 v2.3.18: customize individual fill slots",
     "7bd7c46 Stage 4 v2.3.19: open fill settings from canvas",
     "396f4f6 Stage 4 v2.4.0: add floating original paper reference",
-    "Stage 4 v2.4.1: remove question order control"
+    "5c217d4 Stage 4 v2.4.1: remove question order control",
+    "Stage 4 v2.4.2: support objective and subjective module merge"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-07T05:50:00+08:00"
+  "updatedAt": "2026-11-07T06:10:00+08:00"
 }

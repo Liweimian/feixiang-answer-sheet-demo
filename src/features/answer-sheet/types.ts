@@ -155,6 +155,7 @@ export interface AnswerSheetSettings {
   questionNumberOrder: QuestionNumberOrder
   objectiveSortMode: ObjectiveSortMode
   objectiveMerge: boolean
+  subjectiveMerge: boolean
   subjectiveAnswerStyle: SubjectiveAnswerStyle
   subjectiveLineHeight: number
   noticeText: string

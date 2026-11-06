@@ -27,6 +27,7 @@ function createSettings(overrides: Partial<AnswerSheetSettings> = {}): AnswerShe
     questionNumberOrder: 'major',
     objectiveSortMode: 'number-horizontal-option-horizontal',
     objectiveMerge: true,
+    subjectiveMerge: true,
     subjectiveAnswerStyle: 'lines',
     subjectiveLineHeight: 16,
     noticeText: defaultNotice,

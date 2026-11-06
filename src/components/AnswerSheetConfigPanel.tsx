@@ -7,7 +7,6 @@ import {
   MetisInputNumber,
   MetisRadio,
   MetisSelect,
-  MetisSwitch,
   MetisTag,
 } from '@yuanfudao/metis-web-component'
 import { Plus } from 'lucide-react'
@@ -190,9 +189,12 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               onChange={(value) => props.onSettingsChange({ objectiveSortMode: value as AnswerSheetSettings['objectiveSortMode'] })}
             />
           </div>
-          <div className="config-meta-row">
-            <span>客观题合并</span>
-            <MetisSwitch size="small" checked={settings.objectiveMerge} onChange={(checked) => props.onSettingsChange({ objectiveMerge: checked })} />
+          <div className="config-meta-row config-module-merge-row">
+            <span>模块合并</span>
+            <div className="config-check-list config-module-merge-options">
+              <MetisCheckbox checked={settings.objectiveMerge} onChange={(event) => props.onSettingsChange({ objectiveMerge: event.target.checked })}>客观题</MetisCheckbox>
+              <MetisCheckbox checked={settings.subjectiveMerge} onChange={(event) => props.onSettingsChange({ subjectiveMerge: event.target.checked })}>主观题</MetisCheckbox>
+            </div>
           </div>
           <div className="config-meta-row">
             <span>解答题作答</span>
