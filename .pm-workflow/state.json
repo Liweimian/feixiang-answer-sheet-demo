@@ -101,7 +101,8 @@
     "dddb4b3 Stage 4 v2.3.4: edit scores inline",
     "69c5222 Stage 4 v2.3.5: compact inline score layout",
     "0da99c1 Stage 4 v2.3.6: hide forbidden zones from outline",
-    "83481c5 Stage 4 v2.3.7: unify essay answer settings"
+    "83481c5 Stage 4 v2.3.7: unify essay answer settings",
+    "7879a4b Stage 4 v2.3.8: edit and constrain forbidden zones"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-07T01:25:00+08:00"
