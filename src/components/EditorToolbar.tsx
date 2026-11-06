@@ -25,7 +25,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
   return (
     <section className="editor-toolbar editor-toolbar-compact" data-sec="3">
       <div className="editor-title-row">
-        <MetisButton type="borderless" icon={<ChevronLeft size={17} />} onClick={props.onBack}>{props.backLabel ?? '返回组卷'}</MetisButton>
+        <MetisButton type="borderless" icon={<ChevronLeft size={17} />} onClick={props.onBack}>{props.backLabel ?? '返回首页'}</MetisButton>
         <div className="editor-paper-title">
           <strong>{props.paper.title}</strong>
           <span>{props.paper.subject} · {props.paper.score} 分</span>

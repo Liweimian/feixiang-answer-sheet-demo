@@ -1,12 +1,5 @@
 .answer-sheet-app { background: var(--fx_page); color: var(--fx_text_1); }
-.app-sider { display: flex; align-items: center; flex-direction: column; padding: var(--fx_sp_4) var(--fx_sp_2); color: var(--fx_text_inverse); }
-.sider-logo { width: var(--fx_sp_10); height: var(--fx_sp_10); display: grid; flex: 0 0 auto; place-items: center; border-radius: var(--fx_radius_4); background: var(--fx_brand); box-shadow: var(--fx_shadow_sm); font-family: var(--fx_font_display); font-size: 18px; font-weight: 800; }
-.app-sider nav { width: 100%; display: grid; gap: var(--fx_sp_2); margin-top: var(--fx_sp_8); }
-.app-sider nav button, .sider-user { width: 100%; min-height: 50px; display: grid; justify-items: center; gap: var(--fx_sp_1); padding: var(--fx_sp_2) 0; border: 0; border-radius: var(--fx_radius_3); background: transparent; color: var(--fx_text_3); cursor: pointer; }
-.app-sider nav button span { font-size: 10px; }
-.app-sider nav button:hover, .app-sider nav button.active, .sider-user:hover { background: var(--fx_nav_hover); color: var(--fx_text_inverse); }
-.app-sider nav button.active { box-shadow: inset 3px 0 0 var(--fx_brand); }
-.sider-user { margin-top: auto; }
+.answer-sheet-app .fx-content { margin-left: 0; }
 
 .studio-header { z-index: 50; display: grid; grid-template-columns: 270px 1fr 280px; align-items: center; }
 .studio-brand, .studio-utilities, .studio-steps, .studio-steps > div { display: flex; align-items: center; }

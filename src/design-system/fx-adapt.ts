@@ -4,7 +4,7 @@ export function applyFxZoom(selector = '.fx-zoom-area') {
 
   const update = () => {
     const viewportWidth = Math.max(window.innerWidth, 1280)
-    target.style.zoom = String(Math.min(1, (viewportWidth - 132) / 1280))
+    target.style.zoom = String(Math.min(1, (viewportWidth - 64) / 1280))
   }
 
   update()

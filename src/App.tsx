@@ -25,12 +25,17 @@ export function App() {
     window.location.href = next.toString()
   }
 
+  const goHome = () => {
+    setToolDocument(undefined)
+    if (!window.location.hash.startsWith('#/homework/answer-sheet-list')) window.location.hash = '/homework/answer-sheet-list'
+  }
+
   return (
     <AppShell reviewMode={reviewMode} onToggleReview={toggleReview}>
       {route.startsWith('#/homework/answer-sheet-list') ? <>
         <div hidden={Boolean(toolDocument)}><AnswerSheetListPage onEdit={setToolDocument} /></div>
-        {toolDocument && <AnswerSheetStudioPage initialDocument={toolDocument} entry="tool" onBack={() => setToolDocument(undefined)} />}
-      </> : <AnswerSheetStudioPage />}
+        {toolDocument && <AnswerSheetStudioPage initialDocument={toolDocument} onBack={goHome} />}
+      </> : <AnswerSheetStudioPage onBack={goHome} />}
     </AppShell>
   )
 }
