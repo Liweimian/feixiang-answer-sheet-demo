@@ -19,8 +19,6 @@ import {
   type AnswerBlockKind,
   type AnswerSheetDocument,
   type AnswerSheetSettings,
-  type CandidateNumberLayout,
-  type IdentityField,
   type HeaderPreset,
   type HeaderTemplateId,
 } from '../features/answer-sheet/types'
@@ -40,12 +38,6 @@ interface AnswerSheetConfigPanelProps {
   onAdd: (kind: AnswerBlockKind) => void
 }
 
-const identityFields: IdentityField[] = ['学号', '班级', '学校', '准考证号']
-const candidateLayoutOptions: Array<{ value: CandidateNumberLayout; label: string }> = [
-  { value: 'fill', label: '填涂' },
-  { value: 'barcode', label: '条形码' },
-  { value: 'handwrite', label: '手写' },
-]
 const layoutOptions = (['A3', '8K', 'A4', '16K'] as const).map((paperSize) => ({
   value: paperSize,
   label: paperSize,
@@ -77,37 +69,8 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const selected = blocks.find((block) => block.id === props.selectedBlockId)
   const questionBlock = selected && isQuestionBlockKind(selected.kind)
   const blankCard = document.paper.sections.length === 0
-  const headerIdentityFields = document.header.modules.find((module) => module.kind === 'identity')?.fields ?? []
   const [addKind, setAddKind] = useState<AnswerBlockKind>('short-answer')
   const candidatePreset = document.header.preset
-
-  const toggleIdentity = (field: IdentityField) => {
-    const enabling = !settings.identityFields.includes(field)
-    const next = settings.identityFields.includes(field)
-      ? settings.identityFields.filter((item) => item !== field)
-      : [...settings.identityFields, field]
-    props.onSettingsChange({
-      identityFields: next,
-      ...(field === '准考证号'
-        ? {
-            candidateNumberType: enabling ? '准考证号' : '学号',
-            candidateNumberLayouts: enabling
-              ? settings.candidateNumberLayouts.length ? settings.candidateNumberLayouts : ['fill']
-              : [],
-          }
-        : {}),
-    })
-  }
-
-  const toggleCandidateLayout = (layout: CandidateNumberLayout) => {
-    const current = settings.candidateNumberLayouts
-    if (current.includes(layout) && current.length === 1) return
-    props.onSettingsChange({
-      candidateNumberLayouts: current.includes(layout)
-        ? current.filter((item) => item !== layout)
-        : [...current, layout],
-    })
-  }
 
   const applyCandidatePreset = (preset: 'quiz' | 'exam') => {
     props.onPresetChange(preset)
@@ -165,24 +128,6 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         </section>
 
         <section className="config-flat-section candidate-info-section">
-          <div className="candidate-info-row">
-            <div className="config-flat-title">考生信息</div>
-            {candidatePreset === 'exam'
-              ? <div className="header-required-fields">{headerIdentityFields.map((field) => <MetisTag key={field}>{field}</MetisTag>)}</div>
-              : <div className="candidate-field-options">{identityFields.map((field) => <MetisCheckbox key={field} checked={settings.identityFields.includes(field)} onChange={() => toggleIdentity(field)}>{field === '学校' ? '学校名称' : field}</MetisCheckbox>)}</div>}
-          </div>
-          <div className="config-flat-body">
-            {settings.identityFields.includes('准考证号') && <Field label="考号呈现">
-              <div className="config-check-list">{candidateLayoutOptions.map((option) => (
-                <MetisCheckbox key={option.value} checked={settings.candidateNumberLayouts.includes(option.value)} onChange={() => toggleCandidateLayout(option.value)}>{option.label}</MetisCheckbox>
-              ))}</div>
-            </Field>}
-            {settings.identityFields.includes('准考证号') && <div className="config-grid-two">
-              <Field label="考号位数">
-                <MetisInputNumber className="config-number" value={settings.candidateNumberDigits} min={4} max={18} addonAfter="位" onChange={(value) => props.onSettingsChange({ candidateNumberDigits: Number(value ?? 10) })} />
-              </Field>
-            </div>}
-          </div>
           <div className="candidate-info-row">
             <div className="config-flat-title">注意事项</div>
             <MetisRadio.Group
