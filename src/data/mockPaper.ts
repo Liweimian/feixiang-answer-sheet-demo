@@ -115,6 +115,7 @@ export const initialAnswerBlocks: AnswerBlock[] = [
     height: 300,
     lineCount: 12,
     answerSlotCounts: [3, 2, 1],
+    answerVariant: 'fill',
     showScore: true,
     showQuestionCount: false,
     lineStyle: 'solid',
@@ -128,6 +129,7 @@ export const initialAnswerBlocks: AnswerBlock[] = [
     range: '47',
     score: 4,
     kind: 'short-answer',
+    answerVariant: 'solution',
     height: 180,
     lineCount: 7,
     showScore: true,
@@ -200,4 +202,5 @@ export const blockKindLabels: Record<AnswerBlock['kind'], string> = {
   table: '表格区',
   notice: '说明文字',
   'response-area': '作答组件',
+  'section-title': '标题',
 }

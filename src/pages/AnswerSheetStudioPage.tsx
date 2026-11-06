@@ -206,6 +206,7 @@ export function AnswerSheetStudioPage() {
       table: '新增表格区',
       notice: '作答说明',
       'response-area': '新增作答组件',
+      'section-title': '标题',
     }
     const nextBlock: AnswerBlock = {
       id: `${kind}-${Date.now()}`,
@@ -330,30 +331,36 @@ export function AnswerSheetStudioPage() {
     MetisMessage.success('已恢复合并前的题块')
   }
 
-  const insertAfterBlock = (afterId: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => {
+  const insertAfterBlock = (afterId: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position: 'before' | 'after' = 'after') => {
     const anchorIndex = blocks.findIndex((block) => block.id === afterId)
     const anchor = blocks[anchorIndex]
     if (!anchor) return
-    const title = kind === 'forbidden' ? '禁答区' : responseStyle === 'blank' ? '空行' : responseStyle === 'tian' ? '田字格作答区' : responseStyle === 'mi' ? '米字格作答区' : responseStyle === 'four-line' ? '四线三格作答区' : '作答横线'
+    const title = kind === 'section-title' ? '标题' : kind === 'forbidden' ? '禁答区' : responseStyle === 'blank' ? '空白区' : responseStyle === 'tian' ? '田字格作答区' : responseStyle === 'mi' ? '米字格作答区' : responseStyle === 'four-line' ? '四线三格作答区' : '作答横线'
+    const height = kind === 'section-title' ? 34 : kind === 'forbidden' ? 72 : 100
+    const anchorY = anchor.canvasY ?? 0
     const inserted: AnswerBlock = {
       id: `insert-${kind}-${Date.now()}`,
       page: anchor.page,
       title,
       kind,
-      height: kind === 'forbidden' ? 72 : 100,
+      height,
       lineCount: 4,
       responseStyle,
       contentText: kind === 'forbidden' ? '请勿在此区域作答' : undefined,
       showScore: false,
       showQuestionCount: false,
       canvasX: anchor.canvasX,
-      canvasY: (anchor.canvasY ?? 0) + anchor.height + 8,
+      canvasY: position === 'before' ? anchorY : anchorY + anchor.height + 8,
       canvasWidth: anchor.canvasWidth,
     }
-    const next = [...blocks.slice(0, anchorIndex + 1), inserted, ...blocks.slice(anchorIndex + 1)]
+    const shiftedBlocks = position === 'before'
+      ? blocks.map((block) => block.page === anchor.page && (block.canvasY ?? 0) >= anchorY ? { ...block, canvasY: (block.canvasY ?? 0) + height + 8 } : block)
+      : blocks
+    const insertIndex = position === 'before' ? anchorIndex : anchorIndex + 1
+    const next = [...shiftedBlocks.slice(0, insertIndex), inserted, ...shiftedBlocks.slice(insertIndex)]
     commitBlocks(next)
     setSelectedBlockId(inserted.id)
-    MetisMessage.success(`已在当前模块后插入${title}`)
+    MetisMessage.success(`已在当前题块${position === 'before' ? '前' : '后'}插入${title}`)
   }
 
   const updateTitle = (title: string) => {

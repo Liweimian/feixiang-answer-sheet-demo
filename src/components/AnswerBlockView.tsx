@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { MetisDropdown, MetisInput, MetisInputNumber, MetisRadio, MetisSelect } from '@yuanfudao/metis-web-component'
+import { MetisInput, MetisInputNumber, MetisRadio, MetisSelect } from '@yuanfudao/metis-web-component'
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type ObjectiveSortMode } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
@@ -16,7 +16,7 @@ interface AnswerBlockViewProps {
   onResizeCommit?: (height: number, width: number) => void
   onToggleContent?: (element: ContentElement) => void
   onUpdateBlock?: (patch: Partial<AnswerBlock>) => void
-  onInsertAfter?: (kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => void
+  onInsertAfter?: (kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position?: 'before' | 'after') => void
   onUndo?: () => void
   onRedo?: () => void
   questionAnswer?: boolean
@@ -79,10 +79,6 @@ function GridPaper({ rows = 8, cells, variant = 'grid' }: { rows?: number; cells
 }
 
 function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { block: AnswerBlock; fillModule?: boolean; lineHeight?: number }) {
-  if (block.responseStyle === 'bracket' || block.responseStyle === 'square') return <AnswerMarks block={block} />
-  if (block.responseStyle === 'grid' || block.responseStyle === 'tian' || block.responseStyle === 'mi') return <GridPaper rows={Math.max(4, block.lineCount ?? 4)} cells={block.responseStyle === 'grid' ? block.wordCount : undefined} variant={block.responseStyle === 'grid' ? 'grid' : block.responseStyle} />
-  if (block.responseStyle === 'four-line') return <div className="four-line-grid">{Array.from({ length: Math.max(2, block.lineCount ?? 4) }, (_, index) => <span key={index}>{Array.from({ length: 4 }, (_, line) => <i key={line} />)}</span>)}</div>
-  if (block.responseStyle === 'blank') return <div className="blank-response-area" />
   const count = block.lineCount ?? 4
   const numbers = questionNumbers(block.range)
   const dashed = block.lineStyle === 'dashed'
@@ -100,7 +96,7 @@ function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { bl
             <div key={no} className="short-answer-slot-row">
               <b>{no}.</b>
               {Array.from({ length: slotCount }, (_, slotIndex) => (
-                <span key={slotIndex}><em>{slotCount > 1 ? `(${slotNumbers[slotIndex] ?? slotIndex + 1})` : ''}</em><i /></span>
+                <span key={slotIndex} className={`slot-style-${block.responseStyle ?? 'lines'}`}><em>{slotCount > 1 ? `(${slotNumbers[slotIndex] ?? slotIndex + 1})` : ''}</em><i /></span>
               ))}
             </div>
           )
@@ -108,6 +104,10 @@ function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { bl
       </div>
     )
   }
+  if (block.responseStyle === 'bracket' || block.responseStyle === 'square') return <AnswerMarks block={block} />
+  if (block.responseStyle === 'grid' || block.responseStyle === 'tian' || block.responseStyle === 'mi') return <GridPaper rows={Math.max(4, block.lineCount ?? 4)} cells={block.responseStyle === 'grid' ? block.wordCount : undefined} variant={block.responseStyle === 'grid' ? 'grid' : block.responseStyle} />
+  if (block.responseStyle === 'four-line') return <div className="four-line-grid">{Array.from({ length: Math.max(2, block.lineCount ?? 4) }, (_, index) => <span key={index}>{Array.from({ length: 4 }, (_, line) => <i key={line} />)}</span>)}</div>
+  if (block.responseStyle === 'blank') return <div className="blank-response-area" />
   if (numbers.length > 1) {
     const linesPerQuestion = Math.max(2, Math.floor(count / numbers.length))
     return (
@@ -122,8 +122,8 @@ function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { bl
 function RichElements({ elements = [] }: { elements?: ContentElement[] }) {
   if (!elements.length) return null
   return (
-    <div className="rich-elements">
-      {elements.includes('table') && <span className="rich-table"><Table2 size={12} />{Array.from({ length: 6 }, (_, index) => <i key={index} />)}</span>}
+    <div className={`rich-elements ${elements.includes('table') ? 'has-table' : ''}`}>
+      {elements.includes('table') && <span className="rich-table"><Table2 size={12} />{Array.from({ length: 12 }, (_, index) => <i key={index} />)}</span>}
       {elements.includes('formula') && <span className="rich-formula"><Sigma size={12} /> x² + y² = ______</span>}
       {elements.includes('image') && <span className="rich-image"><Image size={12} /> 图片作答素材区</span>}
     </div>
@@ -151,7 +151,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
   const questionCount = questionNumbers(block.range).length
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(block.title)
-  const [settingsPanel, setSettingsPanel] = useState<'answer' | 'essay' | 'insert' | null>(null)
+  const [settingsPanel, setSettingsPanel] = useState<'answer' | 'subquestion' | 'insert' | null>(null)
   const [slotNumberDrafts, setSlotNumberDrafts] = useState<string[]>([])
   const cancelling = useRef(false)
 
@@ -164,7 +164,6 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
   useEffect(() => setSettingsPanel(null), [block.id])
 
   const openAnswerSettings = () => {
-    if (!selected) onSelect(false)
     const counts = block.answerSlotCounts ?? questionNumbers(block.range).map(() => 1)
     setSlotNumberDrafts(counts.map((count, questionIndex) => (
       block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: count }, (_, index) => index + 1)
@@ -346,14 +345,15 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
 
   const inheritedSubjectiveStyle = subjectiveAnswerStyle ?? 'lines'
   const effectiveSubjectiveStyle = block.answerAreaOverride
-    ? (block.responseStyle === 'blank' ? 'blank' : 'lines')
+    ? (block.responseStyle ?? 'lines')
     : inheritedSubjectiveStyle
   const isSubjectiveAnswerBlock = block.kind === 'short-answer' || block.kind === 'response-area'
   const canEditSlotNumbers = isSubjectiveAnswerBlock && questionNumbers(block.range).length > 0
+  const isFillAnswerBlock = block.answerVariant === 'fill'
 
   return (
     <div
-      className={`answer-block kind-${block.kind} ${selected ? 'selected' : ''} ${multiSelected ? 'multi-selected' : ''}`}
+      className={`answer-block kind-${block.kind} ${block.contentElements?.includes('table') ? 'has-content-table' : ''} ${selected ? 'selected' : ''} ${multiSelected ? 'multi-selected' : ''}`}
       data-block-id={block.id}
       data-block-kind={block.kind}
       data-block-range={block.range ?? ''}
@@ -386,59 +386,59 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
             <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'left' })} title="左对齐"><AlignLeft size={12} /></button>
             <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'center' })} title="居中"><AlignCenter size={12} /></button>
             <button type="button" onClick={() => onUpdateBlock?.({ textAlign: 'right' })} title="右对齐"><AlignRight size={12} /></button>
-            <MetisDropdown
-              trigger={['click']}
-              menu={{
-                items: [
-                  { key: 'bracket', label: '括号' },
-                  { key: 'tian', label: '田字格' },
-                  { key: 'mi', label: '米字格' },
-                  { key: 'four-line', label: '四线三格' },
-                ],
-                onClick: ({ key }) => insertContent(String(key)),
-              }}
-            >
-              <button type="button"><Plus size={12} /> 插入内容 <ChevronDown size={11} /></button>
-            </MetisDropdown>
           </>}
         </div>
       )}
       {onInsertAfter && (
         <div className="block-module-tools" onClick={(event) => event.stopPropagation()}>
-          {isSubjectiveAnswerBlock && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={openAnswerSettings}>作答设置</button>}
-          {block.kind === 'essay' && <button type="button" aria-expanded={settingsPanel === 'essay'} onClick={() => { if (!selected) onSelect(false); setSettingsPanel('essay') }}>作文设置</button>}
-          <button type="button" aria-expanded={settingsPanel === 'insert'} onClick={() => { if (!selected) onSelect(false); setSettingsPanel('insert') }}><Plus size={11} /> 添加区域 <ChevronDown size={11} /></button>
+          {isSubjectiveAnswerBlock && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={openAnswerSettings}>作答样式</button>}
+          {canEditSlotNumbers && <button type="button" aria-expanded={settingsPanel === 'subquestion'} onClick={() => { openAnswerSettings(); setSettingsPanel('subquestion') }}>小题设置</button>}
+          {block.kind === 'essay' && <div className="essay-inline-settings" onClick={(event) => event.stopPropagation()}>
+            <strong>作答样式</strong>
+            <MetisRadio.Group className="essay-style-radio" value={block.responseStyle === 'grid' ? 'grid' : 'lines'} options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]} onChange={(event) => onUpdateBlock?.({ responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />
+            <strong>字数</strong>
+            <MetisSelect size="small" value={block.wordCount ?? 600} options={[400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))} onChange={(value) => onUpdateBlock?.({ wordCount: Number(value) })} aria-label="作文字数" />
+          </div>}
+          <button type="button" aria-expanded={settingsPanel === 'insert'} onClick={() => setSettingsPanel('insert')}><Plus size={11} /> 插入 <ChevronDown size={11} /></button>
         </div>
       )}
-      {selected && settingsPanel === 'answer' && isSubjectiveAnswerBlock ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>
-        <div className="block-settings-title"><strong>作答设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
+      {settingsPanel === 'answer' && isSubjectiveAnswerBlock ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>
+        <div className="block-settings-title"><strong>作答样式</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
         <div className="block-settings-row">
           <span>作答样式</span>
-          <MetisRadio.Group value={effectiveSubjectiveStyle} options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '横线' }]} onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />
+          {isFillAnswerBlock ? <MetisSelect
+            size="small"
+            value={effectiveSubjectiveStyle}
+            options={[
+              { value: 'lines', label: '横线' },
+              { value: 'tian', label: '田字格' },
+              { value: 'mi', label: '米字格' },
+              { value: 'four-line', label: '四线三格' },
+            ]}
+            onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: value as AnswerBlock['responseStyle'] })}
+          /> : <MetisRadio.Group value={effectiveSubjectiveStyle === 'blank' ? 'blank' : 'lines'} options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '作答线' }]} onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />}
         </div>
         {effectiveSubjectiveStyle === 'lines' && <div className="block-settings-row">
           <span>作答线</span>
           <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label="作答线行数" onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
         </div>}
         {block.answerAreaOverride && <button type="button" className="follow-card-action" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>恢复跟随整卡</button>}
-        {canEditSlotNumbers && <div className="slot-number-section">
-          <div className="slot-number-section-title"><strong>小题序号</strong><span>支持跳号，如 3,5</span></div>
+      </div> : null}
+      {settingsPanel === 'subquestion' && canEditSlotNumbers ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>
+        <div className="block-settings-title"><strong>小题设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
+        <div className="slot-number-section standalone">
+          <div className="slot-number-section-title"><span>支持连续序号或跳号，如 1,2,3 / 3,5</span></div>
           {questionNumbers(block.range).map((number, questionIndex) => <label key={number}>
             <span>{number}题</span>
             <MetisInput size="small" value={slotNumberDrafts[questionIndex] ?? ''} placeholder="如 1,2,3" aria-label={`${number}题小题序号`} onChange={(event) => setSlotNumberDrafts((drafts) => drafts.map((draft, index) => index === questionIndex ? event.target.value : draft))} onKeyDown={(event) => { if (event.key === 'Enter') commitSlotNumbers() }} />
           </label>)}
           <button type="button" className="primary" onClick={commitSlotNumbers}>应用序号</button>
-        </div>}
+        </div>
       </div> : null}
-      {selected && settingsPanel === 'essay' && block.kind === 'essay' ? <div className="block-settings-popover essay-settings-popover" onClick={(event) => event.stopPropagation()}>
-        <div className="block-settings-title"><strong>作文设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
-        <div className="block-settings-row"><span>题内空行</span><MetisInputNumber size="small" min={0} max={3} value={block.leadingBlankLines ?? 0} addonAfter="行" onChange={(value) => onUpdateBlock?.({ leadingBlankLines: Number(value ?? 0) })} /></div>
-        <div className="block-settings-row"><span>作答样式</span><MetisRadio.Group className="essay-style-radio" value={block.responseStyle === 'grid' ? 'grid' : 'lines'} options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]} onChange={(event) => onUpdateBlock?.({ responseStyle: event.target.value as AnswerBlock['responseStyle'] })} /></div>
-        <div className="block-settings-row"><span>字数</span><MetisSelect size="small" value={block.wordCount ?? 600} options={[400, 600, 800, 1000, 1200].map((value) => ({ value, label: `${value} 字` }))} onChange={(value) => onUpdateBlock?.({ wordCount: Number(value) })} aria-label="作文字数" /></div>
-      </div> : null}
-      {selected && settingsPanel === 'insert' ? <div className="module-insert-menu" onClick={(event) => event.stopPropagation()}>
-        <button type="button" onClick={() => { onInsertAfter?.('response-area', 'blank'); setSettingsPanel(null) }}>空白区<span>添加到题块下方</span></button>
-        <button type="button" onClick={() => { onInsertAfter?.('forbidden'); setSettingsPanel(null) }}>禁答区<span>添加到题块下方</span></button>
+      {settingsPanel === 'insert' ? <div className="module-insert-menu" onClick={(event) => event.stopPropagation()}>
+        <button type="button" onClick={() => { onInsertAfter?.('section-title', undefined, 'before'); setSettingsPanel(null) }}>标题</button>
+        <button type="button" onClick={() => { onInsertAfter?.('response-area', 'blank', 'after'); setSettingsPanel(null) }}>空白区</button>
+        <button type="button" onClick={() => { onInsertAfter?.('forbidden', undefined, 'after'); setSettingsPanel(null) }}>禁答区</button>
       </div> : null}
       {block.kind !== 'forbidden' && <span className="answer-block-heading">
         {editingTitle && onTitleCommit ? (

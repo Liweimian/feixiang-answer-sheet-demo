@@ -25,7 +25,7 @@ interface AnswerSheetCanvasProps {
   onResizeBlock: (id: string, height: number, width: number) => void
   onToggleBlockContent: (id: string, element: ContentElement) => void
   onUpdateBlock: (id: string, patch: Partial<AnswerBlock>) => void
-  onInsertAfter: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => void
+  onInsertAfter: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position?: 'before' | 'after') => void
   onUndo: () => void
   onRedo: () => void
   onMergeBlocks: (ids: string[], layout?: { x: number; y: number; width: number; height: number }) => void
@@ -52,7 +52,7 @@ interface PaperPageProps {
   onResizeBlock?: (id: string, height: number, width: number) => void
   onToggleBlockContent?: (id: string, element: ContentElement) => void
   onUpdateBlock?: (id: string, patch: Partial<AnswerBlock>) => void
-  onInsertAfter?: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle']) => void
+  onInsertAfter?: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position?: 'before' | 'after') => void
   onUndo?: () => void
   onRedo?: () => void
   onMergeBlocks?: (ids: string[], layout?: { x: number; y: number; width: number; height: number }) => void
@@ -283,7 +283,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
             onResizeCommit={onResizeBlock ? (height, width) => onResizeBlock(block.id, height, width) : undefined}
             onToggleContent={onToggleBlockContent ? (element) => onToggleBlockContent(block.id, element) : undefined}
             onUpdateBlock={onUpdateBlock ? (patch) => onUpdateBlock(block.id, patch) : undefined}
-            onInsertAfter={onInsertAfter ? (kind, responseStyle) => onInsertAfter(block.id, kind, responseStyle) : undefined}
+            onInsertAfter={onInsertAfter ? (kind, responseStyle, position) => onInsertAfter(block.id, kind, responseStyle, position) : undefined}
             onUndo={onUndo}
             onRedo={onRedo}
             questionAnswer={settings.cardStyle === 'question-answer'}

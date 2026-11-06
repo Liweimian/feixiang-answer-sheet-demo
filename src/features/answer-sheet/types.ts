@@ -33,6 +33,7 @@ export type AnswerBlockKind =
   | 'table'
   | 'notice'
   | 'response-area'
+  | 'section-title'
 
 export const questionBlockKinds: AnswerBlockKind[] = [
   'objective',
@@ -87,6 +88,7 @@ export interface AnswerBlock {
   lineCount?: number
   answerSlotCounts?: number[]
   answerSlotNumbers?: number[][]
+  answerVariant?: 'fill' | 'solution'
   wordCount?: number
   optionCount?: 4 | 5
   itemsPerColumn?: number
