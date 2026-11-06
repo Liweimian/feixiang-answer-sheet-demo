@@ -142,7 +142,6 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
     ? header.modules.filter((module) => hiddenItemIds.includes(module.id)).map((module) => ({ id: module.id, label: module.label }))
     : [
         { id: 'daily-student-id', label: '学号' },
-        { id: 'daily-qr', label: '二维码' },
         { id: 'daily-notice', label: '注意事项' },
         { id: 'daily-fill-sample', label: '填涂样例' },
       ].filter((item) => hiddenItemIds.includes(item.id))
@@ -229,7 +228,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
             </button>
           ) : <h1>{paper.title}</h1>}
         </div>
-        {dailyQuizIdentity && !isHeaderItemHidden('daily-qr') && <div className="daily-qr daily-hideable-item" aria-label="答题卡二维码"><QrCode size={46} strokeWidth={2.4} />{onHeaderChange && <button type="button" className="daily-hide-action" aria-label="隐藏二维码" onClick={() => hideHeaderItem('daily-qr')}><EyeOff size={9} />隐藏</button>}</div>}
+        {dailyQuizIdentity && <div className="daily-qr" aria-label="答题卡二维码"><QrCode size={46} strokeWidth={2.4} /></div>}
         <div className="identity-and-code">
           <div className={`identity-grid ${dailyQuizIdentity ? 'daily-identity-grid' : ''}`}>
             {settings.identityFields.filter((field) => field !== '学号' || !isHeaderItemHidden('daily-student-id')).map((field) => (
