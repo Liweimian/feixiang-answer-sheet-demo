@@ -56,6 +56,7 @@ function createDocument(name: string, subject: string, templateId: string) {
 }
 
 export function AnswerSheetListPage({ onEdit }: AnswerSheetListPageProps) {
+  const [entryMode, setEntryMode] = useState<'paper' | 'blank'>('paper')
   const [items, setItems] = useState(records)
   const [keyword, setKeyword] = useState('')
   const [subject, setSubject] = useState('all')
@@ -104,21 +105,21 @@ export function AnswerSheetListPage({ onEdit }: AnswerSheetListPageProps) {
     </header>
 
     <section className="answer-sheet-entry-grid" data-sec="1">
-      <article className="answer-sheet-entry-card entry-from-paper">
+      <article className={`answer-sheet-entry-card entry-from-paper ${entryMode === 'paper' ? 'active' : ''}`} onClick={() => setEntryMode('paper')}>
         <div className="entry-icon"><FileCheck2 size={24} /></div>
         <div className="entry-copy"><span>已有试卷</span><h2>从试卷生成答题卡</h2><p>完成组卷后点击“生成答题卡”，系统自动带入题型、题号和分值，进入编辑区调整。</p></div>
         <div className="entry-steps"><span><b>1</b> 完成组卷</span><i /><span><b>2</b> 生成答题卡</span><i /><span><b>3</b> 调整并发布</span></div>
-        <MetisButton type="primary" icon={<ArrowRight size={15} />} onClick={generateFromPaper}>体验从试卷生成</MetisButton>
+        <MetisButton type="primary" icon={<ArrowRight size={15} />} onClick={(event) => { event.stopPropagation(); generateFromPaper() }}>体验从试卷生成</MetisButton>
       </article>
-      <article className="answer-sheet-entry-card entry-blank-card">
+      <article className={`answer-sheet-entry-card entry-blank-card ${entryMode === 'blank' ? 'active' : ''}`} onClick={() => setEntryMode('blank')}>
         <div className="entry-icon"><FilePlus2 size={24} /></div>
         <div className="entry-copy"><span>没有试卷</span><h2>新建答题卡</h2><p>直接创建空白答题卡，通过添加题组配置题型、题号、分值与客观题答案。</p></div>
         <div className="entry-capabilities"><span>添加题组</span><span>设置答案</span><span>自由排版</span></div>
-        <MetisButton type="bordered" icon={<FilePlus2 size={15} />} onClick={() => setCreateOpen(true)}>新建答题卡</MetisButton>
+        <MetisButton type={entryMode === 'blank' ? 'primary' : 'bordered'} icon={<FilePlus2 size={15} />} onClick={(event) => { event.stopPropagation(); setEntryMode('blank'); setCreateOpen(true) }}>新建答题卡</MetisButton>
       </article>
     </section>
 
-    <div className="library-section-title"><div><h2>我的答题卡</h2><p>继续编辑、复制或下载已创建的答题卡。</p></div></div>
+    {entryMode === 'blank' && <div className="blank-card-library"><div className="library-section-title"><div><h2>我的答题卡</h2><p>继续编辑、复制或下载已创建的答题卡。</p></div></div>
 
     <section className="library-toolbar">
       <MetisInput prefix={<Search size={15} />} placeholder="搜索答题卡名称" value={keyword} onChange={(event) => setKeyword(event.target.value)} allowClear />
@@ -140,7 +141,7 @@ export function AnswerSheetListPage({ onEdit }: AnswerSheetListPageProps) {
           </div>
         </div>
       }) : <div className="library-empty"><FileText size={36} /><strong>没有找到答题卡</strong><span>调整筛选条件，或新建一张空白答题卡</span></div>}
-    </section>
+    </section></div>}
 
     <MetisDialog open={createOpen} title="新建答题卡" width={520} footer={footer} onCancel={() => setCreateOpen(false)}>
       <div className="create-card-form">
