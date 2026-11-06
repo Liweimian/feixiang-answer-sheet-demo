@@ -22,6 +22,11 @@ export type HeaderTemplateId = 'daily-quiz' | 'exam-general' | 'beijing-exam-ref
 export type HeaderEvidence = 'product-default' | 'official-sample' | 'official-rules' | 'reference-layout'
 export type HeaderModuleKind = 'title' | 'identity' | 'candidate-number' | 'barcode' | 'notice' | 'fill-sample' | 'absence-mark'
 export type ResponseStyle = 'lines' | 'grid' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
+export type FillSlotStyle = 'lines' | 'tian' | 'mi' | 'four-line'
+export interface FillSlotSetting {
+  style: FillSlotStyle
+  count?: number
+}
 export type ContentElement = 'table' | 'formula' | 'image'
 export type AnswerBlockKind =
   | 'objective'
@@ -89,6 +94,7 @@ export interface AnswerBlock {
   lineCount?: number
   answerSlotCounts?: number[]
   answerSlotNumbers?: number[][]
+  answerSlotSettings?: Record<string, FillSlotSetting>
   answerVariant?: 'fill' | 'solution'
   wordCount?: number
   optionCount?: 2 | 4 | 5

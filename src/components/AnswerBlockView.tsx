@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisInput, MetisInputNumber, MetisRadio, MetisSelect } from '@yuanfudao/metis-web-component'
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Square, SquareDashed, Sigma, Table2, Trash2, Underline, Undo2 } from 'lucide-react'
-import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type ObjectiveSortMode } from '../features/answer-sheet/types'
+import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type FillSlotSetting, type FillSlotStyle, type ObjectiveSortMode } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
 
 interface AnswerBlockViewProps {
@@ -119,9 +119,14 @@ function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { bl
           return (
             <div key={no} className="short-answer-slot-row">
               <b>{no}.</b>
-              {Array.from({ length: slotCount }, (_, slotIndex) => (
-                <span key={slotIndex} className={`slot-style-${block.responseStyle ?? 'lines'}`}><em>{slotCount > 1 ? `(${slotNumbers[slotIndex] ?? slotIndex + 1})` : ''}<QuestionScore block={block} scoreKey={`${no}.${slotNumbers[slotIndex] ?? slotIndex + 1}`} /></em><i /></span>
-              ))}
+              {Array.from({ length: slotCount }, (_, slotIndex) => {
+                const slotNumber = slotNumbers[slotIndex] ?? slotIndex + 1
+                const slotKey = `${no}.${slotNumber}`
+                const setting = block.answerSlotSettings?.[slotKey]
+                const style = setting?.style ?? block.responseStyle ?? 'lines'
+                const cellCount = style === 'tian' ? Math.max(1, Math.min(20, setting?.count ?? 4)) : 1
+                return <span key={slotIndex} className={`slot-style-${style}`}><em>{slotCount > 1 ? `(${slotNumber})` : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span></span>
+              })}
             </div>
           )
         })}
@@ -212,6 +217,16 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
     })
     onUpdateBlock?.({ answerSlotNumbers: nextNumbers, answerSlotCounts: nextNumbers.map((numbers) => numbers.length) })
     setSettingsPanel(null)
+  }
+
+  const updateSlotSetting = (slotKey: string, patch: Partial<FillSlotSetting>) => {
+    const current = block.answerSlotSettings?.[slotKey] ?? { style: (block.responseStyle === 'tian' || block.responseStyle === 'mi' || block.responseStyle === 'four-line' ? block.responseStyle : 'lines') as FillSlotStyle }
+    onUpdateBlock?.({
+      answerSlotSettings: {
+        ...block.answerSlotSettings,
+        [slotKey]: { ...current, ...patch },
+      },
+    })
   }
 
   const beginMove = (event: React.PointerEvent<HTMLSpanElement>) => {
@@ -455,7 +470,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
         <div className="block-settings-title"><strong>作答设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
         {block.kind === 'essay' ? <>
           <div className="block-settings-row">
-            <span>作答样式</span>
+            <span>全部空</span>
             <MetisRadio.Group value={block.responseStyle === 'grid' ? 'grid' : 'lines'} options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]} onChange={(event) => onUpdateBlock?.({ responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />
           </div>
           <div className="block-settings-row">
@@ -477,6 +492,42 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
             onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: value as AnswerBlock['responseStyle'] })}
             /> : <MetisRadio.Group value={effectiveSubjectiveStyle === 'blank' ? 'blank' : 'lines'} options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '作答线' }]} onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />}
           </div>
+          {isFillAnswerBlock && block.answerSlotCounts?.some((count) => count > 0) && <div className="fill-slot-settings">
+            <div className="fill-slot-settings-title">逐空设置</div>
+            {questionNumbers(block.range).flatMap((number, questionIndex) => {
+              const count = block.answerSlotCounts?.[questionIndex] ?? 0
+              const slots = block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: count }, (_, index) => index + 1)
+              return slots.map((slotNumber) => {
+                const slotKey = `${number}.${slotNumber}`
+                const setting = block.answerSlotSettings?.[slotKey]
+                const style = setting?.style ?? (effectiveSubjectiveStyle === 'tian' || effectiveSubjectiveStyle === 'mi' || effectiveSubjectiveStyle === 'four-line' ? effectiveSubjectiveStyle : 'lines')
+                return <div className="fill-slot-setting-row" key={slotKey}>
+                  <b>{number}({slotNumber})</b>
+                  <MetisSelect
+                    size="small"
+                    value={style}
+                    options={[
+                      { value: 'lines', label: '横线' },
+                      { value: 'tian', label: '田字格' },
+                      { value: 'mi', label: '米字格' },
+                      { value: 'four-line', label: '四线三格' },
+                    ]}
+                    onChange={(value) => updateSlotSetting(slotKey, { style: value as FillSlotStyle })}
+                    aria-label={`${number}题第${slotNumber}空作答样式`}
+                  />
+                  {style === 'tian' ? <MetisInputNumber
+                    size="small"
+                    min={1}
+                    max={20}
+                    value={setting?.count ?? 4}
+                    addonAfter="格"
+                    aria-label={`${number}题第${slotNumber}空田字格数量`}
+                    onChange={(value) => updateSlotSetting(slotKey, { count: Number(value ?? 4) })}
+                  /> : <span />}
+                </div>
+              })
+            })}
+          </div>}
           {effectiveSubjectiveStyle === 'lines' && <div className="block-settings-row">
             <span>作答线</span>
             <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label="作答线行数" onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />

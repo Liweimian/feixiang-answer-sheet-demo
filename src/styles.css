@@ -481,7 +481,8 @@
 .short-answer-slot-row > b { text-align: right; }
 .short-answer-slot-row > span { min-width: 0; display: flex; align-items: end; gap: 4px; }
 .short-answer-slot-row em { flex: none; font-style: normal; }
-.short-answer-slot-row i { min-width: 26px; height: 1px; flex: 1; border-bottom: 1px solid var(--fx_paper_rule); }
+.slot-response-cells { min-width: 26px; display: flex; align-items: end; gap: 1px; flex: 1; }
+.short-answer-slot-row .slot-response-cells i { min-width: 0; height: 1px; flex: 1; border-bottom: 1px solid var(--fx_paper_rule); }
 .ruled-lines { display: grid; align-content: start; gap: 7px; margin-top: var(--fx_sp_1); }
 .ruled-lines span { height: 1px; display: block; border-bottom: 1px solid var(--fx_paper_rule); }
 .ruled-lines.dashed span { border-bottom-style: dashed; }
@@ -517,10 +518,15 @@
 .rich-elements .rich-table { flex: 1; align-self: stretch; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(3, 1fr); padding: 0; }
 .rich-table svg { position: absolute; opacity: 0; }
 .rich-table i { border-right: 1px solid var(--fx_paper_rule); border-bottom: 1px solid var(--fx_paper_rule); }
-.short-answer-slot-row span.slot-style-tian > i, .short-answer-slot-row span.slot-style-mi > i { flex: 0 0 24px; height: 24px; border: 1px solid var(--fx_paper_rule); background-size: 100% 100%; }
-.short-answer-slot-row span.slot-style-tian > i { background-image: linear-gradient(90deg, transparent 49%, var(--fx_paper_rule) 50%, transparent 51%), linear-gradient(transparent 49%, var(--fx_paper_rule) 50%, transparent 51%); }
-.short-answer-slot-row span.slot-style-mi > i { background-image: linear-gradient(45deg, transparent 49%, var(--fx_paper_rule) 50%, transparent 51%), linear-gradient(-45deg, transparent 49%, var(--fx_paper_rule) 50%, transparent 51%); }
-.short-answer-slot-row span.slot-style-four-line > i { flex: 1; height: 24px; border: 0; background: repeating-linear-gradient(to bottom, var(--fx_paper_rule) 0 1px, transparent 1px 7px); }
+.short-answer-slot-row span.slot-style-tian .slot-response-cells i, .short-answer-slot-row span.slot-style-mi .slot-response-cells i { min-width: 12px; height: 24px; border: 1px solid var(--fx_paper_rule); background-size: 100% 100%; }
+.short-answer-slot-row span.slot-style-tian .slot-response-cells i { background-image: linear-gradient(90deg, transparent 49%, var(--fx_paper_rule) 50%, transparent 51%), linear-gradient(transparent 49%, var(--fx_paper_rule) 50%, transparent 51%); }
+.short-answer-slot-row span.slot-style-mi .slot-response-cells i { flex: 0 0 24px; background-image: linear-gradient(45deg, transparent 49%, var(--fx_paper_rule) 50%, transparent 51%), linear-gradient(-45deg, transparent 49%, var(--fx_paper_rule) 50%, transparent 51%); }
+.short-answer-slot-row span.slot-style-four-line .slot-response-cells i { height: 24px; border: 0; background: repeating-linear-gradient(to bottom, var(--fx_paper_rule) 0 1px, transparent 1px 7px); }
+.fill-slot-settings { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--fx_border_subtle); }
+.fill-slot-settings-title { margin-bottom: 5px; color: var(--fx_text_2); font-size: 9px; font-weight: 700; }
+.fill-slot-setting-row { min-height: 32px; display: grid; grid-template-columns: 48px minmax(0, 1fr) 92px; align-items: center; gap: 6px; }
+.fill-slot-setting-row b { font-size: 8px; font-weight: 600; }
+.fill-slot-setting-row .mc-select, .fill-slot-setting-row .mc-input-number-group-wrapper { width: 100%; }
 .answer-block.kind-section-title { min-height: 34px; }
 .answer-block.kind-section-title .answer-block-heading { height: 100%; border: 1px solid var(--fx_paper_ink); background: var(--fx_surface_subtle); }
 .answer-block.kind-section-title.borderless .answer-block-heading { border-color: transparent; }
