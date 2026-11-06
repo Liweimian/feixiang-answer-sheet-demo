@@ -81,7 +81,8 @@
     "e78b4cc Stage 4 v1.7.0: add recoverable header visibility",
     "774e6c2 Stage 4 v1.7.1: simplify block headings",
     "85cca00 Stage 4 v1.8.0: customize subquestion numbering",
-    "8a4057a Stage 4 v1.8.1: streamline block actions"
+    "8a4057a Stage 4 v1.8.1: streamline block actions",
+    "aa367ca Stage 4 v1.9.0: clarify block style and insert actions"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-06T16:20:00+08:00"
