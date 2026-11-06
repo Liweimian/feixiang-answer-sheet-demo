@@ -83,7 +83,8 @@
     "85cca00 Stage 4 v1.8.0: customize subquestion numbering",
     "8a4057a Stage 4 v1.8.1: streamline block actions",
     "aa367ca Stage 4 v1.9.0: clarify block style and insert actions",
-    "6166dca Stage 4 v1.9.1: add inserted content cell controls"
+    "6166dca Stage 4 v1.9.1: add inserted content cell controls",
+    "616437c Stage 4 v2.0.0: add standalone answer sheet tool"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-06T17:40:00+08:00"
