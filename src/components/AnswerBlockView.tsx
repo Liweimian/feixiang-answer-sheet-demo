@@ -102,7 +102,19 @@ function GridPaper({ rows = 8, cells, variant = 'grid' }: { rows?: number; cells
   )
 }
 
-function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { block: AnswerBlock; fillModule?: boolean; lineHeight?: number }) {
+function ShortAnswerContent({
+  block,
+  fillModule = false,
+  lineHeight = 16,
+  activeSlotKey,
+  onSlotClick,
+}: {
+  block: AnswerBlock
+  fillModule?: boolean
+  lineHeight?: number
+  activeSlotKey?: string | null
+  onSlotClick?: (slotKey: string) => void
+}) {
   const count = block.lineCount ?? 4
   const numbers = questionNumbers(block.range)
   const dashed = block.lineStyle === 'dashed'
@@ -125,7 +137,20 @@ function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { bl
                 const setting = block.answerSlotSettings?.[slotKey]
                 const style = setting?.style ?? block.responseStyle ?? 'lines'
                 const cellCount = style === 'tian' ? Math.max(1, Math.min(20, setting?.count ?? 4)) : 1
-                return <span key={slotIndex} className={`slot-style-${style}`}><em>{slotCount > 1 ? `(${slotNumber})` : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span></span>
+                return <span
+                  key={slotIndex}
+                  className={`slot-style-${style} ${onSlotClick ? 'fill-slot-clickable' : ''} ${activeSlotKey === slotKey ? 'active-slot' : ''}`}
+                  role={onSlotClick ? 'button' : undefined}
+                  tabIndex={onSlotClick ? 0 : undefined}
+                  aria-label={onSlotClick ? `设置第${no}题第${slotNumber}空` : undefined}
+                  onClick={onSlotClick ? (event) => { event.stopPropagation(); onSlotClick(slotKey) } : undefined}
+                  onKeyDown={onSlotClick ? (event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return
+                    event.preventDefault()
+                    event.stopPropagation()
+                    onSlotClick(slotKey)
+                  } : undefined}
+                ><em>{slotCount > 1 ? `(${slotNumber})` : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span></span>
               })}
             </div>
           )
@@ -183,6 +208,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
   const [editingForbiddenText, setEditingForbiddenText] = useState(false)
   const [forbiddenTextDraft, setForbiddenTextDraft] = useState(block.contentText || '请勿在此区域作答')
   const [settingsPanel, setSettingsPanel] = useState<'answer' | 'subquestion' | 'insert' | null>(null)
+  const [activeSlotKey, setActiveSlotKey] = useState<string | null>(null)
   const [slotNumberDrafts, setSlotNumberDrafts] = useState<string[]>([])
   const cancelling = useRef(false)
 
@@ -196,7 +222,10 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
 
   useEffect(() => setResizeHeight(block.height), [block.height])
   useEffect(() => setDraftLayout(layout), [layout.x, layout.y, layout.width])
-  useEffect(() => setSettingsPanel(null), [block.id])
+  useEffect(() => {
+    setSettingsPanel(null)
+    setActiveSlotKey(null)
+  }, [block.id])
 
   const openAnswerSettings = () => {
     const counts = block.answerSlotCounts ?? questionNumbers(block.range).map(() => 1)
@@ -204,6 +233,11 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: count }, (_, index) => index + 1)
     ).join(',')))
     setSettingsPanel('answer')
+  }
+
+  const openSlotSettings = (slotKey: string) => {
+    setActiveSlotKey(slotKey)
+    openAnswerSettings()
   }
 
   const commitSlotNumbers = () => {
@@ -451,7 +485,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       )}
       {onInsertAfter && (
         <div className="block-module-tools" onClick={(event) => event.stopPropagation()}>
-          {hasAnswerSettings && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={openAnswerSettings}>作答设置</button>}
+          {hasAnswerSettings && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={() => { setActiveSlotKey(null); openAnswerSettings() }}>作答设置</button>}
           {canEditSlotNumbers && <button type="button" aria-expanded={settingsPanel === 'subquestion'} onClick={() => { openAnswerSettings(); setSettingsPanel('subquestion') }}>小题设置</button>}
           <button type="button" aria-expanded={settingsPanel === 'insert'} onClick={() => setSettingsPanel('insert')}><Plus size={11} /> 插入 <ChevronDown size={11} /></button>
           {block.userInserted && <>
@@ -501,7 +535,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
                 const slotKey = `${number}.${slotNumber}`
                 const setting = block.answerSlotSettings?.[slotKey]
                 const style = setting?.style ?? (effectiveSubjectiveStyle === 'tian' || effectiveSubjectiveStyle === 'mi' || effectiveSubjectiveStyle === 'four-line' ? effectiveSubjectiveStyle : 'lines')
-                return <div className="fill-slot-setting-row" key={slotKey}>
+                return <div className={`fill-slot-setting-row ${activeSlotKey === slotKey ? 'active' : ''}`} key={slotKey}>
                   <b>{number}({slotNumber})</b>
                   <MetisSelect
                     size="small"
@@ -596,7 +630,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       <RichElements elements={block.contentElements} />
       <ScoreBox block={block} />
       {block.kind === 'objective' && <ObjectiveGrid block={block} sortMode={objectiveSortMode} merged={objectiveMerge} />}
-      {block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} />}
+      {block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} activeSlotKey={activeSlotKey} onSlotClick={isFillAnswerBlock ? openSlotSettings : undefined} />}
       {block.kind === 'mixed' && (
         <div className="mixed-area">
           {(() => {
