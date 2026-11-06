@@ -117,8 +117,9 @@
     "8fcc4b1 Stage 4 v2.4.2: support objective and subjective module merge",
     "400db5f Stage 4 v2.4.3: merge modules immediately from settings",
     "b75654e Stage 4 v2.4.4: preserve answer space when merging",
-    "Stage 4 v2.4.5: add per-question group configuration"
+    "5bea067 Stage 4 v2.4.5: add per-question group configuration",
+    "Stage 4 v2.4.6: configure objective questions per item"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-07T07:30:00+08:00"
+  "updatedAt": "2026-11-07T08:00:00+08:00"
 }

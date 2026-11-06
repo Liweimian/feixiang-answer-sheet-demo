@@ -148,6 +148,8 @@ export interface QuestionGroupItemDraft {
   fillStyle: 'lines' | 'tian' | 'mi' | 'four-line'
   lineCount: number
   subquestionCount: number
+  optionCount: 4 | 5
+  answer: string
 }
 
 export interface AnswerSheetSettings {
