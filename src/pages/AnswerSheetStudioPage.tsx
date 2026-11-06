@@ -37,6 +37,7 @@ import { EditorWorkbench } from '../components/EditorWorkbench'
 import { PreflightDialog } from '../components/PreflightDialog'
 import { QuestionGroupDialog } from '../components/QuestionGroupDialog'
 import { ObjectiveAnswerDialog } from '../components/ObjectiveAnswerDialog'
+import { OriginalPaperReference } from '../components/OriginalPaperReference'
 import { questionNumbers } from '../features/answer-sheet/range'
 
 function cloneDefaultDocument(): AnswerSheetDocument {
@@ -83,6 +84,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
   const [questionGroupOpen, setQuestionGroupOpen] = useState(false)
   const [questionGroupType, setQuestionGroupType] = useState<QuestionGroupType>('single')
   const [objectiveAnswerOpen, setObjectiveAnswerOpen] = useState(false)
+  const [originalPaperOpen, setOriginalPaperOpen] = useState(false)
   const saveTimer = useRef<number>()
 
   useEffect(() => {
@@ -351,10 +353,16 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
     }
     const nextBlocks = blocks.map((block) => block.id === blockId ? { ...block, ...normalizedPatch } : block)
     if (paper.sections.length === 0 || patch.score !== undefined) {
+      const nextSections = paper.sections.map((section) => {
+        const sectionBlocks = nextBlocks.filter((block) => block.sectionId === section.id && isQuestionBlockKind(block.kind))
+        return sectionBlocks.length
+          ? { ...section, score: sectionBlocks.reduce((total, block) => total + (block.score ?? 0), 0) }
+          : section
+      })
       commitDocument({
         ...document,
         blocks: nextBlocks,
-        paper: { ...paper, score: totalQuestionScore(nextBlocks) },
+        paper: { ...paper, sections: nextSections, score: totalQuestionScore(nextBlocks) },
       })
       return
     }
@@ -607,6 +615,8 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               canUndo={history.length > 0}
               canRedo={future.length > 0}
               fromPaper={fromPaper}
+              originalPaperOpen={originalPaperOpen}
+              onOriginalPaper={() => setOriginalPaperOpen((open) => !open)}
               onBack={() => onBack ? onBack() : MetisMessage.info('演示：返回组卷页；当前答题卡草稿已自动保存')}
               onUndo={undo}
               onRedo={redo}
@@ -675,6 +685,13 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               onSplitMerged={splitCanvasBlock}
               printDocument={printDocument}
         />
+        {fromPaper && <OriginalPaperReference
+          open={originalPaperOpen}
+          paper={paper}
+          blocks={blocks}
+          selectedBlockId={selectedBlockId}
+          onClose={() => setOriginalPaperOpen(false)}
+        />}
       </div>
 
       <PreflightDialog

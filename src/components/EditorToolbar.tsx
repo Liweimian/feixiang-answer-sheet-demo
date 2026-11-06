@@ -1,5 +1,5 @@
 import { MetisButton, MetisTag } from '@yuanfudao/metis-web-component'
-import { ChevronLeft, Download, FileCheck2, ListChecks, Printer, Redo2, Save, ShieldCheck, Undo2 } from 'lucide-react'
+import { ChevronLeft, Download, Eye, FileCheck2, ListChecks, Printer, Redo2, Save, ShieldCheck, Undo2 } from 'lucide-react'
 import type { ExamPaper } from '../features/answer-sheet/types'
 
 interface EditorToolbarProps {
@@ -21,6 +21,8 @@ interface EditorToolbarProps {
   onObjectiveAnswers: () => void
   hasObjectiveBlocks: boolean
   fromPaper: boolean
+  originalPaperOpen: boolean
+  onOriginalPaper: () => void
 }
 
 export function EditorToolbar(props: EditorToolbarProps) {
@@ -43,6 +45,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
         <MetisButton type="borderless" icon={<Redo2 size={16} />} disabled={!props.canRedo} onClick={props.onRedo} aria-label="重做" />
         {!props.fromPaper && <MetisButton type="bordered" icon={<ListChecks size={16} />} disabled={!props.hasObjectiveBlocks} onClick={props.onObjectiveAnswers}>设置客观题答案</MetisButton>}
         {!props.fromPaper && <MetisButton type="bordered" icon={<Save size={16} />} loading={props.saving} onClick={props.onSave}>立即保存</MetisButton>}
+        {props.fromPaper && <MetisButton type={props.originalPaperOpen ? 'primary' : 'bordered'} icon={<Eye size={16} />} onClick={props.onOriginalPaper}>原卷对照</MetisButton>}
         <MetisButton type="bordered" icon={<Printer size={16} />} onClick={props.onPrint}>PDF / 打印</MetisButton>
         {!props.fromPaper && <MetisButton type="bordered" icon={<FileCheck2 size={16} />} onClick={props.onDownloadAnnotated}>带批改痕迹</MetisButton>}
         {!props.fromPaper && <MetisButton
