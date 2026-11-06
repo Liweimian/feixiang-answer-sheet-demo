@@ -95,6 +95,7 @@ export interface AnswerBlock {
   answerSlotCounts?: number[]
   answerSlotNumbers?: number[][]
   answerSlotSettings?: Record<string, FillSlotSetting>
+  questionLineCounts?: Record<string, number>
   answerVariant?: 'fill' | 'solution'
   wordCount?: number
   optionCount?: 2 | 4 | 5
@@ -137,6 +138,16 @@ export interface QuestionGroupDraft {
   questionCount: number
   totalScore: number
   optionCount: 2 | 4 | 5
+  items: QuestionGroupItemDraft[]
+}
+
+export interface QuestionGroupItemDraft {
+  number: number
+  score: number
+  blankCount: number
+  fillStyle: 'lines' | 'tian' | 'mi' | 'four-line'
+  lineCount: number
+  subquestionCount: number
 }
 
 export interface AnswerSheetSettings {

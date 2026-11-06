@@ -273,6 +273,9 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
       canvasY: nextY,
       canvasWidth: 100,
       lineCount: kind === 'objective' ? undefined : draft.type === 'solution' ? 8 : draft.type === 'comprehensive' ? 6 : 3,
+      questionLineCounts: draft.type === 'solution' ? Object.fromEntries(draft.items.map((item) => [String(item.number), item.lineCount])) : undefined,
+      answerSlotCounts: draft.type === 'fill' ? draft.items.map((item) => item.blankCount) : draft.type === 'solution' ? draft.items.map((item) => item.subquestionCount) : undefined,
+      answerSlotSettings: draft.type === 'fill' ? Object.fromEntries(draft.items.flatMap((item) => Array.from({ length: item.blankCount }, (_, slotIndex) => [`${item.number}.${slotIndex + 1}`, { style: item.fillStyle, count: item.fillStyle === 'tian' || item.fillStyle === 'mi' ? 4 : undefined }]))) : undefined,
       answerVariant: draft.type === 'fill' ? 'fill' : draft.type === 'solution' ? 'solution' : undefined,
       optionCount: kind === 'objective' ? draft.optionCount : undefined,
       objectiveMode: draft.type === 'single' || draft.type === 'multiple' || draft.type === 'judge' ? draft.type : undefined,
@@ -284,6 +287,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
       showUnitScore: true,
       showScoreBox: false,
       objectiveAnswers: kind === 'objective' ? {} : undefined,
+      questionScores: Object.fromEntries(draft.items.flatMap((item) => item.subquestionCount > 0 ? Array.from({ length: item.subquestionCount }, (_, index) => [`${item.number}.${index + 1}`, Number((item.score / item.subquestionCount).toFixed(2))]) : [[String(item.number), item.score]])),
       contentElements: [],
       locked: false,
     }

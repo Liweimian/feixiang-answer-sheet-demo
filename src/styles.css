@@ -723,6 +723,21 @@
 .question-group-summary strong { color: var(--fx_brand); }
 .question-group-fixed-type { min-height: 32px; display: flex; align-items: center; gap: var(--fx_sp_2); }
 .question-group-fixed-type small { color: var(--fx_text_3); font-size: 9px; }
+.question-group-builder.specialized { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--fx_sp_5); min-height: 420px; }
+.question-group-builder.specialized .question-group-form { align-content: start; padding-right: var(--fx_sp_5); border-right: 1px solid var(--fx_border); }
+.question-item-editor { min-width: 0; }
+.question-item-editor > header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--fx_sp_3); }
+.question-item-editor > header strong { font-size: 13px; }
+.question-item-editor > header span { color: var(--fx_text_3); font-size: 10px; }
+.question-item-table { max-height: 390px; overflow-y: auto; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_3); }
+.question-item-head, .question-item-row { display: grid; grid-template-columns: 56px 1fr 1fr 1.2fr; gap: var(--fx_sp_2); align-items: center; padding: var(--fx_sp_2) var(--fx_sp_3); }
+.question-item-head { position: sticky; top: 0; z-index: 1; background: var(--fx_surface_muted); color: var(--fx_text_2); font-size: 10px; }
+.question-item-row + .question-item-row { border-top: 1px solid var(--fx_border); }
+.question-item-row b { text-align: center; font-size: 11px; }
+.solution-question-groups { display: grid; gap: 6px; }
+.solution-question-groups > section { display: grid; grid-template-columns: 24px 1fr; gap: 4px; }
+.solution-subquestion { display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 4px; }
+.solution-subquestion > em { font-style: normal; white-space: nowrap; }
 .objective-answer-dialog { max-height: 560px; display: grid; gap: var(--fx_sp_4); overflow-y: auto; }
 .objective-answer-empty { min-height: 180px; display: grid; place-items: center; color: var(--fx_text_3); }
 .objective-answer-group { overflow: hidden; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_4); }

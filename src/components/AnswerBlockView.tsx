@@ -122,6 +122,14 @@ function ShortAnswerContent({
     const fullLineCount = Math.max(2, Math.floor((block.height - 48) / Math.max(12, lineHeight)))
     return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b key={number}>{number}.<QuestionScore block={block} scoreKey={String(number)} /></b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
   }
+  if (block.answerVariant === 'solution' && numbers.length > 0) {
+    return <div className="solution-question-groups">{numbers.map((no, questionIndex) => {
+      const subCount = block.answerSlotCounts?.[questionIndex] ?? 0
+      const totalLines = block.questionLineCounts?.[String(no)] ?? Math.max(2, Math.floor(count / Math.max(1, numbers.length)))
+      const slots = subCount > 0 ? Array.from({ length: subCount }, (_, index) => index + 1) : [0]
+      return <section key={no}><b>{no}.</b>{slots.map((slot) => <div key={slot} className="solution-subquestion">{slot > 0 && <em>（{slot}）<QuestionScore block={block} scoreKey={`${no}.${slot}`} /></em>}{slot === 0 && <QuestionScore block={block} scoreKey={String(no)} />}<RuledLines count={Math.max(1, Math.floor(totalLines / slots.length))} dashed={dashed} /></div>)}</section>
+    })}</div>
+  }
   if (block.answerSlotCounts?.length && numbers.length > 0) {
     return (
       <div className="short-answer-slots">

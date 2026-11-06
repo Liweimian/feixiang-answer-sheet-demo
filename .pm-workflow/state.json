@@ -116,8 +116,9 @@
     "5c217d4 Stage 4 v2.4.1: remove question order control",
     "8fcc4b1 Stage 4 v2.4.2: support objective and subjective module merge",
     "400db5f Stage 4 v2.4.3: merge modules immediately from settings",
-    "Stage 4 v2.4.4: preserve answer space when merging"
+    "b75654e Stage 4 v2.4.4: preserve answer space when merging",
+    "Stage 4 v2.4.5: add per-question group configuration"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-07T06:50:00+08:00"
+  "updatedAt": "2026-11-07T07:30:00+08:00"
 }
