@@ -91,6 +91,7 @@ function uniformValue(values: number[]) {
 export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const { document } = props
   const { blocks, pageCount, settings } = document
+  const outlineBlocks = blocks.filter((block) => block.kind !== 'forbidden')
   const selected = blocks.find((block) => block.id === props.selectedBlockId)
   const questionBlock = selected && isQuestionBlockKind(selected.kind)
   const blankCard = document.paper.sections.length === 0
@@ -115,7 +116,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
     <aside className="answer-sheet-config" data-sec="4">
       <div className="config-panel-head">
         <div><strong>答题卡配置</strong></div>
-        <MetisTag preset="primary">{blocks.length} 个题块</MetisTag>
+        <MetisTag preset="primary">{outlineBlocks.length} 个题块</MetisTag>
       </div>
 
       <div className="config-scroll">
@@ -226,13 +227,13 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         </section>
 
         <section className="config-flat-section config-block-section">
-          <div className="config-flat-title"><span>题目结构</span><small>{pageCount} 面 · {blocks.length} 个题块</small></div>
+          <div className="config-flat-title"><span>题目结构</span><small>{pageCount} 面 · {outlineBlocks.length} 个题块</small></div>
           <div className="config-flat-body">
             {standaloneCard && <div className="question-type-actions">
               {([['single', '单选题'], ['multiple', '多选题'], ['judge', '判断题'], ['fill', '填空题'], ['solution', '解答题'], ['comprehensive', '综合题']] as const).map(([type, label]) => <MetisButton key={type} type="bordered" icon={<Plus size={13} />} onClick={() => props.onAddQuestionGroup(type)}>{label}</MetisButton>)}
             </div>}
             <div className="config-block-list">
-              {blocks.map((block) => {
+              {outlineBlocks.map((block) => {
                 const isQuestion = isQuestionBlockKind(block.kind)
                 const numbers = isQuestion ? questionNumbers(block.range) : []
                 const questionCount = numbers.length
@@ -265,7 +266,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                   </div>
                 )
               })}
-              {!blocks.length && <div className="config-empty-blocks">暂无题目结构</div>}
+              {!outlineBlocks.length && <div className="config-empty-blocks">暂无题目结构</div>}
             </div>
             {blankCard && !standaloneCard && <div className="config-add-row">
               <MetisSelect value={addKind} options={addableKinds.map((kind) => ({ value: kind, label: blockKindLabels[kind] }))} onChange={(value) => setAddKind(value as AnswerBlockKind)} />
