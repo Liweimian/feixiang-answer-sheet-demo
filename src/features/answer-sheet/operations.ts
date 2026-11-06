@@ -4,6 +4,7 @@ import { formatQuestionRange, parseQuestionRange } from './range'
 
 type MoveDirection = -1 | 1
 type ConsolidationKind = 'objective' | 'subjective'
+export type ModuleMergeKind = 'objective' | 'subjective'
 
 function roundScore(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
@@ -358,4 +359,39 @@ export function splitMergedBlock(blocks: AnswerBlock[], id: string): AnswerBlock
   if (!block?.mergedParts?.length) return blocks
   const restored = block.mergedParts.map((part) => ({ ...part, mergedParts: undefined, contentElements: part.contentElements ? [...part.contentElements] : undefined }))
   return [...blocks.slice(0, index), ...restored, ...blocks.slice(index + 1)]
+}
+
+function mergeCategoryOf(block: AnswerBlock): ModuleMergeKind | undefined {
+  const parts = block.mergedParts?.length ? block.mergedParts : [block]
+  if (parts.every((part) => part.kind === 'objective')) return 'objective'
+  if (parts.every((part) => isQuestionBlockKind(part.kind) && part.kind !== 'objective')) return 'subjective'
+  return undefined
+}
+
+/** Restore every auto-merged module of one category. */
+export function splitMergedModulesByCategory(blocks: AnswerBlock[], kind: ModuleMergeKind): AnswerBlock[] {
+  let changed = false
+  const next = blocks.flatMap((block) => {
+    if (!block.mergedParts?.length || mergeCategoryOf(block) !== kind) return [block]
+    changed = true
+    return block.mergedParts.map((part) => ({
+      ...part,
+      mergedParts: undefined,
+      contentElements: part.contentElements ? [...part.contentElements] : undefined,
+    }))
+  })
+  return changed ? next : blocks
+}
+
+/** Merge all same-category question modules on each page and keep the operation reversible. */
+export function mergeModulesByCategory(blocks: AnswerBlock[], kind: ModuleMergeKind): AnswerBlock[] {
+  let next = splitMergedModulesByCategory(blocks, kind)
+  const pages = [...new Set(next.map((block) => block.page))]
+  pages.forEach((page) => {
+    const ids = next
+      .filter((block) => block.page === page && !block.locked && mergeCategoryOf(block) === kind)
+      .map((block) => block.id)
+    if (ids.length > 1) next = mergeSelectedBlocks(next, ids)
+  })
+  return next
 }

@@ -7,6 +7,7 @@ import { autoFixBlocks, buildPreflightChecks } from '../features/answer-sheet/pr
 import { downloadAnnotatedAnswerSheet } from '../features/answer-sheet/export'
 import {
   consolidateBlocks,
+  mergeModulesByCategory,
   mergeObjectiveModules,
   mergeSelectedBlocks,
   mergeWithNext,
@@ -15,6 +16,7 @@ import {
   reorderBlock,
   splitBlock,
   splitMergedBlock,
+  splitMergedModulesByCategory,
 } from '../features/answer-sheet/operations'
 import type {
   AnswerBlock,
@@ -484,6 +486,21 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
     commitDocument({ ...document, settings: nextSettings })
   }
 
+  const updateModuleMerge = (kind: 'objective' | 'subjective', checked: boolean) => {
+    const field = kind === 'objective' ? 'objectiveMerge' : 'subjectiveMerge'
+    const nextBlocks = checked
+      ? mergeModulesByCategory(blocks, kind)
+      : splitMergedModulesByCategory(blocks, kind)
+    commitDocument({
+      ...document,
+      settings: { ...settings, [field]: checked },
+      blocks: nextBlocks,
+    })
+    MetisMessage.success(checked
+      ? `已按页合并${kind === 'objective' ? '客观题' : '主观题'}模块`
+      : `已恢复${kind === 'objective' ? '客观题' : '主观题'}模块`)
+  }
+
   const applyPreset = (preset: HeaderPreset) => {
     const nextHeader = instantiateHeaderTemplate(preset === 'quiz' ? 'daily-quiz' : 'exam-general')
     const nextSettings: AnswerSheetSettings = preset === 'quiz'
@@ -659,6 +676,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               onTitleCommit={updateTitle}
               onBlockTitleCommit={(id, title) => updateBlock(id, { title })}
               onSettingsChange={updateSettings}
+              onModuleMergeChange={updateModuleMerge}
               onPresetChange={applyPreset}
               onHeaderTemplateChange={applyHeaderTemplate}
               onRestoreHeaderTemplate={restoreHeaderTemplate}

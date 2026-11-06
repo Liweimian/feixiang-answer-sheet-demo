@@ -32,6 +32,7 @@ interface EditorWorkbenchProps {
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void
+  onModuleMergeChange: (kind: 'objective' | 'subjective', checked: boolean) => void
   onPresetChange: (preset: HeaderPreset) => void
   onHeaderTemplateChange: (templateId: HeaderTemplateId) => void
   onRestoreHeaderTemplate: () => void
@@ -66,6 +67,7 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           activePage={props.activePage}
           selectedBlockId={props.selectedBlockId}
           onSettingsChange={props.onSettingsChange}
+          onModuleMergeChange={props.onModuleMergeChange}
           onPresetChange={props.onPresetChange}
           onHeaderTemplateChange={props.onHeaderTemplateChange}
           onRestoreHeaderTemplate={props.onRestoreHeaderTemplate}

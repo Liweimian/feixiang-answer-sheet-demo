@@ -29,6 +29,7 @@ interface AnswerSheetConfigPanelProps {
   activePage: number
   selectedBlockId: string
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void
+  onModuleMergeChange: (kind: 'objective' | 'subjective', checked: boolean) => void
   onPresetChange: (preset: HeaderPreset) => void
   onHeaderTemplateChange: (templateId: HeaderTemplateId) => void
   onRestoreHeaderTemplate: () => void
@@ -192,8 +193,8 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           <div className="config-meta-row config-module-merge-row">
             <span>模块合并</span>
             <div className="config-check-list config-module-merge-options">
-              <MetisCheckbox checked={settings.objectiveMerge} onChange={(event) => props.onSettingsChange({ objectiveMerge: event.target.checked })}>客观题</MetisCheckbox>
-              <MetisCheckbox checked={settings.subjectiveMerge} onChange={(event) => props.onSettingsChange({ subjectiveMerge: event.target.checked })}>主观题</MetisCheckbox>
+              <MetisCheckbox checked={settings.objectiveMerge} onChange={(event) => props.onModuleMergeChange('objective', event.target.checked)}>客观题</MetisCheckbox>
+              <MetisCheckbox checked={settings.subjectiveMerge} onChange={(event) => props.onModuleMergeChange('subjective', event.target.checked)}>主观题</MetisCheckbox>
             </div>
           </div>
           <div className="config-meta-row">
