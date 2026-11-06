@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisInput, MetisInputNumber, MetisRadio, MetisSelect } from '@yuanfudao/metis-web-component'
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Square, SquareDashed, Sigma, Table2, Trash2, Underline, Undo2 } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type ObjectiveSortMode } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
 
@@ -17,6 +17,7 @@ interface AnswerBlockViewProps {
   onToggleContent?: (element: ContentElement) => void
   onUpdateBlock?: (patch: Partial<AnswerBlock>) => void
   onInsertAfter?: (kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position?: 'before' | 'after') => void
+  onDeleteBlock?: () => void
   onUndo?: () => void
   onRedo?: () => void
   questionAnswer?: boolean
@@ -138,7 +139,7 @@ function ScoreBox({ block }: { block: AnswerBlock }) {
   return <div className="score-box"><b>评分栏</b>{Array.from({ length: cells }, (_, index) => <span key={index} />)}</div>
 }
 
-export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true, subjectiveAnswerStyle = 'lines', subjectiveLineHeight = 16 }: AnswerBlockViewProps) {
+export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onDeleteBlock, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true, subjectiveAnswerStyle = 'lines', subjectiveLineHeight = 16 }: AnswerBlockViewProps) {
   const [resizeHeight, setResizeHeight] = useState(block.height)
   const [draftLayout, setDraftLayout] = useState(layout)
   const style = {
@@ -353,7 +354,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
 
   return (
     <div
-      className={`answer-block kind-${block.kind} ${block.contentElements?.includes('table') ? 'has-content-table' : ''} ${selected ? 'selected' : ''} ${multiSelected ? 'multi-selected' : ''}`}
+      className={`answer-block kind-${block.kind} ${block.contentElements?.includes('table') ? 'has-content-table' : ''} ${block.borderStyle === 'borderless' ? 'borderless' : ''} ${block.userInserted ? 'user-inserted' : ''} ${selected ? 'selected' : ''} ${multiSelected ? 'multi-selected' : ''}`}
       data-block-id={block.id}
       data-block-kind={block.kind}
       data-block-range={block.range ?? ''}
@@ -400,6 +401,16 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
             <MetisSelect size="small" value={block.wordCount ?? 600} options={[400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))} onChange={(value) => onUpdateBlock?.({ wordCount: Number(value) })} aria-label="作文字数" />
           </div>}
           <button type="button" aria-expanded={settingsPanel === 'insert'} onClick={() => setSettingsPanel('insert')}><Plus size={11} /> 插入 <ChevronDown size={11} /></button>
+          {block.userInserted && <>
+            <span className="module-tool-divider" />
+            <button
+              type="button"
+              aria-pressed={block.borderStyle !== 'borderless'}
+              title={block.borderStyle === 'borderless' ? '显示边框' : '隐藏边框'}
+              onClick={() => onUpdateBlock?.({ borderStyle: block.borderStyle === 'borderless' ? 'bordered' : 'borderless' })}
+            >{block.borderStyle === 'borderless' ? <SquareDashed size={11} /> : <Square size={11} />} 边框</button>
+            <button type="button" className="danger" title="删除插入内容（可撤销）" onClick={onDeleteBlock}><Trash2 size={11} /> 删除</button>
+          </>}
         </div>
       )}
       {settingsPanel === 'answer' && isSubjectiveAnswerBlock ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>

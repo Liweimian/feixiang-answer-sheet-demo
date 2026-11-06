@@ -349,6 +349,8 @@ export function AnswerSheetStudioPage() {
       contentText: kind === 'forbidden' ? '请勿在此区域作答' : undefined,
       showScore: false,
       showQuestionCount: false,
+      userInserted: true,
+      borderStyle: 'bordered',
       canvasX: anchor.canvasX,
       canvasY: position === 'before' ? anchorY : anchorY + anchor.height + 8,
       canvasWidth: anchor.canvasWidth,
@@ -361,6 +363,14 @@ export function AnswerSheetStudioPage() {
     commitBlocks(next)
     setSelectedBlockId(inserted.id)
     MetisMessage.success(`已在当前题块${position === 'before' ? '前' : '后'}插入${title}`)
+  }
+
+  const deleteInsertedBlock = (id: string) => {
+    const target = blocks.find((block) => block.id === id)
+    if (!target?.userInserted) return
+    commitBlocks(blocks.filter((block) => block.id !== id))
+    setSelectedBlockId('')
+    MetisMessage.success('已删除插入内容，可撤销恢复')
   }
 
   const updateTitle = (title: string) => {
@@ -565,6 +575,7 @@ export function AnswerSheetStudioPage() {
               onToggleBlockContent={toggleBlockContent}
               onUpdateCanvasBlock={updateBlock}
               onInsertAfter={insertAfterBlock}
+              onDeleteInsertedBlock={deleteInsertedBlock}
               onUndo={undo}
               onRedo={redo}
               onMergeBlocks={mergeCanvasBlocks}

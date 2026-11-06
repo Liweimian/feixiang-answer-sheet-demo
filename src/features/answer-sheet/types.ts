@@ -112,6 +112,8 @@ export interface AnswerBlock {
   showUnitScore?: boolean
   showScoreBox?: boolean
   scoreStep?: number
+  userInserted?: boolean
+  borderStyle?: 'bordered' | 'borderless'
   locked?: boolean
   hint?: string
   mergedParts?: AnswerBlock[]
