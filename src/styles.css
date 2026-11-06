@@ -416,9 +416,6 @@
 .composition-count-control .mc-input-number-group-wrapper { width: 92px; }
 .essay-style-radio { display: inline-flex; align-items: center; gap: 5px; }
 .essay-style-radio label { margin: 0; font-size: 8px; white-space: nowrap; }
-.essay-inline-settings { height: 25px; display: flex; align-items: center; gap: 8px; padding: 0 7px; }
-.essay-inline-settings strong { color: var(--fx_text_1); font-size: 8px; font-weight: 500; }
-.essay-inline-settings .mc-select { width: 76px; }
 .block-module-tools { position: absolute; z-index: 9; top: calc(100% + 8px); left: 50%; display: flex; align-items: center; gap: 2px; padding: 4px; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_3); background: var(--fx_surface); box-shadow: var(--fx_shadow_sm); color: var(--fx_text_2); opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(-3px); transition: opacity 120ms ease, transform 120ms ease; white-space: nowrap; }
 .answer-block:hover > .block-module-tools, .answer-block:focus-within > .block-module-tools { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
 .block-module-tools > span, .block-module-tools button { height: 25px; display: inline-flex; align-items: center; gap: 3px; padding: 0 7px; border: 0; border-radius: var(--fx_radius_2); background: transparent; color: inherit; font-size: 8px; }

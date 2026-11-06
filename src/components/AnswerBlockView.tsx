@@ -349,6 +349,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
     ? (block.responseStyle ?? 'lines')
     : inheritedSubjectiveStyle
   const isSubjectiveAnswerBlock = block.kind === 'short-answer' || block.kind === 'response-area'
+  const hasAnswerSettings = isSubjectiveAnswerBlock || block.kind === 'essay'
   const canEditSlotNumbers = isSubjectiveAnswerBlock && questionNumbers(block.range).length > 0
   const isFillAnswerBlock = block.answerVariant === 'fill'
 
@@ -392,14 +393,8 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       )}
       {onInsertAfter && (
         <div className="block-module-tools" onClick={(event) => event.stopPropagation()}>
-          {isSubjectiveAnswerBlock && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={openAnswerSettings}>作答样式</button>}
+          {hasAnswerSettings && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={openAnswerSettings}>作答设置</button>}
           {canEditSlotNumbers && <button type="button" aria-expanded={settingsPanel === 'subquestion'} onClick={() => { openAnswerSettings(); setSettingsPanel('subquestion') }}>小题设置</button>}
-          {block.kind === 'essay' && <div className="essay-inline-settings" onClick={(event) => event.stopPropagation()}>
-            <strong>作答样式</strong>
-            <MetisRadio.Group className="essay-style-radio" value={block.responseStyle === 'grid' ? 'grid' : 'lines'} options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]} onChange={(event) => onUpdateBlock?.({ responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />
-            <strong>字数</strong>
-            <MetisSelect size="small" value={block.wordCount ?? 600} options={[400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))} onChange={(value) => onUpdateBlock?.({ wordCount: Number(value) })} aria-label="作文字数" />
-          </div>}
           <button type="button" aria-expanded={settingsPanel === 'insert'} onClick={() => setSettingsPanel('insert')}><Plus size={11} /> 插入 <ChevronDown size={11} /></button>
           {block.userInserted && <>
             <span className="module-tool-divider" />
@@ -413,11 +408,21 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
           </>}
         </div>
       )}
-      {settingsPanel === 'answer' && isSubjectiveAnswerBlock ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>
-        <div className="block-settings-title"><strong>作答样式</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
-        <div className="block-settings-row">
-          <span>作答样式</span>
-          {isFillAnswerBlock ? <MetisSelect
+      {settingsPanel === 'answer' && hasAnswerSettings ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>
+        <div className="block-settings-title"><strong>作答设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
+        {block.kind === 'essay' ? <>
+          <div className="block-settings-row">
+            <span>作答样式</span>
+            <MetisRadio.Group value={block.responseStyle === 'grid' ? 'grid' : 'lines'} options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]} onChange={(event) => onUpdateBlock?.({ responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />
+          </div>
+          <div className="block-settings-row">
+            <span>字数</span>
+            <MetisSelect size="small" value={block.wordCount ?? 600} options={[400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))} onChange={(value) => onUpdateBlock?.({ wordCount: Number(value) })} aria-label="作文字数" />
+          </div>
+        </> : <>
+          <div className="block-settings-row">
+            <span>作答样式</span>
+            {isFillAnswerBlock ? <MetisSelect
             size="small"
             value={effectiveSubjectiveStyle}
             options={[
@@ -427,13 +432,14 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
               { value: 'four-line', label: '四线三格' },
             ]}
             onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: value as AnswerBlock['responseStyle'] })}
-          /> : <MetisRadio.Group value={effectiveSubjectiveStyle === 'blank' ? 'blank' : 'lines'} options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '作答线' }]} onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />}
-        </div>
-        {effectiveSubjectiveStyle === 'lines' && <div className="block-settings-row">
-          <span>作答线</span>
-          <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label="作答线行数" onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
-        </div>}
-        {block.answerAreaOverride && <button type="button" className="follow-card-action" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>恢复跟随整卡</button>}
+            /> : <MetisRadio.Group value={effectiveSubjectiveStyle === 'blank' ? 'blank' : 'lines'} options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '作答线' }]} onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />}
+          </div>
+          {effectiveSubjectiveStyle === 'lines' && <div className="block-settings-row">
+            <span>作答线</span>
+            <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label="作答线行数" onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
+          </div>}
+          {block.answerAreaOverride && <button type="button" className="follow-card-action" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>恢复跟随整卡</button>}
+        </>}
       </div> : null}
       {settingsPanel === 'subquestion' && canEditSlotNumbers ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>
         <div className="block-settings-title"><strong>小题设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
