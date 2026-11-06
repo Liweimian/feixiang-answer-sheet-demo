@@ -214,13 +214,15 @@
 .structure-tools > div:last-child { grid-template-columns: 1fr 1fr; }
 .structure-tools > button { width: 100%; }
 .config-block-list { display: grid; gap: var(--fx_sp_1); }
-.config-block-row { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; min-height: 44px; padding: var(--fx_sp_1) var(--fx_sp_2); border: 1px solid transparent; border-radius: var(--fx_radius_3); color: var(--fx_text_3); }
+.config-block-row { display: grid; grid-template-columns: minmax(0, 1fr) 86px; align-items: center; gap: var(--fx_sp_2); min-height: 48px; padding: var(--fx_sp_1) var(--fx_sp_2); border: 1px solid transparent; border-radius: var(--fx_radius_3); color: var(--fx_text_3); transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease; }
 .config-block-row:hover { border-color: var(--fx_border_strong); background: var(--fx_surface_muted); }
-.config-block-row.selected { border-color: var(--fx_brand); background: var(--fx_brand_subtle); }
+.config-block-row.selected { border-color: var(--fx_brand); background: var(--fx_brand_subtle); box-shadow: inset 3px 0 0 var(--fx_brand); }
 .config-block-row > button { min-width: 0; display: grid; gap: 2px; padding: 0; border: 0; background: transparent; color: var(--fx_text_1); cursor: pointer; text-align: left; }
 .config-block-row b, .config-block-row small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .config-block-row b { font-size: 10px; }
 .config-block-row small { color: var(--fx_text_3); font-size: 8px; }
+.config-block-score { width: 86px; }
+.config-block-score input { text-align: right; }
 .config-empty-blocks { padding: var(--fx_sp_5); border: 1px dashed var(--fx_border_strong); border-radius: var(--fx_radius_3); color: var(--fx_text_3); font-size: 9px; text-align: center; }
 .config-add-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--fx_sp_2); }
 .config-lock-tip { padding: var(--fx_sp_2); border-radius: var(--fx_radius_2); background: var(--fx_warning_soft); color: var(--fx_warning); font-size: 9px; }

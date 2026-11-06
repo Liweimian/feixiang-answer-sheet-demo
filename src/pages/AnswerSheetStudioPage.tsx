@@ -350,7 +350,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
       }
     }
     const nextBlocks = blocks.map((block) => block.id === blockId ? { ...block, ...normalizedPatch } : block)
-    if (paper.sections.length === 0) {
+    if (paper.sections.length === 0 || patch.score !== undefined) {
       commitDocument({
         ...document,
         blocks: nextBlocks,
@@ -362,6 +362,12 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
   }
 
   const updateSelected = (patch: Partial<AnswerBlock>) => updateBlock(selectedBlockId, patch)
+
+  const selectBlock = (blockId: string) => {
+    const block = blocks.find((item) => item.id === blockId)
+    setSelectedBlockId(blockId)
+    if (block) setActivePage(block.page)
+  }
 
   const toggleBlockContent = (blockId: string, element: ContentElement) => {
     const block = blocks.find((item) => item.id === blockId)
@@ -616,8 +622,9 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               activePage={activePage}
               selectedBlockId={selectedBlockId}
               onPageChange={changePage}
-              onSelect={setSelectedBlockId}
+              onSelect={selectBlock}
               onUpdate={updateSelected}
+              onBlockScoreChange={(id, score) => updateBlock(id, { score })}
               onMove={moveBlock}
               onDelete={deleteSelected}
               onAdd={addBlock}

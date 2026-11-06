@@ -23,6 +23,7 @@ interface EditorWorkbenchProps {
   onPageChange: (page: number) => void
   onSelect: (id: string) => void
   onUpdate: (patch: Partial<AnswerBlock>) => void
+  onBlockScoreChange: (id: string, score: number) => void
   onMove: (id: string, direction: -1 | 1) => void
   onReorder: (dragId: string, targetId: string) => void
   onDelete: () => void
@@ -72,6 +73,7 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           onPageChange={props.onPageChange}
           onSelect={props.onSelect}
           onUpdateBlock={props.onUpdate}
+          onBlockScoreChange={props.onBlockScoreChange}
           onAdd={props.onAdd}
           onAddQuestionGroup={props.onAddQuestionGroup}
         />

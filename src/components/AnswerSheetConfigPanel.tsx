@@ -13,6 +13,7 @@ import {
 import { Plus } from 'lucide-react'
 import { blockKindLabels } from '../data/mockPaper'
 import { examHeaderTemplates } from '../data/headerTemplates'
+import { questionNumbers } from '../features/answer-sheet/range'
 import {
   isQuestionBlockKind,
   type AnswerBlock,
@@ -36,6 +37,7 @@ interface AnswerSheetConfigPanelProps {
   onPageChange: (page: number) => void
   onSelect: (id: string) => void
   onUpdateBlock: (patch: Partial<AnswerBlock>) => void
+  onBlockScoreChange: (id: string, score: number) => void
   onAdd: (kind: AnswerBlockKind) => void
   onAddQuestionGroup: (type: QuestionGroupType) => void
 }
@@ -205,14 +207,36 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               ))}
             </div>
             <div className="config-block-list">
-              {blocks.filter((block) => block.page === props.activePage).map((block) => (
-                <div
-                  key={block.id}
-                  className={`config-block-row ${block.id === props.selectedBlockId ? 'selected' : ''}`}
-                >
-                  <button type="button" onClick={() => props.onSelect(block.id)}><b>{block.title}</b><small>{blockKindLabels[block.kind]}{block.range ? ` · ${block.range}` : ''}</small></button>
-                </div>
-              ))}
+              {blocks.filter((block) => block.page === props.activePage).map((block) => {
+                const isQuestion = isQuestionBlockKind(block.kind)
+                const questionCount = isQuestion ? questionNumbers(block.range).length : 0
+                const selected = block.id === props.selectedBlockId
+                return (
+                  <div
+                    key={block.id}
+                    className={`config-block-row ${selected ? 'selected' : ''}`}
+                    aria-current={selected ? 'true' : undefined}
+                  >
+                    <button type="button" onClick={() => props.onSelect(block.id)}>
+                      <b>{block.title}</b>
+                      <small>{blockKindLabels[block.kind]}{questionCount > 0 ? ` · ${questionCount} 题` : ''}</small>
+                    </button>
+                    {isQuestion && (
+                      <MetisInputNumber
+                        className="config-block-score"
+                        value={block.score ?? 0}
+                        min={0}
+                        max={300}
+                        addonAfter="分"
+                        aria-label={`${block.title}分值`}
+                        onFocus={() => props.onSelect(block.id)}
+                        onClick={(event) => event.stopPropagation()}
+                        onChange={(value) => props.onBlockScoreChange(block.id, Number(value ?? 0))}
+                      />
+                    )}
+                  </div>
+                )
+              })}
               {!blocks.some((block) => block.page === props.activePage) && <div className="config-empty-blocks">当前页暂无题块</div>}
             </div>
             {blankCard && !standaloneCard && <div className="config-add-row">
