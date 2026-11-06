@@ -528,7 +528,7 @@
 .essay-choice-areas b { font-size: 8px; }
 .forbidden-area { height: calc(100% - 24px); display: grid; place-items: center; background: repeating-linear-gradient(135deg, var(--fx_forbidden_fill) 0 6px, var(--fx_surface) 6px 12px); color: var(--fx_locked); font-size: 10px; font-weight: 700; letter-spacing: 4px; }
 .kind-forbidden .forbidden-area { height: 100%; }
-.forbidden-text-edit { display: inline-flex; align-items: center; gap: 6px; max-width: calc(100% - 24px); padding: 4px 8px; border: 0; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; cursor: text; }
+.forbidden-text-edit { display: inline-flex; align-items: center; justify-content: inherit; gap: 6px; width: calc(100% - 24px); max-width: calc(100% - 24px); padding: 4px 8px; border: 0; background: transparent; color: inherit; letter-spacing: inherit; cursor: text; }
 .forbidden-text-edit svg { flex: none; opacity: .7; }
 .forbidden-text-input { width: min(280px, calc(100% - 24px)); letter-spacing: 1px; text-align: center; }
 .drawing-area { position: relative; height: calc(100% - 24px); display: grid; place-items: center; color: var(--fx_text_3); font-size: 10px; }

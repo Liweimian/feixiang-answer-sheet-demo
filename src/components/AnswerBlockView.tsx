@@ -391,7 +391,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
     >
       <span className="block-drag-handle" aria-label={`自由拖动${block.title}`} role="button" tabIndex={0} onPointerDown={beginMove}><GripVertical size={13} /></span>
       <button type="button" className="block-select-toggle" title="选择模块，可与其他模块合并" aria-label={`${multiSelected ? '取消选择' : '选择'}${block.title}`} aria-pressed={multiSelected} onClick={(event) => { event.stopPropagation(); onSelect(true) }}>{multiSelected ? '✓' : ''}</button>
-      {selected && block.kind !== 'forbidden' && (block.kind !== 'objective' || block.mergedParts?.length) && (
+      {selected && (block.kind !== 'objective' || block.mergedParts?.length) && (
         <div className="block-floating-tools" onClick={(event) => event.stopPropagation()}>
           {block.kind !== 'objective' && onToggleContent && <>
             <button type="button" onClick={onUndo} title="撤销"><Undo2 size={12} /></button>
@@ -575,7 +575,13 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
         ) : (
           <button
             type="button"
-            className="forbidden-text-edit"
+            className={`forbidden-text-edit text-${block.fontSize ?? 'medium'} spacing-${block.lineSpacing ?? 'normal'}`}
+            style={{
+              fontWeight: block.textBold ? 700 : undefined,
+              fontStyle: block.textItalic ? 'italic' : undefined,
+              textDecoration: block.textUnderline ? 'underline' : undefined,
+              textAlign: block.textAlign ?? 'center',
+            }}
             aria-label="修改禁答区文字"
             onClick={(event) => {
               event.stopPropagation()
