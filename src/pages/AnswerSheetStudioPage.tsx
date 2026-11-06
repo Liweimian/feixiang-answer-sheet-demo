@@ -364,7 +364,14 @@ export function AnswerSheetStudioPage() {
 
   const updateSettings = (patch: Partial<AnswerSheetSettings>) => {
     const nextSettings = { ...settings, ...patch }
-    if (patch.identityFields) nextSettings.identityFields = [...patch.identityFields]
+    if (patch.identityFields) {
+      const identityFields = [...patch.identityFields]
+      if (!identityFields.includes('姓名')) {
+        const studentNumberIndex = identityFields.indexOf('学号')
+        identityFields.splice(studentNumberIndex >= 0 ? studentNumberIndex + 1 : 0, 0, '姓名')
+      }
+      nextSettings.identityFields = identityFields
+    }
     if (patch.candidateNumberLayouts) nextSettings.candidateNumberLayouts = [...patch.candidateNumberLayouts]
     commitDocument({ ...document, settings: nextSettings })
   }
