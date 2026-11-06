@@ -100,6 +100,7 @@
 .entry-copy h2 { margin: var(--fx_sp_1) 0 var(--fx_sp_2); color: var(--fx_text_1); font-size: 17px; }
 .entry-copy p { max-width: 520px; margin: 0; color: var(--fx_text_2); font-size: 11px; line-height: 1.7; }
 .answer-sheet-entry-card > button { align-self: center; }
+.answer-sheet-entry-card .entry-action-button { min-width: 156px; min-height: 42px; padding-inline: var(--fx_sp_5); font-size: 12px; font-weight: 600; }
 .entry-steps, .entry-capabilities { grid-column: 2 / 4; display: flex; align-items: center; gap: var(--fx_sp_2); }
 .entry-steps span { display: inline-flex; align-items: center; gap: var(--fx_sp_2); color: var(--fx_text_2); font-size: 10px; }
 .entry-steps b { width: 20px; height: 20px; display: grid; place-items: center; border-radius: var(--fx_radius_round); background: var(--fx_brand); color: var(--fx_text_inverse); font-size: 9px; }

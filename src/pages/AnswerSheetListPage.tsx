@@ -109,13 +109,13 @@ export function AnswerSheetListPage({ onEdit }: AnswerSheetListPageProps) {
         <div className="entry-icon"><FileCheck2 size={24} /></div>
         <div className="entry-copy"><span>已有试卷</span><h2>从试卷生成答题卡</h2><p>完成组卷后点击“生成答题卡”，系统自动带入题型、题号和分值，进入编辑区调整。</p></div>
         <div className="entry-steps"><span><b>1</b> 完成组卷</span><i /><span><b>2</b> 生成答题卡</span><i /><span><b>3</b> 调整并发布</span></div>
-        <MetisButton type="primary" icon={<ArrowRight size={15} />} onClick={(event) => { event.stopPropagation(); generateFromPaper() }}>体验从试卷生成</MetisButton>
+        <MetisButton className="entry-action-button" type="primary" minWidth={168} icon={<ArrowRight size={17} />} onClick={(event) => { event.stopPropagation(); generateFromPaper() }}>体验从试卷生成</MetisButton>
       </article>
       <article className={`answer-sheet-entry-card entry-blank-card ${entryMode === 'blank' ? 'active' : ''}`} onClick={() => setEntryMode('blank')}>
         <div className="entry-icon"><FilePlus2 size={24} /></div>
         <div className="entry-copy"><span>没有试卷</span><h2>新建答题卡</h2><p>直接创建空白答题卡，通过添加题组配置题型、题号、分值与客观题答案。</p></div>
         <div className="entry-capabilities"><span>添加题组</span><span>设置答案</span><span>自由排版</span></div>
-        <MetisButton type={entryMode === 'blank' ? 'primary' : 'bordered'} icon={<FilePlus2 size={15} />} onClick={(event) => { event.stopPropagation(); setEntryMode('blank'); setCreateOpen(true) }}>新建答题卡</MetisButton>
+        <MetisButton className="entry-action-button" type={entryMode === 'blank' ? 'primary' : 'bordered'} minWidth={168} icon={<FilePlus2 size={17} />} onClick={(event) => { event.stopPropagation(); setEntryMode('blank'); setCreateOpen(true) }}>新建答题卡</MetisButton>
       </article>
     </section>
 
