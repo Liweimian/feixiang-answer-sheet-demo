@@ -192,8 +192,11 @@
 .config-meta-row { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: var(--fx_sp_2); }
 .config-meta-row > span { min-height: 20px; display: flex; align-items: center; color: var(--fx_text_1); font-size: 12px; font-weight: 700; }
 .config-meta-row .config-check-list { flex-wrap: nowrap; gap: var(--fx_sp_2); }
-.config-score-meta-row { grid-template-columns: minmax(0, 1fr); align-items: start; }
-.config-score-meta-row .config-check-list { width: calc(100% - 4px); justify-content: space-between; }
+.config-score-meta-row { align-items: start; row-gap: var(--fx_sp_2); }
+.config-score-meta-row .config-check-list { width: 100%; }
+.config-score-primary { grid-column: 2; }
+.config-score-secondary { grid-column: 2; justify-content: flex-start; gap: var(--fx_sp_4) !important; }
+.config-question-order-row .config-inline-options { flex-wrap: nowrap; gap: var(--fx_sp_4); }
 .config-meta-row > .mc-switch { justify-self: start; }
 .subjective-answer-controls { min-width: 0; display: flex; align-items: center; gap: var(--fx_sp_2); }
 .subjective-answer-controls .config-inline-options { flex: none; }
