@@ -8,6 +8,7 @@ interface EditorToolbarProps {
   publishedVersion?: number
   saving: boolean
   savedAt: string
+  backLabel?: string
   canUndo: boolean
   canRedo: boolean
   onBack: () => void
@@ -24,7 +25,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
   return (
     <section className="editor-toolbar editor-toolbar-compact" data-sec="3">
       <div className="editor-title-row">
-        <MetisButton type="borderless" icon={<ChevronLeft size={17} />} onClick={props.onBack}>返回组卷</MetisButton>
+        <MetisButton type="borderless" icon={<ChevronLeft size={17} />} onClick={props.onBack}>{props.backLabel ?? '返回组卷'}</MetisButton>
         <div className="editor-paper-title">
           <strong>{props.paper.title}</strong>
           <span>{props.paper.subject} · {props.paper.score} 分</span>

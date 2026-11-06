@@ -57,8 +57,14 @@ function totalQuestionScore(blocks: AnswerBlock[]): number {
   return blocks.reduce((total, block) => total + (isQuestionBlockKind(block.kind) ? block.score ?? 0 : 0), 0)
 }
 
-export function AnswerSheetStudioPage() {
-  const [document, setDocument] = useState<AnswerSheetDocument>(cloneDefaultDocument)
+interface AnswerSheetStudioPageProps {
+  initialDocument?: AnswerSheetDocument
+  entry?: 'paper' | 'tool'
+  onBack?: () => void
+}
+
+export function AnswerSheetStudioPage({ initialDocument, entry = 'paper', onBack }: AnswerSheetStudioPageProps) {
+  const [document, setDocument] = useState<AnswerSheetDocument>(() => initialDocument ? structuredClone(initialDocument) : cloneDefaultDocument())
   const [history, setHistory] = useState<AnswerSheetDocument[]>([])
   const [future, setFuture] = useState<AnswerSheetDocument[]>([])
   const [selectedBlockId, setSelectedBlockId] = useState(document.blocks[0]?.id ?? '')
@@ -516,13 +522,14 @@ export function AnswerSheetStudioPage() {
       <div className="studio-body stage-editor">
         <EditorToolbar
               paper={paper}
+              backLabel={entry === 'tool' ? '返回答题卡工具' : '返回组卷'}
               draftVersion={draftVersion}
               publishedVersion={published?.version}
               saving={saving}
               savedAt={savedAt}
               canUndo={history.length > 0}
               canRedo={future.length > 0}
-              onBack={() => MetisMessage.info('演示：返回组卷页；当前答题卡草稿已自动保存')}
+              onBack={() => onBack ? onBack() : MetisMessage.info('演示：返回组卷页；当前答题卡草稿已自动保存')}
               onUndo={undo}
               onRedo={redo}
               onSave={() => void saveNow()}
