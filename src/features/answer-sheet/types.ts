@@ -93,6 +93,8 @@ export interface AnswerBlock {
   writingLayout?: 'choose-one' | 'separate'
   lineStyle?: LineStyle
   responseStyle?: ResponseStyle
+  answerAreaOverride?: boolean
+  leadingBlankLines?: number
   contentText?: string
   contentElements?: ContentElement[]
   textBold?: boolean

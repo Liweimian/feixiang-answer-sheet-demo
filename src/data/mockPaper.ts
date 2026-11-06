@@ -150,7 +150,6 @@ export const initialAnswerBlocks: AnswerBlock[] = [
     showQuestionCount: false,
     lineStyle: 'solid',
     responseStyle: 'grid',
-    hint: '作文格作答区；当前设置 400 字，可在选中后调整字数',
   },
   {
     id: 'forbidden-page-2',
