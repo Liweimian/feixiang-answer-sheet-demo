@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { MetisDropdown, MetisInput, MetisInputNumber, MetisRadio, MetisSelect, MetisSwitch } from '@yuanfudao/metis-web-component'
+import { MetisDropdown, MetisInput, MetisInputNumber, MetisRadio, MetisSelect } from '@yuanfudao/metis-web-component'
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type ObjectiveSortMode } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
@@ -151,7 +151,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
   const questionCount = questionNumbers(block.range).length
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(block.title)
-  const [slotEditorOpen, setSlotEditorOpen] = useState(false)
+  const [settingsPanel, setSettingsPanel] = useState<'answer' | 'essay' | 'insert' | null>(null)
   const [slotNumberDrafts, setSlotNumberDrafts] = useState<string[]>([])
   const cancelling = useRef(false)
 
@@ -161,14 +161,15 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
 
   useEffect(() => setResizeHeight(block.height), [block.height])
   useEffect(() => setDraftLayout(layout), [layout.x, layout.y, layout.width])
-  useEffect(() => setSlotEditorOpen(false), [block.id])
+  useEffect(() => setSettingsPanel(null), [block.id])
 
-  const openSlotEditor = () => {
+  const openAnswerSettings = () => {
+    if (!selected) onSelect(false)
     const counts = block.answerSlotCounts ?? questionNumbers(block.range).map(() => 1)
     setSlotNumberDrafts(counts.map((count, questionIndex) => (
       block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: count }, (_, index) => index + 1)
     ).join(',')))
-    setSlotEditorOpen(true)
+    setSettingsPanel('answer')
   }
 
   const commitSlotNumbers = () => {
@@ -181,7 +182,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       return parsed.length ? parsed : Array.from({ length: count }, (_, index) => index + 1)
     })
     onUpdateBlock?.({ answerSlotNumbers: nextNumbers, answerSlotCounts: nextNumbers.map((numbers) => numbers.length) })
-    setSlotEditorOpen(false)
+    setSettingsPanel(null)
   }
 
   const beginMove = (event: React.PointerEvent<HTMLSpanElement>) => {
@@ -397,80 +398,47 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
                 onClick: ({ key }) => insertContent(String(key)),
               }}
             >
-              <button type="button"><Plus size={12} /> 插入 <ChevronDown size={11} /></button>
+              <button type="button"><Plus size={12} /> 插入内容 <ChevronDown size={11} /></button>
             </MetisDropdown>
           </>}
         </div>
       )}
       {onInsertAfter && (
         <div className="block-module-tools" onClick={(event) => event.stopPropagation()}>
-          {isSubjectiveAnswerBlock && (
-            <div className="answer-area-controls" aria-label="作答区设置">
-              <strong>作答区</strong>
-              <span>作答线</span>
-              <MetisSwitch
-                size="small"
-                checked={effectiveSubjectiveStyle === 'lines'}
-                onChange={(checked) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: checked ? 'lines' : 'blank' })}
-              />
-              {effectiveSubjectiveStyle === 'lines' && (
-                <MetisInputNumber
-                  size="small"
-                  min={1}
-                  max={40}
-                  value={block.lineCount ?? 4}
-                  addonAfter="行"
-                  aria-label="作答线行数"
-                  onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })}
-                />
-              )}
-              {canEditSlotNumbers ? <button type="button" onClick={openSlotEditor}>小题序号</button> : null}
-              {block.answerAreaOverride && <button type="button" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>跟随整卡</button>}
-            </div>
-          )}
-          {block.kind === 'essay' && (
-            <div className="essay-answer-controls" aria-label="作文作答区设置">
-              <button
-                type="button"
-                onClick={() => onUpdateBlock?.({ leadingBlankLines: ((block.leadingBlankLines ?? 0) + 1) % 4 })}
-                title="在作文作答区前增加空行，最多 3 行"
-              >题内空行{block.leadingBlankLines ? ` ${block.leadingBlankLines}` : ''}</button>
-              <span>作答样式</span>
-              <MetisRadio.Group
-                className="essay-style-radio"
-                value={block.responseStyle === 'grid' ? 'grid' : 'lines'}
-                options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]}
-                onChange={(event) => onUpdateBlock?.({ responseStyle: event.target.value as AnswerBlock['responseStyle'] })}
-              />
-              <span>字数</span>
-              <MetisSelect
-                size="small"
-                value={block.wordCount ?? 600}
-                options={[400, 600, 800, 1000, 1200].map((value) => ({ value, label: `${value}` }))}
-                onChange={(value) => onUpdateBlock?.({ wordCount: Number(value) })}
-                aria-label="作文字数"
-              />
-            </div>
-          )}
-          <span><Plus size={11} /> 在模块后插入</span>
-          <button type="button" onClick={() => onInsertAfter('response-area', 'blank')}>空白区</button>
-          <button type="button" onClick={() => onInsertAfter('forbidden')}>禁答区</button>
+          {isSubjectiveAnswerBlock && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={openAnswerSettings}>作答设置</button>}
+          {block.kind === 'essay' && <button type="button" aria-expanded={settingsPanel === 'essay'} onClick={() => { if (!selected) onSelect(false); setSettingsPanel('essay') }}>作文设置</button>}
+          <button type="button" aria-expanded={settingsPanel === 'insert'} onClick={() => { if (!selected) onSelect(false); setSettingsPanel('insert') }}><Plus size={11} /> 添加区域 <ChevronDown size={11} /></button>
         </div>
       )}
-      {selected && slotEditorOpen && canEditSlotNumbers ? <div className="slot-number-editor" onClick={(event) => event.stopPropagation()}>
-        <div className="slot-number-editor-title"><strong>小题序号</strong><span>支持跳号，如 3,5</span></div>
-        {questionNumbers(block.range).map((number, questionIndex) => <label key={number}>
-          <span>{number}题</span>
-          <MetisInput
-            size="small"
-            value={slotNumberDrafts[questionIndex] ?? ''}
-            placeholder="如 1,2,3"
-            aria-label={`${number}题小题序号`}
-            onChange={(event) => setSlotNumberDrafts((drafts) => drafts.map((draft, index) => index === questionIndex ? event.target.value : draft))}
-            onKeyDown={(event) => { if (event.key === 'Enter') commitSlotNumbers() }}
-          />
-        </label>)}
-        <div className="slot-number-editor-actions"><button type="button" onClick={() => setSlotEditorOpen(false)}>取消</button><button type="button" className="primary" onClick={commitSlotNumbers}>应用</button></div>
+      {selected && settingsPanel === 'answer' && isSubjectiveAnswerBlock ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>
+        <div className="block-settings-title"><strong>作答设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
+        <div className="block-settings-row">
+          <span>作答样式</span>
+          <MetisRadio.Group value={effectiveSubjectiveStyle} options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '横线' }]} onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />
+        </div>
+        {effectiveSubjectiveStyle === 'lines' && <div className="block-settings-row">
+          <span>作答线</span>
+          <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label="作答线行数" onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
+        </div>}
+        {block.answerAreaOverride && <button type="button" className="follow-card-action" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>恢复跟随整卡</button>}
+        {canEditSlotNumbers && <div className="slot-number-section">
+          <div className="slot-number-section-title"><strong>小题序号</strong><span>支持跳号，如 3,5</span></div>
+          {questionNumbers(block.range).map((number, questionIndex) => <label key={number}>
+            <span>{number}题</span>
+            <MetisInput size="small" value={slotNumberDrafts[questionIndex] ?? ''} placeholder="如 1,2,3" aria-label={`${number}题小题序号`} onChange={(event) => setSlotNumberDrafts((drafts) => drafts.map((draft, index) => index === questionIndex ? event.target.value : draft))} onKeyDown={(event) => { if (event.key === 'Enter') commitSlotNumbers() }} />
+          </label>)}
+          <button type="button" className="primary" onClick={commitSlotNumbers}>应用序号</button>
+        </div>}
+      </div> : null}
+      {selected && settingsPanel === 'essay' && block.kind === 'essay' ? <div className="block-settings-popover essay-settings-popover" onClick={(event) => event.stopPropagation()}>
+        <div className="block-settings-title"><strong>作文设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
+        <div className="block-settings-row"><span>题内空行</span><MetisInputNumber size="small" min={0} max={3} value={block.leadingBlankLines ?? 0} addonAfter="行" onChange={(value) => onUpdateBlock?.({ leadingBlankLines: Number(value ?? 0) })} /></div>
+        <div className="block-settings-row"><span>作答样式</span><MetisRadio.Group className="essay-style-radio" value={block.responseStyle === 'grid' ? 'grid' : 'lines'} options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]} onChange={(event) => onUpdateBlock?.({ responseStyle: event.target.value as AnswerBlock['responseStyle'] })} /></div>
+        <div className="block-settings-row"><span>字数</span><MetisSelect size="small" value={block.wordCount ?? 600} options={[400, 600, 800, 1000, 1200].map((value) => ({ value, label: `${value} 字` }))} onChange={(value) => onUpdateBlock?.({ wordCount: Number(value) })} aria-label="作文字数" /></div>
+      </div> : null}
+      {selected && settingsPanel === 'insert' ? <div className="module-insert-menu" onClick={(event) => event.stopPropagation()}>
+        <button type="button" onClick={() => { onInsertAfter?.('response-area', 'blank'); setSettingsPanel(null) }}>空白区<span>添加到题块下方</span></button>
+        <button type="button" onClick={() => { onInsertAfter?.('forbidden'); setSettingsPanel(null) }}>禁答区<span>添加到题块下方</span></button>
       </div> : null}
       {block.kind !== 'forbidden' && <span className="answer-block-heading">
         {editingTitle && onTitleCommit ? (
