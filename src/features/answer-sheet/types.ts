@@ -147,7 +147,7 @@ export interface HeaderModule {
   minWidth: number
   minHeight: number
   fields?: string[]
-  variant?: 'lines' | 'boxes' | 'compact' | 'detailed'
+  variant?: 'lines' | 'boxes' | 'compact' | 'detailed' | 'beijing-footer'
   protected?: boolean
 }
 

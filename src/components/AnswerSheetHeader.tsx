@@ -106,9 +106,9 @@ function HeaderModuleContent({ module, paper, settings, editable, onTitleCommit 
     return <div className={`header-notice-module is-${variant}`}><b>{module.label}</b><ol><li>核对姓名和考号，按要求粘贴条形码。</li><li>客观题使用 2B 铅笔规范填涂。</li><li>主观题使用黑色字迹签字笔作答。</li><li>答案须写在对应答题区域内。</li></ol></div>
   }
   if (module.kind === 'fill-sample') {
-    return <div className="header-fill-module"><b>{module.label}</b><span>正确填涂 <i className="fill-correct" /></span><span>错误填涂　●　×　—　✓</span></div>
+    return <div className={`header-fill-module is-${module.variant ?? 'detailed'}`}><b>{module.label}</b><span>正确填涂 <i className="fill-correct" /></span>{module.variant !== 'beijing-footer' && <span>错误填涂　●　×　—　✓</span>}</div>
   }
-  return <div className="header-absence-module"><b>{module.label}</b><span>□</span><small>由监考员填涂</small></div>
+  return <div className={`header-absence-module is-${module.variant ?? 'detailed'}`}><b>{module.label}</b><span>□</span><small>由监考员填涂</small></div>
 }
 
 export function AnswerSheetHeader({ header, paper, settings, page, pageCount, editable = false, onChange, onTitleCommit }: AnswerSheetHeaderProps) {

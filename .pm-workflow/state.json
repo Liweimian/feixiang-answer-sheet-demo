@@ -30,8 +30,8 @@
       "status": "completed",
       "startedAt": "2026-11-03T17:10:00+08:00",
       "completedAt": "2026-11-04T12:00:00+08:00",
-      "version": "1.6.1",
-      "iterationCount": 48,
+      "version": "1.6.2",
+      "iterationCount": 49,
       "awaitingUserConfirmation": true,
       "scope": ["单一飞象模式", "大型考试表头模板", "北京官方样例结构", "深圳官方字段规则抽象", "首面与续面表头", "表头块级拖动缩放", "表头碰撞与安全区", "完整文档快照", "画布直接编辑", "题块自由坐标拖动", "多选合并与切割", "左侧通用配置", "打印发布"],
       "outputs": ["src/data/headerTemplates.ts", "src/components/AnswerSheetHeader.tsx", "src/features/answer-sheet/headerGeometry.ts", "src/components/AnswerSheetConfigPanel.tsx", "src/components/AnswerSheetCanvas.tsx", "src/features/answer-sheet/preflight.ts", "docs/changelog.md"],
@@ -76,5 +76,5 @@
     "ca3913d Stage 4 v1.5.20: expose block merge and split controls"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-06T10:51:35+08:00"
+  "updatedAt": "2026-11-06T11:05:00+08:00"
 }
