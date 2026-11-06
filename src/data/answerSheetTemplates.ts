@@ -253,6 +253,7 @@ export function instantiateTemplate(template: AnswerSheetTemplate): AnswerSheetD
     blocks: template.document.blocks.map((block) => ({
       ...block,
       answerSlotCounts: block.answerSlotCounts ? [...block.answerSlotCounts] : undefined,
+      answerSlotNumbers: block.answerSlotNumbers?.map((numbers) => [...numbers]),
       contentElements: block.contentElements ? [...block.contentElements] : undefined,
     })),
     settings: {

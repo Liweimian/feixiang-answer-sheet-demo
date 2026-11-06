@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { MetisDropdown, MetisInputNumber, MetisRadio, MetisSelect, MetisSwitch } from '@yuanfudao/metis-web-component'
+import { MetisDropdown, MetisInput, MetisInputNumber, MetisRadio, MetisSelect, MetisSwitch } from '@yuanfudao/metis-web-component'
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Sigma, Table2, Underline, Undo2 } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type ObjectiveSortMode } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
@@ -95,11 +95,12 @@ function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { bl
       <div className="short-answer-slots">
         {numbers.map((no, questionIndex) => {
           const slotCount = Math.max(1, block.answerSlotCounts?.[questionIndex] ?? 1)
+          const slotNumbers = block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: slotCount }, (_, index) => index + 1)
           return (
             <div key={no} className="short-answer-slot-row">
               <b>{no}.</b>
               {Array.from({ length: slotCount }, (_, slotIndex) => (
-                <span key={slotIndex}><em>{slotCount > 1 ? `(${slotIndex + 1})` : ''}</em><i /></span>
+                <span key={slotIndex}><em>{slotCount > 1 ? `(${slotNumbers[slotIndex] ?? slotIndex + 1})` : ''}</em><i /></span>
               ))}
             </div>
           )
@@ -150,6 +151,8 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
   const questionCount = questionNumbers(block.range).length
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(block.title)
+  const [slotEditorOpen, setSlotEditorOpen] = useState(false)
+  const [slotNumberDrafts, setSlotNumberDrafts] = useState<string[]>([])
   const cancelling = useRef(false)
 
   useEffect(() => {
@@ -158,6 +161,28 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
 
   useEffect(() => setResizeHeight(block.height), [block.height])
   useEffect(() => setDraftLayout(layout), [layout.x, layout.y, layout.width])
+  useEffect(() => setSlotEditorOpen(false), [block.id])
+
+  const openSlotEditor = () => {
+    const counts = block.answerSlotCounts ?? questionNumbers(block.range).map(() => 1)
+    setSlotNumberDrafts(counts.map((count, questionIndex) => (
+      block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: count }, (_, index) => index + 1)
+    ).join(',')))
+    setSlotEditorOpen(true)
+  }
+
+  const commitSlotNumbers = () => {
+    const fallbackCounts = block.answerSlotCounts ?? questionNumbers(block.range).map(() => 1)
+    const nextNumbers = fallbackCounts.map((count, questionIndex) => {
+      const parsed = (slotNumberDrafts[questionIndex] ?? '')
+        .split(/[\s,，、]+/)
+        .map((value) => Number(value))
+        .filter((value, index, values) => Number.isInteger(value) && value > 0 && value <= 99 && values.indexOf(value) === index)
+      return parsed.length ? parsed : Array.from({ length: count }, (_, index) => index + 1)
+    })
+    onUpdateBlock?.({ answerSlotNumbers: nextNumbers, answerSlotCounts: nextNumbers.map((numbers) => numbers.length) })
+    setSlotEditorOpen(false)
+  }
 
   const beginMove = (event: React.PointerEvent<HTMLSpanElement>) => {
     if (locked || !onMoveCommit) return
@@ -323,6 +348,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
     ? (block.responseStyle === 'blank' ? 'blank' : 'lines')
     : inheritedSubjectiveStyle
   const isSubjectiveAnswerBlock = block.kind === 'short-answer' || block.kind === 'response-area'
+  const canEditSlotNumbers = isSubjectiveAnswerBlock && questionNumbers(block.range).length > 0
 
   return (
     <div
@@ -398,6 +424,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
                   onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })}
                 />
               )}
+              {canEditSlotNumbers ? <button type="button" onClick={openSlotEditor}>小题序号</button> : null}
               {block.answerAreaOverride && <button type="button" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>跟随整卡</button>}
             </div>
           )}
@@ -430,6 +457,21 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
           <button type="button" onClick={() => onInsertAfter('forbidden')}>禁答区</button>
         </div>
       )}
+      {selected && slotEditorOpen && canEditSlotNumbers ? <div className="slot-number-editor" onClick={(event) => event.stopPropagation()}>
+        <div className="slot-number-editor-title"><strong>小题序号</strong><span>支持跳号，如 3,5</span></div>
+        {questionNumbers(block.range).map((number, questionIndex) => <label key={number}>
+          <span>{number}题</span>
+          <MetisInput
+            size="small"
+            value={slotNumberDrafts[questionIndex] ?? ''}
+            placeholder="如 1,2,3"
+            aria-label={`${number}题小题序号`}
+            onChange={(event) => setSlotNumberDrafts((drafts) => drafts.map((draft, index) => index === questionIndex ? event.target.value : draft))}
+            onKeyDown={(event) => { if (event.key === 'Enter') commitSlotNumbers() }}
+          />
+        </label>)}
+        <div className="slot-number-editor-actions"><button type="button" onClick={() => setSlotEditorOpen(false)}>取消</button><button type="button" className="primary" onClick={commitSlotNumbers}>应用</button></div>
+      </div> : null}
       {block.kind !== 'forbidden' && <span className="answer-block-heading">
         {editingTitle && onTitleCommit ? (
           <input

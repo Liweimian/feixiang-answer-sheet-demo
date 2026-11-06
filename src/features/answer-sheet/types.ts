@@ -86,6 +86,7 @@ export interface AnswerBlock {
   canvasWidth?: number
   lineCount?: number
   answerSlotCounts?: number[]
+  answerSlotNumbers?: number[][]
   wordCount?: number
   optionCount?: 4 | 5
   itemsPerColumn?: number
