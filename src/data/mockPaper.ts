@@ -161,7 +161,7 @@ export const initialAnswerBlocks: AnswerBlock[] = [
     kind: 'forbidden',
     height: 56,
     showScore: false,
-    locked: true,
+    locked: false,
   },
 ]
 
