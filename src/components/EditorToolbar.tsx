@@ -20,6 +20,7 @@ interface EditorToolbarProps {
   onDownloadAnnotated: () => void
   onObjectiveAnswers: () => void
   hasObjectiveBlocks: boolean
+  fromPaper: boolean
 }
 
 export function EditorToolbar(props: EditorToolbarProps) {
@@ -40,18 +41,18 @@ export function EditorToolbar(props: EditorToolbarProps) {
         <span className="autosave-status">{props.saving ? '正在保存…' : `已自动保存 ${props.savedAt}`}</span>
         <MetisButton type="borderless" icon={<Undo2 size={16} />} disabled={!props.canUndo} onClick={props.onUndo} aria-label="撤销" />
         <MetisButton type="borderless" icon={<Redo2 size={16} />} disabled={!props.canRedo} onClick={props.onRedo} aria-label="重做" />
-        <MetisButton type="bordered" icon={<ListChecks size={16} />} disabled={!props.hasObjectiveBlocks} onClick={props.onObjectiveAnswers}>设置客观题答案</MetisButton>
-        <MetisButton type="bordered" icon={<Save size={16} />} loading={props.saving} onClick={props.onSave}>立即保存</MetisButton>
+        {!props.fromPaper && <MetisButton type="bordered" icon={<ListChecks size={16} />} disabled={!props.hasObjectiveBlocks} onClick={props.onObjectiveAnswers}>设置客观题答案</MetisButton>}
+        {!props.fromPaper && <MetisButton type="bordered" icon={<Save size={16} />} loading={props.saving} onClick={props.onSave}>立即保存</MetisButton>}
         <MetisButton type="bordered" icon={<Printer size={16} />} onClick={props.onPrint}>PDF / 打印</MetisButton>
-        <MetisButton type="bordered" icon={<FileCheck2 size={16} />} onClick={props.onDownloadAnnotated}>带批改痕迹</MetisButton>
-        <MetisButton
+        {!props.fromPaper && <MetisButton type="bordered" icon={<FileCheck2 size={16} />} onClick={props.onDownloadAnnotated}>带批改痕迹</MetisButton>}
+        {!props.fromPaper && <MetisButton
           type="primary"
           icon={isPublishedCurrent ? <Download size={16} /> : <ShieldCheck size={16} />}
           onClick={props.onPreflight}
           data-track="/click/answerSheetEditor/preflight | 打开印前校验 | version"
         >
           {isPublishedCurrent ? `查看 / 下载 V${props.draftVersion}` : '校验并发布'}
-        </MetisButton>
+        </MetisButton>}
       </div>
     </section>
   )

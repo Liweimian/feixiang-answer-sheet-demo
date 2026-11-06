@@ -90,6 +90,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
   }, [])
 
   const { paper, blocks, settings, mode, rulePackId, pageCount } = document
+  const fromPaper = Boolean(settings.linkedPaperId)
   const rulePack = rulePacks.find((pack) => pack.id === rulePackId) ?? rulePacks[0]
   const checks = useMemo(
     () => buildPreflightChecks(paper, blocks, mode, rulePack, pageCount, settings, document.header),
@@ -580,12 +581,17 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               savedAt={savedAt}
               canUndo={history.length > 0}
               canRedo={future.length > 0}
+              fromPaper={fromPaper}
               onBack={() => onBack ? onBack() : MetisMessage.info('演示：返回组卷页；当前答题卡草稿已自动保存')}
               onUndo={undo}
               onRedo={redo}
               onSave={() => void saveNow()}
               onPreflight={() => setPreflightOpen(true)}
               onPrint={() => {
+                if (fromPaper) {
+                  printSnapshot(document)
+                  return
+                }
                 if (!published) {
                   setPreflightOpen(true)
                   MetisMessage.info('请先完成印前校验并生成印刷版')
