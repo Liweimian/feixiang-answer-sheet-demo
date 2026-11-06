@@ -47,7 +47,7 @@ function cloneDefaultDocument(): AnswerSheetDocument {
       ...defaultAnswerSheetDocument.paper,
       sections: defaultAnswerSheetDocument.paper.sections.map((section) => ({ ...section })),
     },
-    blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block, locked: false, answerSlotCounts: block.answerSlotCounts ? [...block.answerSlotCounts] : undefined, answerSlotNumbers: block.answerSlotNumbers?.map((numbers) => [...numbers]), contentElements: block.contentElements ? [...block.contentElements] : undefined })),
+    blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block, locked: false, answerSlotCounts: block.answerSlotCounts ? [...block.answerSlotCounts] : undefined, answerSlotNumbers: block.answerSlotNumbers?.map((numbers) => [...numbers]), questionScores: block.questionScores ? { ...block.questionScores } : undefined, contentElements: block.contentElements ? [...block.contentElements] : undefined })),
     settings: {
       ...defaultAnswerSheetDocument.settings,
       identityFields: ['学号', '姓名', '班级'],
@@ -624,7 +624,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               onPageChange={changePage}
               onSelect={selectBlock}
               onUpdate={updateSelected}
-              onBlockScoreChange={(id, score) => updateBlock(id, { score })}
+              onBlockScoresChange={(id, scores) => updateBlock(id, { questionScores: scores, score: Object.values(scores).reduce((sum, score) => sum + score, 0) })}
               onMove={moveBlock}
               onDelete={deleteSelected}
               onAdd={addBlock}

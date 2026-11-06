@@ -14,6 +14,7 @@ import { Plus } from 'lucide-react'
 import { blockKindLabels } from '../data/mockPaper'
 import { examHeaderTemplates } from '../data/headerTemplates'
 import { questionNumbers } from '../features/answer-sheet/range'
+import { ScoreSettingsDialog } from './ScoreSettingsDialog'
 import {
   isQuestionBlockKind,
   type AnswerBlock,
@@ -37,7 +38,7 @@ interface AnswerSheetConfigPanelProps {
   onPageChange: (page: number) => void
   onSelect: (id: string) => void
   onUpdateBlock: (patch: Partial<AnswerBlock>) => void
-  onBlockScoreChange: (id: string, score: number) => void
+  onBlockScoresChange: (id: string, scores: Record<string, number>) => void
   onAdd: (kind: AnswerBlockKind) => void
   onAddQuestionGroup: (type: QuestionGroupType) => void
 }
@@ -75,6 +76,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const blankCard = document.paper.sections.length === 0
   const standaloneCard = !settings.linkedPaperId
   const [addKind, setAddKind] = useState<AnswerBlockKind>('short-answer')
+  const [scoreBlockId, setScoreBlockId] = useState('')
   const candidatePreset = document.header.preset
 
   const applyCandidatePreset = (preset: 'quiz' | 'exam') => {
@@ -221,19 +223,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                       <b>{block.title}</b>
                       <small>{blockKindLabels[block.kind]}{questionCount > 0 ? ` · ${questionCount} 题` : ''}</small>
                     </button>
-                    {isQuestion && (
-                      <MetisInputNumber
-                        className="config-block-score"
-                        value={block.score ?? 0}
-                        min={0}
-                        max={300}
-                        addonAfter="分"
-                        aria-label={`${block.title}分值`}
-                        onFocus={() => props.onSelect(block.id)}
-                        onClick={(event) => event.stopPropagation()}
-                        onChange={(value) => props.onBlockScoreChange(block.id, Number(value ?? 0))}
-                      />
-                    )}
+                    {isQuestion && <button type="button" className="config-block-score-trigger" aria-label={`设置${block.title}分值`} onClick={() => { props.onSelect(block.id); setScoreBlockId(block.id) }}><b>{block.score ?? 0}</b><span>分</span></button>}
                   </div>
                 )
               })}
@@ -268,6 +258,12 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </section>
         )}
       </div>
+      <ScoreSettingsDialog
+        open={Boolean(scoreBlockId)}
+        block={blocks.find((block) => block.id === scoreBlockId)}
+        onClose={() => setScoreBlockId('')}
+        onSave={(blockId, scores) => { props.onBlockScoresChange(blockId, scores); setScoreBlockId('') }}
+      />
     </aside>
   )
 }

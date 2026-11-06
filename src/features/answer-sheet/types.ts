@@ -80,6 +80,7 @@ export interface AnswerBlock {
   title: string
   range?: string
   score?: number
+  questionScores?: Record<string, number>
   kind: AnswerBlockKind
   height: number
   canvasX?: number
