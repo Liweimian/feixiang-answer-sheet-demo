@@ -78,7 +78,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
   const columns = settings.frontColumns
-  const gapPercent = 1.2
+  const gapPercent = 0
   const defaultWidth = (100 - gapPercent * (columns - 1)) / columns
   const columnBottoms = Array.from({ length: columns }, () => 0)
   const blockLayouts = new Map(pageBlocks.map((block) => {
@@ -88,7 +88,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
     }
     const column = columnBottoms.indexOf(Math.min(...columnBottoms))
     const layout = { x: column * (defaultWidth + gapPercent), y: columnBottoms[column], width: block.canvasWidth ?? defaultWidth }
-    columnBottoms[column] += block.height + 4
+    columnBottoms[column] += block.height
     return [block.id, layout] as const
   }))
   const minimumCanvasHeight = paperSize === 'a3' ? 390 : paperSize === '16k' ? 450 : paperSize === '8k' ? 650 : 720
@@ -270,11 +270,26 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
       <div className={`paper-blocks columns-${columns}`} style={{ height: contentHeight }}>
         {selectionToolbarStyle && <div className="canvas-selection-toolbar" style={selectionToolbarStyle}>{selectionToolbar}</div>}
         {pageBlocks.map((block) => {
+          const layout = blockLayouts.get(block.id) ?? { x: 0, y: 0, width: 100 }
+          const seamlessTop = pageBlocks.some((other) => {
+            if (other.id === block.id) return false
+            const otherLayout = blockLayouts.get(other.id)
+            if (!otherLayout || Math.abs(otherLayout.y + other.height - layout.y) > 0.5) return false
+            return Math.min(otherLayout.x + otherLayout.width, layout.x + layout.width) - Math.max(otherLayout.x, layout.x) > 0.5
+          })
+          const seamlessLeft = pageBlocks.some((other) => {
+            if (other.id === block.id) return false
+            const otherLayout = blockLayouts.get(other.id)
+            if (!otherLayout || Math.abs(otherLayout.x + otherLayout.width - layout.x) > 0.05) return false
+            return Math.min(otherLayout.y + other.height, layout.y + block.height) - Math.max(otherLayout.y, layout.y) > 0.5
+          })
           return (
           <AnswerBlockView
             key={block.id}
             block={block}
-            layout={blockLayouts.get(block.id) ?? { x: 0, y: 0, width: 100 }}
+            layout={layout}
+            seamlessTop={seamlessTop}
+            seamlessLeft={seamlessLeft}
             selected={selectedBlockIds.length === 1 && selectedBlockIds.includes(block.id)}
             multiSelected={selectedBlockIds.includes(block.id)}
             locked={standard && Boolean(block.locked)}

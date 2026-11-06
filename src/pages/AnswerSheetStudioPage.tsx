@@ -256,7 +256,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
     const endNumber = draft.startNumber + draft.questionCount - 1
     const kind: AnswerBlockKind = ['single', 'multiple', 'judge'].includes(draft.type) ? 'objective' : draft.type === 'comprehensive' ? 'mixed' : 'short-answer'
     const pageBlocks = blocks.filter((block) => block.page === activePage)
-    const nextY = Math.min(88, pageBlocks.reduce((bottom, block) => Math.max(bottom, (block.canvasY ?? 0) + Math.max(10, block.height / 8)), 0) + 2)
+    const nextY = pageBlocks.reduce((bottom, block) => Math.max(bottom, (block.canvasY ?? 0) + block.height), 0)
     const nextBlock: AnswerBlock = {
       id: `group-${Date.now()}`,
       page: activePage,
@@ -418,12 +418,18 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
       userInserted: true,
       borderStyle: 'bordered',
       canvasX: anchor.canvasX,
-      canvasY: position === 'before' ? anchorY : anchorY + anchor.height + 8,
+      canvasY: position === 'before' ? anchorY : anchorY + anchor.height,
       canvasWidth: anchor.canvasWidth,
     }
-    const shiftedBlocks = position === 'before'
-      ? blocks.map((block) => block.page === anchor.page && (block.canvasY ?? 0) >= anchorY ? { ...block, canvasY: (block.canvasY ?? 0) + height + 8 } : block)
-      : blocks
+    const insertionY = position === 'before' ? anchorY : anchorY + anchor.height
+    const shiftedBlocks = blocks.map((block) => (
+      block.page === anchor.page
+      && (position === 'before' || block.id !== anchor.id)
+      && (block.canvasY ?? 0) >= insertionY
+      && (block.canvasX ?? 0) === (anchor.canvasX ?? 0)
+        ? { ...block, canvasY: (block.canvasY ?? 0) + height }
+        : block
+    ))
     const insertIndex = position === 'before' ? anchorIndex : anchorIndex + 1
     const next = [...shiftedBlocks.slice(0, insertIndex), inserted, ...shiftedBlocks.slice(insertIndex)]
     commitBlocks(next)
@@ -434,7 +440,18 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
   const deleteInsertedBlock = (id: string) => {
     const target = blocks.find((block) => block.id === id)
     if (!target?.userInserted) return
-    commitBlocks(blocks.filter((block) => block.id !== id))
+    const targetY = target.canvasY ?? 0
+    const targetBottom = targetY + target.height
+    const compacted = blocks
+      .filter((block) => block.id !== id)
+      .map((block) => (
+        block.page === target.page
+        && (block.canvasX ?? 0) === (target.canvasX ?? 0)
+        && (block.canvasY ?? 0) >= targetBottom
+          ? { ...block, canvasY: (block.canvasY ?? 0) - target.height }
+          : block
+      ))
+    commitBlocks(compacted)
     setSelectedBlockId('')
     MetisMessage.success('已删除插入内容，可撤销恢复')
   }

@@ -7,6 +7,8 @@ import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/r
 interface AnswerBlockViewProps {
   block: AnswerBlock
   layout: { x: number; y: number; width: number }
+  seamlessTop?: boolean
+  seamlessLeft?: boolean
   selected: boolean
   multiSelected?: boolean
   locked?: boolean
@@ -160,7 +162,7 @@ function ScoreBox({ block }: { block: AnswerBlock }) {
   return <div className="score-box"><b>评分栏</b>{Array.from({ length: cells }, (_, index) => <span key={index} />)}</div>
 }
 
-export function AnswerBlockView({ block, layout, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onDeleteBlock, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true, subjectiveAnswerStyle = 'lines', subjectiveLineHeight = 16 }: AnswerBlockViewProps) {
+export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLeft = false, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onDeleteBlock, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true, subjectiveAnswerStyle = 'lines', subjectiveLineHeight = 16 }: AnswerBlockViewProps) {
   const [resizeHeight, setResizeHeight] = useState(block.height)
   const [draftLayout, setDraftLayout] = useState(layout)
   const style = {
@@ -244,7 +246,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       const height = block.height
       const desiredX = Math.max(0, Math.min(target.offsetWidth - width, (clientX - targetRect.left) / targetScale - pointerOffsetX))
       const desiredY = Math.max(0, Math.min(target.offsetHeight - height, (clientY - targetRect.top) / targetScale - pointerOffsetY))
-      const gap = 4
+      const gap = 0
       const occupied = [...target.querySelectorAll<HTMLElement>('.answer-block')]
         .filter((element) => element.dataset.blockId !== block.id)
         .map((element) => ({ left: element.offsetLeft, top: element.offsetTop, right: element.offsetLeft + element.offsetWidth, bottom: element.offsetTop + element.offsetHeight }))
@@ -327,10 +329,10 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       const overlaps = [...container.querySelectorAll<HTMLElement>('.answer-block')]
         .filter((element) => element.dataset.blockId !== block.id)
         .some((element) => !(
-          proposedLeft + proposedWidth + 4 <= element.offsetLeft
-          || proposedLeft >= element.offsetLeft + element.offsetWidth + 4
-          || draftLayout.y + nextHeight + 4 <= element.offsetTop
-          || draftLayout.y >= element.offsetTop + element.offsetHeight + 4
+          proposedLeft + proposedWidth <= element.offsetLeft
+          || proposedLeft >= element.offsetLeft + element.offsetWidth
+          || draftLayout.y + nextHeight <= element.offsetTop
+          || draftLayout.y >= element.offsetTop + element.offsetHeight
         ))
       if (overlaps) {
         setResizeHeight(block.height)
@@ -396,7 +398,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
 
   return (
     <div
-      className={`answer-block kind-${block.kind} ${block.contentElements?.includes('table') ? 'has-content-table' : ''} ${block.borderStyle === 'borderless' ? 'borderless' : ''} ${block.userInserted ? 'user-inserted' : ''} ${selected ? 'selected' : ''} ${multiSelected ? 'multi-selected' : ''}`}
+      className={`answer-block kind-${block.kind} ${seamlessTop ? 'seamless-top' : ''} ${seamlessLeft ? 'seamless-left' : ''} ${block.contentElements?.includes('table') ? 'has-content-table' : ''} ${block.borderStyle === 'borderless' ? 'borderless' : ''} ${block.userInserted ? 'user-inserted' : ''} ${selected ? 'selected' : ''} ${multiSelected ? 'multi-selected' : ''}`}
       data-block-id={block.id}
       data-block-kind={block.kind}
       data-block-range={block.range ?? ''}

@@ -167,11 +167,11 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           <div className="config-meta-row config-score-meta-row">
             <span>题量与分值</span>
             <div className="config-check-list config-score-primary">
-              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showUnitScore)} onChange={(event) => props.onMetaVisibilityChange('showUnitScore', event.target.checked)}>单题分值</MetisCheckbox>
-            </div>
-            <div className="config-check-list config-score-secondary">
               <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showQuestionCount)} onChange={(event) => props.onMetaVisibilityChange('showQuestionCount', event.target.checked)}>模块总题量</MetisCheckbox>
               <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showScore)} onChange={(event) => props.onMetaVisibilityChange('showScore', event.target.checked)}>模块总分</MetisCheckbox>
+            </div>
+            <div className="config-check-list config-score-secondary">
+              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showUnitScore)} onChange={(event) => props.onMetaVisibilityChange('showUnitScore', event.target.checked)}>单题分值</MetisCheckbox>
             </div>
           </div>
         </section>
