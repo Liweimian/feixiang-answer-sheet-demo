@@ -242,20 +242,23 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                     <div className="config-block-row">
                       <button type="button" onClick={() => props.onSelect(block.id)}>
                         <b>{block.title}</b>
-                        <small>{blockKindLabels[block.kind]}{questionCount > 0 ? ` · ${questionCount} 题` : ''}</small>
+                        <small>{isQuestion ? `（共 ${questionCount} 题，共 ${block.score ?? 0} 分）` : blockKindLabels[block.kind]}</small>
                       </button>
-                      {isQuestion && <label className="config-block-batch-score"><span>每题</span><MetisInputNumber value={uniformValue(Object.values(resolvedScores(block)))} min={0} max={100} precision={2} controls={false} placeholder="分值" aria-label={`${block.title}每题分值`} onChange={(value) => setAllScores(block, Number(value ?? 0))} /></label>}
+                      {isQuestion && <label className="config-block-batch-score"><span>每题分值</span><MetisInputNumber value={uniformValue(Object.values(resolvedScores(block)))} min={0} max={100} precision={2} controls={false} placeholder="分值" addonAfter="分" aria-label={`${block.title}每题分值`} onChange={(value) => setAllScores(block, Number(value ?? 0))} /></label>}
                     </div>
                     {isQuestion && <div className="config-question-tree">
                       {numbers.map((number, questionIndex) => {
                         const scores = resolvedScores(block)
                         const slotCount = block.answerSlotCounts?.[questionIndex] ?? 0
                         const slotNumbers = block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: slotCount }, (_, index) => index + 1)
-                        return <div key={number} className="config-question-node">
-                          {slotCount > 0 && <div className="config-question-head"><button type="button" onClick={() => props.onSelect(block.id)}><b>题 {number}</b><small>{slotCount} 小题</small></button><label><span>每小题</span><MetisInputNumber value={uniformValue(slotNumbers.map((slot) => scores[`${number}.${slot}`] ?? 0))} min={0} max={100} precision={2} controls={false} placeholder="分值" aria-label={`第${number}题每小题分值`} onChange={(value) => updateScores(block, Object.fromEntries(slotNumbers.map((slot) => [`${number}.${slot}`, Number(value ?? 0)])))} /></label></div>}
+                        const questionScore = slotCount > 0
+                          ? slotNumbers.reduce((total, slot) => total + (scores[`${number}.${slot}`] ?? 0), 0)
+                          : scores[String(number)] ?? 0
+                        return <div key={number} className={`config-question-node ${slotCount > 0 ? 'nested' : 'direct'}`}>
+                          {slotCount > 0 && <div className="config-question-head"><button type="button" onClick={() => props.onSelect(block.id)}><b>题 {number}</b><small>（共 {slotCount} 小题，共 {questionScore} 分）</small></button><label><span>每小题</span><MetisInputNumber value={uniformValue(slotNumbers.map((slot) => scores[`${number}.${slot}`] ?? 0))} min={0} max={100} precision={2} controls={false} placeholder="分值" addonAfter="分" aria-label={`第${number}题每小题分值`} onChange={(value) => updateScores(block, Object.fromEntries(slotNumbers.map((slot) => [`${number}.${slot}`, Number(value ?? 0)])))} /></label></div>}
                           {slotCount > 0
                             ? <div className="config-subquestion-list">{slotNumbers.map((slotNumber) => <label key={slotNumber}><span>题({slotNumber})</span><MetisInputNumber value={scores[`${number}.${slotNumber}`] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={`第${number}题第${slotNumber}小题分值`} onChange={(value) => updateScores(block, { [`${number}.${slotNumber}`]: Number(value ?? 0) })} /></label>)}</div>
-                            : <label className="config-direct-score"><span>题 {number}</span><MetisInputNumber value={scores[String(number)] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={`第${number}题分值`} onChange={(value) => updateScores(block, { [String(number)]: Number(value ?? 0) })} /></label>}
+                            : <label className="config-direct-score"><span>{number}.</span><MetisInputNumber value={scores[String(number)] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={`第${number}题分值`} onChange={(value) => updateScores(block, { [String(number)]: Number(value ?? 0) })} /></label>}
                         </div>
                       })}
                     </div>}

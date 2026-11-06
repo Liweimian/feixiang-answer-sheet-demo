@@ -217,23 +217,26 @@
 .config-outline-group { overflow: hidden; border: 1px solid transparent; border-radius: var(--fx_radius_3); transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease; }
 .config-outline-group:hover { border-color: var(--fx_border_strong); }
 .config-outline-group.selected { border-color: var(--fx_brand); background: var(--fx_brand_subtle); box-shadow: inset 3px 0 0 var(--fx_brand); }
-.config-block-row { display: grid; grid-template-columns: minmax(0, 1fr) 112px; align-items: center; gap: var(--fx_sp_2); min-height: 48px; padding: var(--fx_sp_1) var(--fx_sp_2); color: var(--fx_text_3); }
-.config-block-row > button { min-width: 0; display: grid; gap: 2px; padding: 0; border: 0; background: transparent; color: var(--fx_text_1); cursor: pointer; text-align: left; }
+.config-block-row { display: grid; grid-template-columns: minmax(0, 1fr) 82px; align-items: center; gap: var(--fx_sp_2); min-height: 42px; padding: var(--fx_sp_1) var(--fx_sp_2); color: var(--fx_text_3); }
+.config-block-row > button { min-width: 0; display: flex; align-items: baseline; gap: 4px; padding: 0; border: 0; background: transparent; color: var(--fx_text_1); cursor: pointer; text-align: left; }
 .config-block-row b, .config-block-row small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.config-block-row b { font-size: 10px; }
+.config-block-row b { flex: 0 1 auto; font-size: 10px; }
 .config-block-row small { color: var(--fx_text_3); font-size: 8px; }
-.config-block-batch-score { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 3px; color: var(--fx_text_3); font-size: 8px; }
+.config-block-batch-score { position: relative; display: block; color: var(--fx_text_3); font-size: 8px; }
+.config-block-batch-score > span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .config-block-batch-score > div { width: 100%; }
-.config-question-tree { display: grid; padding: 0 var(--fx_sp_2) var(--fx_sp_2) var(--fx_sp_5); }
-.config-question-node { display: grid; gap: 2px; padding: 5px 0; border-top: 1px solid var(--fx_border); }
+.config-question-tree { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 14px; padding: 6px var(--fx_sp_2) 10px var(--fx_sp_4); border-top: 1px solid var(--fx_border); }
+.config-question-node { min-width: 0; display: grid; gap: 5px; }
+.config-question-node.nested { grid-column: 1 / -1; padding: 5px 0 8px; border-bottom: 1px solid var(--fx_border); }
 .config-question-head { display: flex; align-items: center; justify-content: space-between; gap: var(--fx_sp_2); }
 .config-question-head > button { min-width: 0; display: flex; align-items: center; gap: var(--fx_sp_2); padding: 0; border: 0; background: transparent; color: var(--fx_text_2); cursor: pointer; text-align: left; }
 .config-question-head > button b { font-size: 9px; }
 .config-question-head > button small { color: var(--fx_text_3); font-size: 8px; }
-.config-question-head > label { width: 112px; display: grid; grid-template-columns: 42px minmax(0, 1fr); align-items: center; gap: 3px; color: var(--fx_text_3); font-size: 8px; }
+.config-question-head > label { width: 124px; display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 3px; color: var(--fx_text_3); font-size: 8px; }
 .config-question-head > label > div { width: 100%; }
-.config-subquestion-list { display: grid; gap: 4px; padding: 4px 0 0 var(--fx_sp_3); }
-.config-subquestion-list label, .config-direct-score { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: var(--fx_sp_2); color: var(--fx_text_2); font-size: 8px; }
+.config-subquestion-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 14px; padding: 3px 0 0 var(--fx_sp_3); }
+.config-subquestion-list label, .config-direct-score { min-width: 0; display: grid; grid-template-columns: 34px minmax(0, 82px); align-items: center; gap: 5px; color: var(--fx_text_2); font-size: 9px; font-weight: 600; }
+.config-direct-score { grid-template-columns: 22px minmax(0, 82px); }
 .config-subquestion-list label > div, .config-direct-score > div { width: 100%; }
 .config-block-score-trigger { height: 30px; display: inline-flex; align-items: center; justify-content: flex-end; gap: 3px; padding: 0 9px; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_2); background: var(--fx_surface); color: var(--fx_text_1); cursor: pointer; }
 .config-block-score-trigger:hover { border-color: var(--fx_brand); color: var(--fx_brand); }
