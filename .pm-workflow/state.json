@@ -96,7 +96,8 @@
     "d822df3 Stage 4 v2.2.2: fix daily quiz QR position",
     "a3a1d23 Stage 4 v2.3.0: add compact score settings",
     "2acb7ea Stage 4 v2.3.1: preserve score hierarchy",
-    "30115d3 Stage 4 v2.3.2: restore source score layout"
+    "30115d3 Stage 4 v2.3.2: restore source score layout",
+    "52267be Stage 4 v2.3.3: flatten question structure"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-07T00:10:00+08:00"
