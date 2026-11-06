@@ -77,7 +77,8 @@
     "f8a2ac3 Stage 4 v1.6.6: reuse per-question answer area controls",
     "ed246a0 Stage 4 v1.6.7: separate module and content actions",
     "fbece72 Stage 4 v1.6.8: use fixed candidate headers",
-    "8639272 Stage 4 v1.6.9: reposition header template controls"
+    "8639272 Stage 4 v1.6.9: reposition header template controls",
+    "e78b4cc Stage 4 v1.7.0: add recoverable header visibility"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-06T15:10:00+08:00"
