@@ -192,15 +192,6 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               onChange={(event) => props.onSettingsChange({ showNotice: event.target.value === 'show' })}
             />
           </div>
-          {settings.showNotice && <div className="candidate-info-row">
-            <div className="config-flat-title">样式</div>
-            <MetisSelect
-              className="notice-style-select"
-              value={settings.noticeStyle}
-              options={[{ value: 'daily', label: '日常样式' }, { value: 'exam', label: '大型考试样式' }]}
-              onChange={(value) => props.onSettingsChange({ noticeStyle: value as AnswerSheetSettings['noticeStyle'] })}
-            />
-          </div>}
         </section>
 
         <section className="config-flat-section">

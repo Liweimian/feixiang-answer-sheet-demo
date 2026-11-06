@@ -375,8 +375,8 @@ export function AnswerSheetStudioPage() {
       ? {
           ...settings,
           paperSize: 'A4',
-          frontColumns: 2,
-          backColumns: 2,
+          frontColumns: 1,
+          backColumns: 1,
           identityFields: ['学号', '姓名', '班级'],
           candidateNumberType: '学号',
           candidateNumberLayouts: [],
