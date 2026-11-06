@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { MetisButton, MetisInput } from '@yuanfudao/metis-web-component'
-import { Combine, LockKeyhole, Pencil, QrCode, Scissors, X } from 'lucide-react'
+import { MetisButton, MetisDropdown, MetisInput } from '@yuanfudao/metis-web-component'
+import { Combine, Eye, EyeOff, LockKeyhole, Pencil, QrCode, Scissors, X } from 'lucide-react'
 import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, HeaderLayout, RulePack } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { questionNumbers } from '../features/answer-sheet/range'
@@ -132,6 +132,18 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
   const scanEnabled = settings.reviewMode !== 'manual'
   const manualScoreEnabled = settings.reviewMode !== 'online'
   const dailyQuizIdentity = settings.identityFields.includes('学号') && !settings.identityFields.includes('准考证号')
+  const hiddenItemIds = header.hiddenItemIds ?? []
+  const isHeaderItemHidden = (id: string) => hiddenItemIds.includes(id)
+  const hideHeaderItem = (id: string) => onHeaderChange?.({ ...header, customized: true, hiddenItemIds: [...hiddenItemIds, id] })
+  const restoreHeaderItem = (id: string) => onHeaderChange?.({ ...header, customized: true, hiddenItemIds: hiddenItemIds.filter((item) => item !== id) })
+  const hiddenHeaderItems = header.preset === 'exam'
+    ? header.modules.filter((module) => hiddenItemIds.includes(module.id)).map((module) => ({ id: module.id, label: module.label }))
+    : [
+        { id: 'daily-student-id', label: '学号' },
+        { id: 'daily-qr', label: '二维码' },
+        { id: 'daily-notice', label: '注意事项' },
+        { id: 'daily-fill-sample', label: '填涂样例' },
+      ].filter((item) => hiddenItemIds.includes(item.id))
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(paper.title)
   const cancellingTitle = useRef(false)
@@ -157,6 +169,15 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
   return (
     <article className={`answer-paper paper-size-${paperSize} ${standard ? 'standard-paper' : 'smart-paper'} review-${settings.reviewMode}`} data-paper-page={page}>
       {scanEnabled && <><i className="corner-mark top-left" /><i className="corner-mark top-right" /><i className="corner-mark bottom-left" /><i className="corner-mark bottom-right" /></>}
+      {page === 1 && onHeaderChange && hiddenHeaderItems.length > 0 && <MetisDropdown
+        trigger={['click']}
+        menu={{
+          items: hiddenHeaderItems.map((item) => ({ key: item.id, label: `恢复${item.label}` })),
+          onClick: ({ key }) => restoreHeaderItem(String(key)),
+        }}
+      >
+        <button type="button" className="hidden-header-items-trigger"><Eye size={11} /> 已隐藏内容 {hiddenHeaderItems.length}</button>
+      </MetisDropdown>}
       {header.preset === 'exam' ? (
         <AnswerSheetHeader
           header={header}
@@ -206,13 +227,13 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
             </button>
           ) : <h1>{paper.title}</h1>}
         </div>
-        {dailyQuizIdentity && <div className="daily-qr" aria-label="答题卡二维码"><QrCode size={46} strokeWidth={2.4} /></div>}
+        {dailyQuizIdentity && !isHeaderItemHidden('daily-qr') && <div className="daily-qr daily-hideable-item" aria-label="答题卡二维码"><QrCode size={46} strokeWidth={2.4} />{onHeaderChange && <button type="button" className="daily-hide-action" aria-label="隐藏二维码" onClick={() => hideHeaderItem('daily-qr')}><EyeOff size={9} />隐藏</button>}</div>}
         <div className="identity-and-code">
           <div className={`identity-grid ${dailyQuizIdentity ? 'daily-identity-grid' : ''}`}>
-            {settings.identityFields.map((field) => (
+            {settings.identityFields.filter((field) => field !== '学号' || !isHeaderItemHidden('daily-student-id')).map((field) => (
               field === '班级' && dailyQuizIdentity
                 ? <span key={field} className="grade-class-field"><i /><em>年级</em><i /><em>班</em></span>
-                : <span key={field}><b>{field}</b><i /></span>
+                : <span key={field} className={field === '学号' ? 'daily-hideable-item' : ''}><b>{field}</b><i />{field === '学号' && onHeaderChange && <button type="button" className="daily-hide-action" aria-label="隐藏学号" onClick={() => hideHeaderItem('daily-student-id')}><EyeOff size={9} />隐藏</button>}</span>
             ))}
           </div>
           <CandidateNumberArea settings={settings} />
@@ -220,21 +241,27 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
         {(standard || scanEnabled) && <span className="locked-zone-label"><LockKeyhole size={10} /> {standard ? rulePack.shortName : '网阅定位'} · 身份与考号区</span>}
       </header>}
 
-      {header.preset === 'quiz' && page === 1 && settings.showNotice && (
-        <div className={`candidate-notice notice-style-${settings.noticeStyle}`}>
-          <strong className="notice-vertical-title">注意事项</strong>
-          <ol>
-            <li>答题前请将{settings.identityFields.join('、')}填写清楚。</li>
-            <li>客观题答题，必须使用 2B 铅笔填涂，修改时用橡皮擦干净。</li>
-            <li>主观题必须使用黑色字迹签字笔书写。</li>
-            <li>必须在题号对应的答题区域内作答，超出答题区域书写无效。</li>
-            <li>保持答卷清洁完整，请勿折叠或污损答题卡。</li>
-          </ol>
-          <strong className="notice-vertical-title">填涂样例</strong>
-          <div className="fill-sample">
-            <span>正确填涂： <i className="fill-correct" /></span>
-            <span>错误填涂： <i>●</i> <i>×</i> <i>—</i> <i>✓</i></span>
-          </div>
+      {header.preset === 'quiz' && page === 1 && settings.showNotice && (!isHeaderItemHidden('daily-notice') || !isHeaderItemHidden('daily-fill-sample')) && (
+        <div className={`candidate-notice notice-style-${settings.noticeStyle} ${!isHeaderItemHidden('daily-notice') && !isHeaderItemHidden('daily-fill-sample') ? 'has-both' : 'has-single'}`}>
+          {!isHeaderItemHidden('daily-notice') && <div className="candidate-notice-part daily-hideable-item">
+            <strong className="notice-vertical-title">注意事项</strong>
+            <ol>
+              <li>答题前请将{settings.identityFields.filter((field) => field !== '学号' || !isHeaderItemHidden('daily-student-id')).join('、')}填写清楚。</li>
+              <li>客观题答题，必须使用 2B 铅笔填涂，修改时用橡皮擦干净。</li>
+              <li>主观题必须使用黑色字迹签字笔书写。</li>
+              <li>必须在题号对应的答题区域内作答，超出答题区域书写无效。</li>
+              <li>保持答卷清洁完整，请勿折叠或污损答题卡。</li>
+            </ol>
+            {onHeaderChange && <button type="button" className="daily-hide-action" aria-label="隐藏注意事项" onClick={() => hideHeaderItem('daily-notice')}><EyeOff size={9} />隐藏</button>}
+          </div>}
+          {!isHeaderItemHidden('daily-fill-sample') && <div className="candidate-notice-part daily-hideable-item">
+            <strong className="notice-vertical-title">填涂样例</strong>
+            <div className="fill-sample">
+              <span>正确填涂： <i className="fill-correct" /></span>
+              <span>错误填涂： <i>●</i> <i>×</i> <i>—</i> <i>✓</i></span>
+            </div>
+            {onHeaderChange && <button type="button" className="daily-hide-action" aria-label="隐藏填涂样例" onClick={() => hideHeaderItem('daily-fill-sample')}><EyeOff size={9} />隐藏</button>}
+          </div>}
         </div>
       )}
       {manualScoreEnabled && <div className="manual-score-strip"><b>手批评分栏</b><span>得分：________</span><span>阅卷人：________</span></div>}

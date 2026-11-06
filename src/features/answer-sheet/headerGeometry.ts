@@ -27,7 +27,8 @@ export function headerModulesOverlap(first: HeaderModule, second: HeaderModule):
     && first.y + first.height + GAP > second.y
 }
 
-export function isHeaderModuleVisible(module: HeaderModule, settings: AnswerSheetSettings): boolean {
+export function isHeaderModuleVisible(module: HeaderModule, settings: AnswerSheetSettings, hiddenItemIds: string[] = []): boolean {
+  if (hiddenItemIds.includes(module.id)) return false
   if (module.kind === 'notice') return settings.showNotice
   if (module.kind === 'barcode') return settings.candidateNumberLayouts.includes('barcode')
   if (module.kind === 'candidate-number') {
@@ -37,12 +38,12 @@ export function isHeaderModuleVisible(module: HeaderModule, settings: AnswerShee
 }
 
 export function visibleHeaderModules(header: HeaderLayout, settings: AnswerSheetSettings): HeaderModule[] {
-  return header.modules.filter((module) => isHeaderModuleVisible(module, settings))
+  return header.modules.filter((module) => isHeaderModuleVisible(module, settings, header.hiddenItemIds))
 }
 
 export function validateHeaderGeometry(header: HeaderLayout, settings?: AnswerSheetSettings): HeaderGeometryIssue[] {
   const issues: HeaderGeometryIssue[] = []
-  const modules = settings ? visibleHeaderModules(header, settings) : header.modules
+  const modules = settings ? visibleHeaderModules(header, settings) : header.modules.filter((module) => !header.hiddenItemIds?.includes(module.id))
   modules.forEach((module, index) => {
     if (module.width < module.minWidth || module.height < module.minHeight) {
       issues.push({ type: 'minimum-size', moduleId: module.id })
@@ -69,7 +70,7 @@ export function updateHeaderModule(
   if (!current) return header
   const nextModule = clampHeaderModule({ ...current, ...patch })
   if (nextModule.x === current.x && nextModule.y === current.y && nextModule.width === current.width && nextModule.height === current.height) return header
-  const others = header.modules.filter((item) => item.id !== moduleId && (!settings || isHeaderModuleVisible(item, settings)))
+  const others = header.modules.filter((item) => item.id !== moduleId && (!settings || isHeaderModuleVisible(item, settings, header.hiddenItemIds)))
   if (others.some((item) => headerModulesOverlap(nextModule, item))) return header
   return {
     ...header,

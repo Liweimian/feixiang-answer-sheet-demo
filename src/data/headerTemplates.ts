@@ -153,6 +153,7 @@ export function instantiateHeaderTemplate(id: HeaderTemplateId): HeaderLayout {
     ...template.layout,
     continuationFields: [...template.layout.continuationFields],
     modules: template.layout.modules.map((item) => ({ ...item, fields: item.fields ? [...item.fields] : undefined })),
+    hiddenItemIds: [],
   }
 }
 
@@ -161,5 +162,6 @@ export function cloneHeaderLayout(header: HeaderLayout): HeaderLayout {
     ...header,
     continuationFields: [...header.continuationFields],
     modules: header.modules.map((item) => ({ ...item, fields: item.fields ? [...item.fields] : undefined })),
+    hiddenItemIds: [...(header.hiddenItemIds ?? [])],
   }
 }

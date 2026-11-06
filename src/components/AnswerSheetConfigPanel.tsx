@@ -127,18 +127,6 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           <p className="header-template-source">{document.header.sourceNote}</p>
         </section>}
 
-        <section className="config-flat-section candidate-info-section">
-          <div className="candidate-info-row">
-            <div className="config-flat-title">注意事项</div>
-            <MetisRadio.Group
-              className="config-inline-options"
-              value={settings.showNotice ? 'show' : 'hide'}
-              options={[{ value: 'show', label: '显示' }, { value: 'hide', label: '隐藏' }]}
-              onChange={(event) => props.onSettingsChange({ showNotice: event.target.value === 'show' })}
-            />
-          </div>
-        </section>
-
         <section className="config-flat-section">
           <div className="config-meta-row">
             <span>题量与分值</span>

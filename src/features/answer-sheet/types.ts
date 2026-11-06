@@ -165,6 +165,7 @@ export interface HeaderLayout {
   continuationHeight: number
   continuationFields: string[]
   modules: HeaderModule[]
+  hiddenItemIds?: string[]
 }
 
 export interface RulePack {

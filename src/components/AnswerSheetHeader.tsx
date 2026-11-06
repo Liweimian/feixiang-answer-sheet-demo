@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { MetisInput } from '@yuanfudao/metis-web-component'
-import { GripVertical, LockKeyhole, Pencil } from 'lucide-react'
+import { EyeOff, GripVertical, LockKeyhole, Pencil } from 'lucide-react'
 import type { AnswerSheetSettings, ExamPaper, HeaderLayout, HeaderModule } from '../features/answer-sheet/types'
 import { clampHeaderModule, headerModulesOverlap, isHeaderModuleVisible, updateHeaderModule } from '../features/answer-sheet/headerGeometry'
 
@@ -116,6 +116,7 @@ export function AnswerSheetHeader({ header, paper, settings, page, pageCount, ed
   const [selectedId, setSelectedId] = useState('')
   const [preview, setPreview] = useState<HeaderModule>()
   const [invalid, setInvalid] = useState(false)
+  const hideableKinds = new Set(['candidate-number', 'barcode', 'notice', 'fill-sample', 'absence-mark'])
 
   useEffect(() => {
     if (selectedId && !header.modules.some((item) => item.id === selectedId)) setSelectedId('')
@@ -150,7 +151,7 @@ export function AnswerSheetHeader({ header, paper, settings, page, pageCount, ed
       latest = clampHeaderModule(action === 'move'
         ? { ...start, x: start.x + dx, y: start.y + dy }
         : { ...start, width: start.width + dx, height: start.height + dy })
-      const collision = header.modules.some((item) => item.id !== module.id && isHeaderModuleVisible(item, settings) && headerModulesOverlap(latest, item))
+      const collision = header.modules.some((item) => item.id !== module.id && isHeaderModuleVisible(item, settings, header.hiddenItemIds) && headerModulesOverlap(latest, item))
       setInvalid(collision)
       setPreview(latest)
     }
@@ -174,7 +175,7 @@ export function AnswerSheetHeader({ header, paper, settings, page, pageCount, ed
         style={{ height: header.height }}
         onPointerDown={() => setSelectedId('')}
       >
-        {header.modules.filter((item) => isHeaderModuleVisible(item, settings)).map((item) => {
+        {header.modules.filter((item) => isHeaderModuleVisible(item, settings, header.hiddenItemIds)).map((item) => {
           const module = preview?.id === item.id ? preview : item
           const selected = editable && selectedId === item.id
           const style = {
@@ -196,6 +197,18 @@ export function AnswerSheetHeader({ header, paper, settings, page, pageCount, ed
               aria-label={`${item.label}${item.protected ? '，扫描关键区' : ''}`}
             >
               <HeaderModuleContent module={item} paper={paper} settings={settings} editable={editable && selected} onTitleCommit={onTitleCommit} />
+              {editable && hideableKinds.has(item.kind) && <button
+                type="button"
+                className="header-hide-action"
+                aria-label={`隐藏${item.label}`}
+                title={`隐藏${item.label}`}
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onChange?.({ ...header, customized: true, hiddenItemIds: [...(header.hiddenItemIds ?? []), item.id] })
+                  setSelectedId('')
+                }}
+              ><EyeOff size={10} /> 隐藏</button>}
               {selected && <>
                 <span className="header-module-label"><GripVertical size={10} />{item.label}{item.protected && <LockKeyhole size={9} />}</span>
                 <button type="button" className="header-resize-handle" aria-label={`调整${item.label}大小`} onPointerDown={(event) => beginTransform(event, item, 'resize')} />

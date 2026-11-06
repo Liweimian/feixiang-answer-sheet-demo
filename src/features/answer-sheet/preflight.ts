@@ -100,9 +100,6 @@ export function buildPreflightChecks(
   const headerIssues = validateHeaderGeometry(header, settings)
   const headerKinds = new Set(renderedHeaderModules.map((module) => module.kind))
   const requiredHeaderKinds: HeaderModuleKind[] = ['title', 'identity']
-  if (settings.showNotice) requiredHeaderKinds.push('notice')
-  if (settings.candidateNumberLayouts.includes('barcode')) requiredHeaderKinds.push('barcode')
-  if (settings.candidateNumberLayouts.some((layout) => layout === 'fill' || layout === 'handwrite')) requiredHeaderKinds.push('candidate-number')
   const requiredTemplateFields = header.templateId.startsWith('shenzhen-exam-reference')
     ? ['考生号', '姓名', '考点', '考场号', '座位号']
     : []
