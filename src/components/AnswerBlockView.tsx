@@ -152,6 +152,8 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
   const questionCount = questionNumbers(block.range).length
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState(block.title)
+  const [editingForbiddenText, setEditingForbiddenText] = useState(false)
+  const [forbiddenTextDraft, setForbiddenTextDraft] = useState(block.contentText || '请勿在此区域作答')
   const [settingsPanel, setSettingsPanel] = useState<'answer' | 'subquestion' | 'insert' | null>(null)
   const [slotNumberDrafts, setSlotNumberDrafts] = useState<string[]>([])
   const cancelling = useRef(false)
@@ -159,6 +161,10 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
   useEffect(() => {
     if (!editingTitle) setTitleDraft(block.title)
   }, [block.title, editingTitle])
+
+  useEffect(() => {
+    if (!editingForbiddenText) setForbiddenTextDraft(block.contentText || '请勿在此区域作答')
+  }, [block.contentText, editingForbiddenText])
 
   useEffect(() => setResizeHeight(block.height), [block.height])
   useEffect(() => setDraftLayout(layout), [layout.x, layout.y, layout.width])
@@ -330,6 +336,20 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
     setEditingTitle(false)
     setTitleDraft(nextTitle)
     if (nextTitle !== block.title) onTitleCommit?.(nextTitle)
+  }
+
+  const commitForbiddenText = () => {
+    if (!editingForbiddenText) return
+    if (cancelling.current) {
+      cancelling.current = false
+      setForbiddenTextDraft(block.contentText || '请勿在此区域作答')
+      setEditingForbiddenText(false)
+      return
+    }
+    const nextText = forbiddenTextDraft.trim() || '请勿在此区域作答'
+    setEditingForbiddenText(false)
+    setForbiddenTextDraft(nextText)
+    if (nextText !== block.contentText) onUpdateBlock?.({ contentText: nextText })
   }
 
   const insertContent = (key: string) => {
@@ -532,7 +552,42 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
           ) : <RuledLines dashed={block.lineStyle === 'dashed'} count={block.lineCount ?? 10} />}
         </div>
       )}
-      {block.kind === 'forbidden' && <div className="forbidden-area">{block.contentText || '请勿在此区域作答'}</div>}
+      {block.kind === 'forbidden' && <div className="forbidden-area">
+        {editingForbiddenText ? (
+          <MetisInput
+            className="forbidden-text-input"
+            autoFocus
+            maxLength={40}
+            value={forbiddenTextDraft}
+            aria-label="编辑禁答区文字"
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => setForbiddenTextDraft(event.target.value)}
+            onBlur={commitForbiddenText}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') event.currentTarget.blur()
+              if (event.key === 'Escape') {
+                cancelling.current = true
+                setForbiddenTextDraft(block.contentText || '请勿在此区域作答')
+                event.currentTarget.blur()
+              }
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            className="forbidden-text-edit"
+            aria-label="修改禁答区文字"
+            onClick={(event) => {
+              event.stopPropagation()
+              cancelling.current = false
+              setEditingForbiddenText(true)
+            }}
+          >
+            <span>{block.contentText || '请勿在此区域作答'}</span>
+            {selected && !locked && <Pencil size={10} />}
+          </button>
+        )}
+      </div>}
       {block.kind === 'drawing' && <div className="drawing-area"><span>作图区</span><i /><i /></div>}
       {block.kind === 'table' && (
         <div className="table-area">{Array.from({ length: 8 }, (_, index) => <span key={index} />)}</div>
