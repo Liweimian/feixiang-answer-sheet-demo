@@ -406,6 +406,7 @@
 .answer-block { position: absolute; height: var(--block-height); display: block; box-sizing: border-box; padding: 0; overflow: visible; border: 1px solid var(--fx_paper_ink); border-radius: 0; background: var(--fx_paper); color: var(--fx_paper_ink); cursor: default; text-align: left; transition: outline 120ms ease, box-shadow 120ms ease; }
 .answer-block.seamless-top { border-top-width: 0; }
 .answer-block.seamless-left { border-left-width: 0; }
+.answer-block.kind-forbidden { height: calc(var(--block-height) - 8px); transform: translateY(4px); }
 .answer-block.borderless { border-color: transparent; }
 .answer-block.borderless > .answer-block-heading { border-color: transparent; }
 .answer-block:hover, .answer-block.selected { outline: 2px solid var(--fx_brand); outline-offset: 1px; box-shadow: inset 0 0 0 1px var(--fx_brand); }

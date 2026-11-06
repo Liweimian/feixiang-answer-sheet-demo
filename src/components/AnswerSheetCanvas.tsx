@@ -273,12 +273,14 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
           const layout = blockLayouts.get(block.id) ?? { x: 0, y: 0, width: 100 }
           const seamlessTop = pageBlocks.some((other) => {
             if (other.id === block.id) return false
+            if (block.kind === 'forbidden' || other.kind === 'forbidden') return false
             const otherLayout = blockLayouts.get(other.id)
             if (!otherLayout || Math.abs(otherLayout.y + other.height - layout.y) > 0.5) return false
             return Math.min(otherLayout.x + otherLayout.width, layout.x + layout.width) - Math.max(otherLayout.x, layout.x) > 0.5
           })
           const seamlessLeft = pageBlocks.some((other) => {
             if (other.id === block.id) return false
+            if (block.kind === 'forbidden' || other.kind === 'forbidden') return false
             const otherLayout = blockLayouts.get(other.id)
             if (!otherLayout || Math.abs(otherLayout.x + otherLayout.width - layout.x) > 0.05) return false
             return Math.min(otherLayout.y + other.height, layout.y + block.height) - Math.max(otherLayout.y, layout.y) > 0.5
