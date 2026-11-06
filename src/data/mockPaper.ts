@@ -114,7 +114,7 @@ export const initialAnswerBlocks: AnswerBlock[] = [
     kind: 'short-answer',
     height: 300,
     lineCount: 12,
-    answerSlotCounts: [3, 2, 1],
+    answerSlotCounts: [3, 2, 0],
     answerVariant: 'fill',
     showScore: true,
     showQuestionCount: false,

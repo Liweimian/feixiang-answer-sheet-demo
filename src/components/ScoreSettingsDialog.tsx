@@ -11,20 +11,22 @@ interface ScoreSettingsDialogProps {
 }
 
 interface ScoreItem { key: string; label: string; ariaLabel: string }
-interface ScoreGroup { number: number; items: ScoreItem[] }
+interface ScoreGroup { number: number; items: ScoreItem[]; nested: boolean }
 
 function buildGroups(block?: AnswerBlock): ScoreGroup[] {
   if (!block) return []
   return questionNumbers(block.range).map((number, questionIndex) => {
     const explicitSlots = block.answerSlotNumbers?.[questionIndex]
-    const slotCount = Math.max(1, block.answerSlotCounts?.[questionIndex] ?? 1)
+    const configuredSlotCount = block.answerSlotCounts?.[questionIndex]
+    const slotCount = Math.max(1, configuredSlotCount ?? 1)
     const slotNumbers = explicitSlots?.length ? explicitSlots : Array.from({ length: slotCount }, (_, index) => index + 1)
-    const nested = Boolean(block.answerSlotCounts || block.answerSlotNumbers)
+    const nested = Boolean(explicitSlots?.length || (configuredSlotCount != null && configuredSlotCount > 0))
     return {
       number,
+      nested,
       items: nested
         ? slotNumbers.map((slotNumber) => ({ key: `${number}.${slotNumber}`, label: `题(${slotNumber})`, ariaLabel: `第${number}题第${slotNumber}小题分值` }))
-        : [{ key: String(number), label: `${number}.`, ariaLabel: `第${number}题分值` }],
+        : [{ key: String(number), label: `题${number}`, ariaLabel: `第${number}题分值` }],
     }
   })
 }
@@ -45,7 +47,8 @@ export function ScoreSettingsDialog({ open, block, onClose, onSave }: ScoreSetti
   const [groupBatchScores, setGroupBatchScores] = useState<Record<string, number>>({})
   const groups = useMemo(() => buildGroups(block), [block])
   const items = useMemo(() => groups.flatMap((group) => group.items), [groups])
-  const nested = Boolean(block?.answerSlotCounts || block?.answerSlotNumbers)
+  const nested = groups.some((group) => group.nested)
+  const nestedItemCount = groups.reduce((sum, group) => sum + (group.nested ? group.items.length : 0), 0)
 
   useEffect(() => {
     if (!open || !block) return
@@ -77,15 +80,15 @@ export function ScoreSettingsDialog({ open, block, onClose, onSave }: ScoreSetti
   return <MetisDialog open={open} title="分值设置" width={680} footer={footer} onCancel={onClose}>
     <div className="score-settings-dialog">
       <header className="score-section-heading">
-        <div><strong>{block.title}</strong><span>（共 {groups.length} 题{nested ? ` / ${items.length} 小题` : ''}）　|　共 {Number(total.toFixed(2))} 分</span></div>
+        <div><strong>{block.title}</strong><span>（共 {groups.length} 题{nested ? ` / ${nestedItemCount} 小题` : ''}）　|　共 {Number(total.toFixed(2))} 分</span></div>
         <span className="score-collapse-mark">▴</span>
       </header>
       <label className="score-batch-row"><span>每题</span><MetisInputNumber value={batchScore} min={0} max={100} precision={2} controls={false} placeholder="输入分数" addonAfter="分" aria-label="批量分值" onChange={(value) => setAllScores(Number(value ?? 0))} /></label>
       {nested ? <div className="score-major-list">
         {groups.map((group) => <section key={group.number} className="score-major-group">
           <header>
-            <div><span className="score-group-arrow">▾</span><strong>题 {group.number}</strong><span>（共 {group.items.length} 小题）　|　共 {Number(group.items.reduce((sum, item) => sum + (scores[item.key] ?? 0), 0).toFixed(2))} 分</span></div>
-            <label><span>每小题</span><MetisInputNumber value={groupBatchScores[String(group.number)] ?? 0} min={0} max={100} precision={2} controls={false} placeholder="输入分数" aria-label={`第${group.number}题批量分值`} onChange={(value) => setGroupScores(group, Number(value ?? 0))} /></label>
+            <div><span className="score-group-arrow">▾</span><strong>题 {group.number}</strong><span>{group.nested ? `（共 ${group.items.length} 小题）　|　` : '|　'}共 {Number(group.items.reduce((sum, item) => sum + (scores[item.key] ?? 0), 0).toFixed(2))} 分</span></div>
+            {group.nested && <label><span>每小题</span><MetisInputNumber value={groupBatchScores[String(group.number)] ?? 0} min={0} max={100} precision={2} controls={false} placeholder="输入分数" aria-label={`第${group.number}题批量分值`} onChange={(value) => setGroupScores(group, Number(value ?? 0))} /></label>}
           </header>
           <div className="score-question-grid">{group.items.map(scoreInput)}</div>
         </section>)}

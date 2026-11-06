@@ -203,31 +203,35 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             {standaloneCard && <div className="question-type-actions">
               {([['single', '单选题'], ['multiple', '多选题'], ['judge', '判断题'], ['fill', '填空题'], ['solution', '解答题'], ['comprehensive', '综合题']] as const).map(([type, label]) => <MetisButton key={type} type="bordered" icon={<Plus size={13} />} onClick={() => props.onAddQuestionGroup(type)}>{label}</MetisButton>)}
             </div>}
-            <div className="config-page-tabs">
-              {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
-                <button key={page} type="button" className={props.activePage === page ? 'active' : ''} onClick={() => props.onPageChange(page)}>第 {page} 面</button>
-              ))}
-            </div>
             <div className="config-block-list">
-              {blocks.filter((block) => block.page === props.activePage).map((block) => {
+              {blocks.map((block) => {
                 const isQuestion = isQuestionBlockKind(block.kind)
-                const questionCount = isQuestion ? questionNumbers(block.range).length : 0
+                const numbers = isQuestion ? questionNumbers(block.range) : []
+                const questionCount = numbers.length
                 const selected = block.id === props.selectedBlockId
                 return (
-                  <div
-                    key={block.id}
-                    className={`config-block-row ${selected ? 'selected' : ''}`}
-                    aria-current={selected ? 'true' : undefined}
-                  >
-                    <button type="button" onClick={() => props.onSelect(block.id)}>
-                      <b>{block.title}</b>
-                      <small>{blockKindLabels[block.kind]}{questionCount > 0 ? ` · ${questionCount} 题` : ''}</small>
-                    </button>
-                    {isQuestion && <button type="button" className="config-block-score-trigger" aria-label={`设置${block.title}分值`} onClick={() => { props.onSelect(block.id); setScoreBlockId(block.id) }}><b>{block.score ?? 0}</b><span>分</span></button>}
+                  <div key={block.id} className={`config-outline-group ${selected ? 'selected' : ''}`} aria-current={selected ? 'true' : undefined}>
+                    <div className="config-block-row">
+                      <button type="button" onClick={() => props.onSelect(block.id)}>
+                        <b>{block.title}</b>
+                        <small>{blockKindLabels[block.kind]}{questionCount > 0 ? ` · ${questionCount} 题` : ''}</small>
+                      </button>
+                      {isQuestion && <button type="button" className="config-block-score-trigger" aria-label={`设置${block.title}分值`} onClick={() => { props.onSelect(block.id); setScoreBlockId(block.id) }}><b>{block.score ?? 0}</b><span>分</span></button>}
+                    </div>
+                    {isQuestion && <div className="config-question-tree">
+                      {numbers.map((number, questionIndex) => {
+                        const slotCount = block.answerSlotCounts?.[questionIndex] ?? 0
+                        const slotNumbers = block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: slotCount }, (_, index) => index + 1)
+                        return <div key={number} className="config-question-node">
+                          <button type="button" onClick={() => props.onSelect(block.id)}><b>题 {number}</b>{slotCount > 0 && <small>{slotCount} 小题</small>}</button>
+                          {slotCount > 0 && <div className="config-subquestion-list">{slotNumbers.map((slotNumber) => <button key={slotNumber} type="button" onClick={() => props.onSelect(block.id)}>题({slotNumber})</button>)}</div>}
+                        </div>
+                      })}
+                    </div>}
                   </div>
                 )
               })}
-              {!blocks.some((block) => block.page === props.activePage) && <div className="config-empty-blocks">当前页暂无题块</div>}
+              {!blocks.length && <div className="config-empty-blocks">暂无题目结构</div>}
             </div>
             {blankCard && !standaloneCard && <div className="config-add-row">
               <MetisSelect value={addKind} options={addableKinds.map((kind) => ({ value: kind, label: blockKindLabels[kind] }))} onChange={(value) => setAddKind(value as AnswerBlockKind)} />
