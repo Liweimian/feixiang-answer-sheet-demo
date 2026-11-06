@@ -14,7 +14,6 @@ import { Plus } from 'lucide-react'
 import { blockKindLabels } from '../data/mockPaper'
 import { examHeaderTemplates } from '../data/headerTemplates'
 import { questionNumbers } from '../features/answer-sheet/range'
-import { ScoreSettingsDialog } from './ScoreSettingsDialog'
 import {
   isQuestionBlockKind,
   type AnswerBlock,
@@ -68,6 +67,27 @@ function ToggleField({ title, description, checked, disabled, onChange }: {
   )
 }
 
+function scoreKeys(block: AnswerBlock) {
+  return questionNumbers(block.range).flatMap((number, questionIndex) => {
+    const count = block.answerSlotCounts?.[questionIndex] ?? 0
+    const slots = block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: count }, (_, index) => index + 1)
+    return count > 0 ? slots.map((slot) => `${number}.${slot}`) : [String(number)]
+  })
+}
+
+function resolvedScores(block: AnswerBlock) {
+  const keys = scoreKeys(block)
+  if (!keys.length) return {}
+  const unit = Number(((block.score ?? 0) / keys.length).toFixed(2))
+  const distributed = Object.fromEntries(keys.map((key, index) => [key, index === keys.length - 1 ? Number(((block.score ?? 0) - unit * (keys.length - 1)).toFixed(2)) : unit]))
+  return Object.fromEntries(keys.map((key) => [key, block.questionScores?.[key] ?? distributed[key]]))
+}
+
+function uniformValue(values: number[]) {
+  if (!values.length || values.some((value) => value !== values[0])) return undefined
+  return values[0]
+}
+
 export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const { document } = props
   const { blocks, pageCount, settings } = document
@@ -76,8 +96,16 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const blankCard = document.paper.sections.length === 0
   const standaloneCard = !settings.linkedPaperId
   const [addKind, setAddKind] = useState<AnswerBlockKind>('short-answer')
-  const [scoreBlockId, setScoreBlockId] = useState('')
   const candidatePreset = document.header.preset
+
+  const updateScores = (block: AnswerBlock, patch: Record<string, number>) => {
+    props.onSelect(block.id)
+    props.onBlockScoresChange(block.id, { ...resolvedScores(block), ...patch })
+  }
+
+  const setAllScores = (block: AnswerBlock, value: number) => {
+    updateScores(block, Object.fromEntries(scoreKeys(block).map((key) => [key, value])))
+  }
 
   const applyCandidatePreset = (preset: 'quiz' | 'exam') => {
     props.onPresetChange(preset)
@@ -216,15 +244,18 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                         <b>{block.title}</b>
                         <small>{blockKindLabels[block.kind]}{questionCount > 0 ? ` · ${questionCount} 题` : ''}</small>
                       </button>
-                      {isQuestion && <button type="button" className="config-block-score-trigger" aria-label={`设置${block.title}分值`} onClick={() => { props.onSelect(block.id); setScoreBlockId(block.id) }}><b>{block.score ?? 0}</b><span>分</span></button>}
+                      {isQuestion && <label className="config-block-batch-score"><span>每题</span><MetisInputNumber value={uniformValue(Object.values(resolvedScores(block)))} min={0} max={100} precision={2} controls={false} placeholder="分值" aria-label={`${block.title}每题分值`} onChange={(value) => setAllScores(block, Number(value ?? 0))} /></label>}
                     </div>
                     {isQuestion && <div className="config-question-tree">
                       {numbers.map((number, questionIndex) => {
+                        const scores = resolvedScores(block)
                         const slotCount = block.answerSlotCounts?.[questionIndex] ?? 0
                         const slotNumbers = block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: slotCount }, (_, index) => index + 1)
                         return <div key={number} className="config-question-node">
-                          <button type="button" onClick={() => props.onSelect(block.id)}><b>题 {number}</b>{slotCount > 0 && <small>{slotCount} 小题</small>}</button>
-                          {slotCount > 0 && <div className="config-subquestion-list">{slotNumbers.map((slotNumber) => <button key={slotNumber} type="button" onClick={() => props.onSelect(block.id)}>题({slotNumber})</button>)}</div>}
+                          {slotCount > 0 && <div className="config-question-head"><button type="button" onClick={() => props.onSelect(block.id)}><b>题 {number}</b><small>{slotCount} 小题</small></button><label><span>每小题</span><MetisInputNumber value={uniformValue(slotNumbers.map((slot) => scores[`${number}.${slot}`] ?? 0))} min={0} max={100} precision={2} controls={false} placeholder="分值" aria-label={`第${number}题每小题分值`} onChange={(value) => updateScores(block, Object.fromEntries(slotNumbers.map((slot) => [`${number}.${slot}`, Number(value ?? 0)])))} /></label></div>}
+                          {slotCount > 0
+                            ? <div className="config-subquestion-list">{slotNumbers.map((slotNumber) => <label key={slotNumber}><span>题({slotNumber})</span><MetisInputNumber value={scores[`${number}.${slotNumber}`] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={`第${number}题第${slotNumber}小题分值`} onChange={(value) => updateScores(block, { [`${number}.${slotNumber}`]: Number(value ?? 0) })} /></label>)}</div>
+                            : <label className="config-direct-score"><span>题 {number}</span><MetisInputNumber value={scores[String(number)] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={`第${number}题分值`} onChange={(value) => updateScores(block, { [String(number)]: Number(value ?? 0) })} /></label>}
                         </div>
                       })}
                     </div>}
@@ -262,12 +293,6 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </section>
         )}
       </div>
-      <ScoreSettingsDialog
-        open={Boolean(scoreBlockId)}
-        block={blocks.find((block) => block.id === scoreBlockId)}
-        onClose={() => setScoreBlockId('')}
-        onSave={(blockId, scores) => { props.onBlockScoresChange(blockId, scores); setScoreBlockId('') }}
-      />
     </aside>
   )
 }
