@@ -10,48 +10,82 @@ interface ScoreSettingsDialogProps {
   onSave: (blockId: string, scores: Record<string, number>) => void
 }
 
-function initialScores(block: AnswerBlock): Record<string, number> {
-  const numbers = questionNumbers(block.range)
-  if (!numbers.length) return {}
+interface ScoreItem { key: string; label: string; ariaLabel: string }
+interface ScoreGroup { number: number; items: ScoreItem[] }
+
+function buildGroups(block?: AnswerBlock): ScoreGroup[] {
+  if (!block) return []
+  return questionNumbers(block.range).map((number, questionIndex) => {
+    const explicitSlots = block.answerSlotNumbers?.[questionIndex]
+    const slotCount = Math.max(1, block.answerSlotCounts?.[questionIndex] ?? 1)
+    const slotNumbers = explicitSlots?.length ? explicitSlots : Array.from({ length: slotCount }, (_, index) => index + 1)
+    const nested = Boolean(block.answerSlotCounts || block.answerSlotNumbers)
+    return {
+      number,
+      items: nested
+        ? slotNumbers.map((slotNumber) => ({ key: `${number}.${slotNumber}`, label: `(${slotNumber})`, ariaLabel: `第${number}题第${slotNumber}小题分值` }))
+        : [{ key: String(number), label: `${number}.`, ariaLabel: `第${number}题分值` }],
+    }
+  })
+}
+
+function initialScores(block: AnswerBlock, groups: ScoreGroup[]): Record<string, number> {
+  const items = groups.flatMap((group) => group.items)
+  if (!items.length) return {}
   const total = block.score ?? 0
-  const unitScore = Number((total / numbers.length).toFixed(2))
-  const distributed = Object.fromEntries(numbers.map((number, index) => [String(number), index === numbers.length - 1 ? Number((total - unitScore * (numbers.length - 1)).toFixed(2)) : unitScore]))
+  const unitScore = Number((total / items.length).toFixed(2))
+  const distributed = Object.fromEntries(items.map((item, index) => [item.key, index === items.length - 1 ? Number((total - unitScore * (items.length - 1)).toFixed(2)) : unitScore]))
   if (!block.questionScores) return distributed
-  return Object.fromEntries(numbers.map((number) => [String(number), block.questionScores?.[String(number)] ?? distributed[String(number)]]))
+  return Object.fromEntries(items.map((item) => [item.key, block.questionScores?.[item.key] ?? distributed[item.key]]))
 }
 
 export function ScoreSettingsDialog({ open, block, onClose, onSave }: ScoreSettingsDialogProps) {
   const [scores, setScores] = useState<Record<string, number>>({})
   const [batchScore, setBatchScore] = useState(0)
-  const numbers = useMemo(() => questionNumbers(block?.range), [block?.range])
+  const [groupBatchScores, setGroupBatchScores] = useState<Record<string, number>>({})
+  const groups = useMemo(() => buildGroups(block), [block])
+  const items = useMemo(() => groups.flatMap((group) => group.items), [groups])
+  const nested = Boolean(block?.answerSlotCounts || block?.answerSlotNumbers)
 
   useEffect(() => {
     if (!open || !block) return
-    const next = initialScores(block)
+    const next = initialScores(block, groups)
     setScores(next)
-    setBatchScore(numbers.length ? next[String(numbers[0])] ?? 0 : 0)
-  }, [block, numbers, open])
+    setBatchScore(items.length ? next[items[0].key] ?? 0 : 0)
+    setGroupBatchScores(Object.fromEntries(groups.map((group) => [String(group.number), next[group.items[0]?.key] ?? 0])))
+  }, [block, groups, items, open])
 
   if (!block) return null
   const total = Object.values(scores).reduce((sum, score) => sum + score, 0)
-  const applyBatch = () => setScores(Object.fromEntries(numbers.map((number) => [String(number), batchScore])))
+  const applyBatch = () => setScores(Object.fromEntries(items.map((item) => [item.key, batchScore])))
+  const applyGroupBatch = (group: ScoreGroup) => {
+    const value = groupBatchScores[String(group.number)] ?? 0
+    setScores((current) => ({ ...current, ...Object.fromEntries(group.items.map((item) => [item.key, value])) }))
+  }
+  const scoreInput = (item: ScoreItem) => <label key={item.key} className="score-question-item">
+    <b>{item.label}</b>
+    <MetisInputNumber value={scores[item.key] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={item.ariaLabel} onChange={(value) => setScores((current) => ({ ...current, [item.key]: Number(value ?? 0) }))} />
+  </label>
   const footer = <div className="dialog-footer-actions">
     <MetisButton type="borderless" onClick={onClose}>取消</MetisButton>
     <MetisButton type="primary" onClick={() => onSave(block.id, scores)}>保存分值</MetisButton>
   </div>
 
-  return <MetisDialog open={open} title="分值设置" width={640} footer={footer} onCancel={onClose}>
+  return <MetisDialog open={open} title="分值设置" width={680} footer={footer} onCancel={onClose}>
     <div className="score-settings-dialog">
       <header>
-        <div><strong>{block.title}</strong><span>共 {numbers.length} 小题，当前共 {Number(total.toFixed(2))} 分</span></div>
-        <label><span>批量设为</span><MetisInputNumber value={batchScore} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label="批量分值" onChange={(value) => setBatchScore(Number(value ?? 0))} /><MetisButton type="bordered" onClick={applyBatch}>应用全部</MetisButton></label>
+        <div><strong>{block.title}</strong><span>共 {groups.length} 题{nested ? ` / ${items.length} 小题` : ''}，当前共 {Number(total.toFixed(2))} 分</span></div>
+        <label><span>{nested ? '每小题' : '每题'}设为</span><MetisInputNumber value={batchScore} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label="批量分值" onChange={(value) => setBatchScore(Number(value ?? 0))} /><MetisButton type="bordered" onClick={applyBatch}>应用全部</MetisButton></label>
       </header>
-      <div className="score-question-grid">
-        {numbers.map((number) => <label key={number} className="score-question-item">
-          <b>{number}.</b>
-          <MetisInputNumber value={scores[String(number)] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={`第${number}题分值`} onChange={(value) => setScores((current) => ({ ...current, [String(number)]: Number(value ?? 0) }))} />
-        </label>)}
-      </div>
+      {nested ? <div className="score-major-list">
+        {groups.map((group) => <section key={group.number} className="score-major-group">
+          <header>
+            <div><strong>题 {group.number}</strong><span>共 {group.items.length} 小题　|　共 {Number(group.items.reduce((sum, item) => sum + (scores[item.key] ?? 0), 0).toFixed(2))} 分</span></div>
+            <label><span>每小题</span><MetisInputNumber value={groupBatchScores[String(group.number)] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={`第${group.number}题批量分值`} onChange={(value) => setGroupBatchScores((current) => ({ ...current, [String(group.number)]: Number(value ?? 0) }))} /><MetisButton type="borderless" onClick={() => applyGroupBatch(group)}>应用</MetisButton></label>
+          </header>
+          <div className="score-question-grid">{group.items.map(scoreInput)}</div>
+        </section>)}
+      </div> : <div className="score-question-grid is-flat">{items.map(scoreInput)}</div>}
     </div>
   </MetisDialog>
 }
