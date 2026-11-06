@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect, MetisTag } from '@yuanfudao/metis-web-component'
-import { Copy, Download, Edit3, FilePlus2, FileText, Search, Upload } from 'lucide-react'
-import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
+import { ArrowRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, Search, Upload } from 'lucide-react'
+import { answerSheetTemplates, defaultAnswerSheetDocument, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
 
 interface AnswerSheetListPageProps {
@@ -87,13 +87,38 @@ export function AnswerSheetListPage({ onEdit }: AnswerSheetListPageProps) {
     onEdit(nextDocument)
   }
 
+  const generateFromPaper = () => {
+    const generated = structuredClone(defaultAnswerSheetDocument)
+    onEdit({
+      ...generated,
+      paper: { ...generated.paper, sourceLabel: '组卷 · 当前试卷' },
+      settings: { ...generated.settings, linkedPaperId: generated.paper.id },
+    })
+  }
+
   const footer = <div className="dialog-footer-actions"><MetisButton type="borderless" onClick={() => setCreateOpen(false)}>取消</MetisButton><MetisButton type="primary" onClick={createCard}>创建并开始制卡</MetisButton></div>
 
   return <div className="answer-sheet-library">
     <header className="library-header">
-      <div><span>题库卷库 / 答题卡工具</span><h1>答题卡工具</h1><p>没有电子试卷也能直接制卡；创建后使用与试卷制卡一致的编辑能力。</p></div>
-      <MetisButton type="primary" icon={<FilePlus2 size={16} />} onClick={() => setCreateOpen(true)}>新建答题卡</MetisButton>
+      <div><span>题库卷库 / 答题卡工具</span><h1>答题卡工具</h1><p>根据是否已有试卷，选择对应的制卡方式。</p></div>
     </header>
+
+    <section className="answer-sheet-entry-grid" data-sec="1">
+      <article className="answer-sheet-entry-card entry-from-paper">
+        <div className="entry-icon"><FileCheck2 size={24} /></div>
+        <div className="entry-copy"><span>已有试卷</span><h2>从试卷生成答题卡</h2><p>完成组卷后点击“生成答题卡”，系统自动带入题型、题号和分值，进入编辑区调整。</p></div>
+        <div className="entry-steps"><span><b>1</b> 完成组卷</span><i /><span><b>2</b> 生成答题卡</span><i /><span><b>3</b> 调整并发布</span></div>
+        <MetisButton type="primary" icon={<ArrowRight size={15} />} onClick={generateFromPaper}>体验从试卷生成</MetisButton>
+      </article>
+      <article className="answer-sheet-entry-card entry-blank-card">
+        <div className="entry-icon"><FilePlus2 size={24} /></div>
+        <div className="entry-copy"><span>没有试卷</span><h2>新建答题卡</h2><p>直接创建空白答题卡，通过添加题组配置题型、题号、分值与客观题答案。</p></div>
+        <div className="entry-capabilities"><span>添加题组</span><span>设置答案</span><span>自由排版</span></div>
+        <MetisButton type="bordered" icon={<FilePlus2 size={15} />} onClick={() => setCreateOpen(true)}>新建答题卡</MetisButton>
+      </article>
+    </section>
+
+    <div className="library-section-title"><div><h2>我的答题卡</h2><p>继续编辑、复制或下载已创建的答题卡。</p></div></div>
 
     <section className="library-toolbar">
       <MetisInput prefix={<Search size={15} />} placeholder="搜索答题卡名称" value={keyword} onChange={(event) => setKeyword(event.target.value)} allowClear />

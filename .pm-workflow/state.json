@@ -30,8 +30,8 @@
       "status": "completed",
       "startedAt": "2026-11-03T17:10:00+08:00",
       "completedAt": "2026-11-04T12:00:00+08:00",
-      "version": "2.1.0",
-      "iterationCount": 65,
+      "version": "2.1.1",
+      "iterationCount": 66,
       "awaitingUserConfirmation": true,
       "scope": ["单一飞象模式", "无试卷制卡", "添加题组", "客观题答案", "大型考试表头模板", "首面与续面表头", "完整文档快照", "画布直接编辑", "题块自由坐标拖动", "多选合并与切割", "打印发布"],
       "outputs": ["src/data/headerTemplates.ts", "src/components/AnswerSheetHeader.tsx", "src/features/answer-sheet/headerGeometry.ts", "src/components/AnswerSheetConfigPanel.tsx", "src/components/AnswerSheetCanvas.tsx", "src/features/answer-sheet/preflight.ts", "docs/changelog.md"],
@@ -89,5 +89,5 @@
     "d171c2b Stage 4 v2.1.0: add question groups and objective answers"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-06T21:10:00+08:00"
+  "updatedAt": "2026-11-06T21:40:00+08:00"
 }
