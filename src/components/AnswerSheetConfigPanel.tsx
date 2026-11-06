@@ -177,15 +177,6 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         </section>
 
         <section className="config-flat-section">
-          <div className="config-meta-row config-question-order-row">
-            <span>题号排序</span>
-            <MetisRadio.Group
-              className="config-inline-options"
-              value={settings.questionNumberOrder}
-              options={[{ value: 'major', label: '按大题' }, { value: 'minor', label: '按小题' }]}
-              onChange={(event) => props.onSettingsChange({ questionNumberOrder: event.target.value as AnswerSheetSettings['questionNumberOrder'] })}
-            />
-          </div>
           <div className="config-meta-row config-objective-sort-row">
             <span>客观题排列</span>
             <MetisSelect

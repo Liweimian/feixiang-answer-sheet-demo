@@ -112,8 +112,9 @@
     "5b98221 Stage 4 v2.3.17: space forbidden zones from questions",
     "42520ba Stage 4 v2.3.18: customize individual fill slots",
     "7bd7c46 Stage 4 v2.3.19: open fill settings from canvas",
-    "Stage 4 v2.4.0: add floating original paper reference"
+    "396f4f6 Stage 4 v2.4.0: add floating original paper reference",
+    "Stage 4 v2.4.1: remove question order control"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-07T05:20:00+08:00"
+  "updatedAt": "2026-11-07T05:50:00+08:00"
 }
