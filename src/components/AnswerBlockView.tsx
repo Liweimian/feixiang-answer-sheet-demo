@@ -440,6 +440,10 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
   const effectiveSubjectiveStyle = block.answerAreaOverride
     ? (block.responseStyle ?? 'lines')
     : inheritedSubjectiveStyle
+  const mergedSubjectiveParts = block.mergedParts?.length
+    && block.mergedParts.every((part) => isQuestionBlockKind(part.kind) && part.kind !== 'objective')
+    ? block.mergedParts
+    : undefined
   const isSubjectiveAnswerBlock = block.kind === 'short-answer' || block.kind === 'response-area'
   const hasAnswerSettings = isSubjectiveAnswerBlock || block.kind === 'essay'
   const canEditSlotNumbers = isSubjectiveAnswerBlock && questionNumbers(block.range).length > 0
@@ -630,8 +634,21 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       <RichElements elements={block.contentElements} />
       <ScoreBox block={block} />
       {block.kind === 'objective' && <ObjectiveGrid block={block} sortMode={objectiveSortMode} merged={objectiveMerge} />}
-      {block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} activeSlotKey={activeSlotKey} onSlotClick={isFillAnswerBlock ? openSlotSettings : undefined} />}
-      {block.kind === 'mixed' && (
+      {mergedSubjectiveParts && <div className="merged-subjective-parts">
+        {mergedSubjectiveParts.map((part) => {
+          const partStyle = part.answerAreaOverride ? (part.responseStyle ?? 'lines') : inheritedSubjectiveStyle
+          return <section key={part.id} className="merged-subjective-part" style={{ flexGrow: Math.max(1, part.height) }}>
+            {part.kind === 'short-answer' && <ShortAnswerContent block={{ ...part, responseStyle: partStyle }} fillModule={partStyle === 'lines'} lineHeight={subjectiveLineHeight} />}
+            {part.kind === 'essay' && (part.responseStyle === 'grid'
+              ? <GridPaper rows={part.lineCount ?? 10} cells={part.wordCount} />
+              : <RuledLines dashed={part.lineStyle === 'dashed'} count={part.lineCount ?? 10} />)}
+            {part.kind === 'drawing' && <div className="drawing-area">作图区</div>}
+            {part.kind === 'table' && <RichElements elements={['table']} />}
+          </section>
+        })}
+      </div>}
+      {!mergedSubjectiveParts && block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} activeSlotKey={activeSlotKey} onSlotClick={isFillAnswerBlock ? openSlotSettings : undefined} />}
+      {!mergedSubjectiveParts && block.kind === 'mixed' && (
         <div className="mixed-area">
           {(() => {
             const numbers = questionNumbers(block.range)
@@ -647,7 +664,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           })()}
         </div>
       )}
-      {block.kind === 'essay' && (
+      {!mergedSubjectiveParts && block.kind === 'essay' && (
         <div className={`essay-area ${block.writingLayout === 'separate' ? 'essay-separated' : ''}`}>
           {questionNumbers(block.range).map((number) => <div key={number} className="subjective-question-label"><b>{number}.</b><QuestionScore block={block} scoreKey={String(number)} /></div>)}
           <p>{block.hint ?? (block.responseStyle === 'grid' ? `作文格作答区；当前设置 ${block.wordCount ?? 600} 字，可在选中后调整字数` : '请在指定区域内完成作文，超出区域的答案无效。')}</p>
