@@ -1,5 +1,5 @@
 import { MetisButton, MetisTag } from '@yuanfudao/metis-web-component'
-import { ChevronLeft, Download, FileCheck2, Printer, Redo2, Save, ShieldCheck, Undo2 } from 'lucide-react'
+import { ChevronLeft, Download, FileCheck2, ListChecks, Printer, Redo2, Save, ShieldCheck, Undo2 } from 'lucide-react'
 import type { ExamPaper } from '../features/answer-sheet/types'
 
 interface EditorToolbarProps {
@@ -18,6 +18,8 @@ interface EditorToolbarProps {
   onPreflight: () => void
   onPrint: () => void
   onDownloadAnnotated: () => void
+  onObjectiveAnswers: () => void
+  hasObjectiveBlocks: boolean
 }
 
 export function EditorToolbar(props: EditorToolbarProps) {
@@ -38,6 +40,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
         <span className="autosave-status">{props.saving ? '正在保存…' : `已自动保存 ${props.savedAt}`}</span>
         <MetisButton type="borderless" icon={<Undo2 size={16} />} disabled={!props.canUndo} onClick={props.onUndo} aria-label="撤销" />
         <MetisButton type="borderless" icon={<Redo2 size={16} />} disabled={!props.canRedo} onClick={props.onRedo} aria-label="重做" />
+        <MetisButton type="bordered" icon={<ListChecks size={16} />} disabled={!props.hasObjectiveBlocks} onClick={props.onObjectiveAnswers}>设置客观题答案</MetisButton>
         <MetisButton type="bordered" icon={<Save size={16} />} loading={props.saving} onClick={props.onSave}>立即保存</MetisButton>
         <MetisButton type="bordered" icon={<Printer size={16} />} onClick={props.onPrint}>PDF / 打印</MetisButton>
         <MetisButton type="bordered" icon={<FileCheck2 size={16} />} onClick={props.onDownloadAnnotated}>带批改痕迹</MetisButton>

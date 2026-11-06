@@ -26,6 +26,7 @@ interface EditorWorkbenchProps {
   onReorder: (dragId: string, targetId: string) => void
   onDelete: () => void
   onAdd: (kind: AnswerBlockKind) => void
+  onAddQuestionGroup: () => void
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void
@@ -71,6 +72,7 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           onSelect={props.onSelect}
           onUpdateBlock={props.onUpdate}
           onAdd={props.onAdd}
+          onAddQuestionGroup={props.onAddQuestionGroup}
         />
         <AnswerSheetCanvas
           paper={paper}

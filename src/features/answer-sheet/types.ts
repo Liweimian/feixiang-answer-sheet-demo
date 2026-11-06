@@ -91,6 +91,7 @@ export interface AnswerBlock {
   answerVariant?: 'fill' | 'solution'
   wordCount?: number
   optionCount?: 4 | 5
+  objectiveAnswers?: Record<string, string[]>
   itemsPerColumn?: number
   objectiveLayout?: ObjectiveLayout
   writingLayout?: 'choose-one' | 'separate'
@@ -117,6 +118,17 @@ export interface AnswerBlock {
   locked?: boolean
   hint?: string
   mergedParts?: AnswerBlock[]
+}
+
+export type QuestionGroupType = 'objective' | 'fill' | 'solution' | 'essay'
+
+export interface QuestionGroupDraft {
+  title: string
+  type: QuestionGroupType
+  startNumber: number
+  questionCount: number
+  totalScore: number
+  optionCount: 4 | 5
 }
 
 export interface AnswerSheetSettings {

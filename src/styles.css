@@ -619,6 +619,24 @@
 .paper-settings-score strong { color: var(--fx_brand); font-size: 14px; }
 .paper-settings-score small { justify-self: end; color: var(--fx_text_3); font-size: 9px; }
 
+.add-question-group-button { width: 100%; margin-bottom: var(--fx_sp_3); }
+.question-group-form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--fx_sp_4); }
+.question-group-form label { display: grid; gap: var(--fx_sp_2); color: var(--fx_text_2); font-size: 10px; }
+.question-group-form label > div { width: 100%; }
+.question-group-wide, .question-group-summary { grid-column: 1 / -1; }
+.question-group-summary { padding: var(--fx_sp_3); border-radius: var(--fx_radius_3); background: var(--fx_surface_muted); color: var(--fx_text_2); font-size: 10px; }
+.question-group-summary strong { color: var(--fx_brand); }
+.objective-answer-dialog { max-height: 560px; display: grid; gap: var(--fx_sp_4); overflow-y: auto; }
+.objective-answer-empty { min-height: 180px; display: grid; place-items: center; color: var(--fx_text_3); }
+.objective-answer-group { overflow: hidden; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_4); }
+.objective-answer-group header { display: flex; align-items: center; justify-content: space-between; padding: var(--fx_sp_3) var(--fx_sp_4); border-bottom: 1px solid var(--fx_border); background: var(--fx_surface_muted); }
+.objective-answer-group header strong { font-size: 12px; }
+.objective-answer-group header span { color: var(--fx_text_3); font-size: 9px; }
+.objective-answer-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
+.objective-answer-row { min-height: 42px; display: flex; align-items: center; gap: var(--fx_sp_3); padding: 0 var(--fx_sp_4); border-bottom: 1px solid var(--fx_border); }
+.objective-answer-row:nth-child(odd) { border-right: 1px solid var(--fx_border); }
+.objective-answer-row b { width: 28px; color: var(--fx_text_2); font-size: 10px; }
+
 .review-toggle { position: fixed; right: var(--fx_sp_5); bottom: var(--fx_sp_5); z-index: 120; height: 34px; padding: 0 var(--fx_sp_4); border: 0; border-radius: var(--fx_radius_round); background: var(--fx_text_1); color: var(--fx_text_inverse); box-shadow: var(--fx_shadow_md); cursor: pointer; font-size: 11px; }
 .review-stage-one { position: fixed; top: 0; right: 0; bottom: 0; z-index: 110; width: 340px; display: flex; flex-direction: column; justify-content: space-between; padding: var(--fx_sp_6); border-left: 1px solid var(--fx_border); background: var(--fx_surface); box-shadow: var(--fx_shadow_md); }
 .review-stage-one h2 { margin: var(--fx_sp_3) 0 var(--fx_sp_2); font-size: 20px; }

@@ -36,6 +36,7 @@ interface AnswerSheetConfigPanelProps {
   onSelect: (id: string) => void
   onUpdateBlock: (patch: Partial<AnswerBlock>) => void
   onAdd: (kind: AnswerBlockKind) => void
+  onAddQuestionGroup: () => void
 }
 
 const layoutOptions = (['A3', '8K', 'A4', '16K'] as const).map((paperSize) => ({
@@ -69,6 +70,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const selected = blocks.find((block) => block.id === props.selectedBlockId)
   const questionBlock = selected && isQuestionBlockKind(selected.kind)
   const blankCard = document.paper.sections.length === 0
+  const standaloneCard = !settings.linkedPaperId
   const [addKind, setAddKind] = useState<AnswerBlockKind>('short-answer')
   const candidatePreset = document.header.preset
 
@@ -193,6 +195,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         <section className="config-flat-section config-block-section">
           <div className="config-flat-title"><span>题目结构</span><small>{pageCount} 面 · {blocks.length} 个题块</small></div>
           <div className="config-flat-body">
+            {standaloneCard && <MetisButton className="add-question-group-button" type="primary" icon={<Plus size={14} />} onClick={props.onAddQuestionGroup}>添加题组</MetisButton>}
             <div className="config-page-tabs">
               {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
                 <button key={page} type="button" className={props.activePage === page ? 'active' : ''} onClick={() => props.onPageChange(page)}>第 {page} 面</button>
@@ -209,7 +212,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               ))}
               {!blocks.some((block) => block.page === props.activePage) && <div className="config-empty-blocks">当前页暂无题块</div>}
             </div>
-            {blankCard && <div className="config-add-row">
+            {blankCard && !standaloneCard && <div className="config-add-row">
               <MetisSelect value={addKind} options={addableKinds.map((kind) => ({ value: kind, label: blockKindLabels[kind] }))} onChange={(value) => setAddKind(value as AnswerBlockKind)} />
               <MetisButton type="primary" size="s" icon={<Plus size={13} />} onClick={() => props.onAdd(addKind)}>添加到本页</MetisButton>
             </div>}

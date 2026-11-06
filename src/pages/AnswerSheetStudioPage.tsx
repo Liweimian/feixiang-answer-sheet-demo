@@ -27,12 +27,16 @@ import type {
   HeaderPreset,
   HeaderTemplateId,
   PublishedVersion,
+  QuestionGroupDraft,
 } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { answerSheetService } from '../services/answerSheetService'
 import { EditorToolbar } from '../components/EditorToolbar'
 import { EditorWorkbench } from '../components/EditorWorkbench'
 import { PreflightDialog } from '../components/PreflightDialog'
+import { QuestionGroupDialog } from '../components/QuestionGroupDialog'
+import { ObjectiveAnswerDialog } from '../components/ObjectiveAnswerDialog'
+import { questionNumbers } from '../features/answer-sheet/range'
 
 function cloneDefaultDocument(): AnswerSheetDocument {
   return {
@@ -75,6 +79,8 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
   const [preflightOpen, setPreflightOpen] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [printDocument, setPrintDocument] = useState<AnswerSheetDocument>()
+  const [questionGroupOpen, setQuestionGroupOpen] = useState(false)
+  const [objectiveAnswerOpen, setObjectiveAnswerOpen] = useState(false)
   const saveTimer = useRef<number>()
 
   useEffect(() => {
@@ -242,6 +248,52 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
     commitBlocks(next)
     setSelectedBlockId(nextBlock.id)
   }
+
+  const addQuestionGroup = (draft: QuestionGroupDraft) => {
+    const endNumber = draft.startNumber + draft.questionCount - 1
+    const kind: AnswerBlockKind = draft.type === 'objective' ? 'objective' : draft.type === 'essay' ? 'essay' : 'short-answer'
+    const pageBlocks = blocks.filter((block) => block.page === activePage)
+    const nextY = Math.min(88, pageBlocks.reduce((bottom, block) => Math.max(bottom, (block.canvasY ?? 0) + Math.max(10, block.height / 8)), 0) + 2)
+    const nextBlock: AnswerBlock = {
+      id: `group-${Date.now()}`,
+      page: activePage,
+      title: draft.title,
+      range: draft.questionCount === 1 ? `${draft.startNumber}` : `${draft.startNumber}–${endNumber}`,
+      score: draft.totalScore,
+      kind,
+      height: kind === 'objective' ? Math.max(112, Math.ceil(draft.questionCount / 4) * 26 + 54) : kind === 'essay' ? 320 : draft.type === 'solution' ? 220 : 150,
+      canvasX: 0,
+      canvasY: nextY,
+      canvasWidth: 100,
+      lineCount: kind === 'objective' ? undefined : kind === 'essay' ? 16 : draft.type === 'solution' ? 8 : 3,
+      answerVariant: draft.type === 'fill' ? 'fill' : draft.type === 'solution' ? 'solution' : undefined,
+      optionCount: kind === 'objective' ? draft.optionCount : undefined,
+      itemsPerColumn: kind === 'objective' ? Math.min(10, draft.questionCount) : undefined,
+      objectiveLayout: kind === 'objective' ? 'horizontal' : undefined,
+      responseStyle: kind === 'essay' ? 'grid' : kind === 'short-answer' ? 'lines' : undefined,
+      wordCount: kind === 'essay' ? 800 : undefined,
+      showScore: true,
+      showQuestionCount: true,
+      showUnitScore: true,
+      showScoreBox: false,
+      objectiveAnswers: kind === 'objective' ? {} : undefined,
+      contentElements: [],
+      locked: false,
+    }
+    const nextBlocks = [...blocks, nextBlock]
+    commitDocument({ ...document, blocks: nextBlocks, paper: { ...paper, score: totalQuestionScore(nextBlocks) } })
+    setSelectedBlockId(nextBlock.id)
+    setQuestionGroupOpen(false)
+    MetisMessage.success(`已添加“${draft.title}”`)
+  }
+
+  const saveObjectiveAnswers = (answers: Record<string, Record<string, string[]>>) => {
+    commitBlocks(blocks.map((block) => block.kind === 'objective' ? { ...block, objectiveAnswers: answers[block.id] ?? {} } : block))
+    setObjectiveAnswerOpen(false)
+    MetisMessage.success('客观题答案已保存')
+  }
+
+  const suggestedQuestionStart = Math.max(0, ...blocks.flatMap((block) => questionNumbers(block.range))) + 1
 
   const changePage = (page: number) => {
     setActivePage(page)
@@ -546,6 +598,8 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
                 downloadAnnotatedAnswerSheet(document, draftVersion)
                 MetisMessage.success('已下载带批改痕迹版，可在浏览器中继续打印为 PDF')
               }}
+              hasObjectiveBlocks={blocks.some((block) => block.kind === 'objective')}
+              onObjectiveAnswers={() => setObjectiveAnswerOpen(true)}
         />
         <EditorWorkbench
               document={document}
@@ -559,6 +613,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               onMove={moveBlock}
               onDelete={deleteSelected}
               onAdd={addBlock}
+              onAddQuestionGroup={() => setQuestionGroupOpen(true)}
               onTitleCommit={updateTitle}
               onBlockTitleCommit={(id, title) => updateBlock(id, { title })}
               onSettingsChange={updateSettings}
@@ -606,6 +661,8 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
         onDownload={() => printSnapshot(published?.snapshot ?? document)}
         onDownloadPublished={() => printSnapshot(published?.snapshot ?? document)}
       />
+      <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} onClose={() => setQuestionGroupOpen(false)} onSubmit={addQuestionGroup} />
+      <ObjectiveAnswerDialog open={objectiveAnswerOpen} blocks={blocks} onClose={() => setObjectiveAnswerOpen(false)} onSave={saveObjectiveAnswers} />
     </>
   )
 }
