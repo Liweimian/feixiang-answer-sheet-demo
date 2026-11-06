@@ -86,7 +86,8 @@
     "6166dca Stage 4 v1.9.1: add inserted content cell controls",
     "616437c Stage 4 v2.0.0: add standalone answer sheet tool",
     "8b64827 Stage 4 v2.0.1: remove sidebar and return home",
-    "d171c2b Stage 4 v2.1.0: add question groups and objective answers"
+    "d171c2b Stage 4 v2.1.0: add question groups and objective answers",
+    "dc0e22c Stage 4 v2.1.1: split answer sheet entry paths"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-06T21:40:00+08:00"
