@@ -55,10 +55,31 @@ function RuledLines({ count, dashed = false }: { count: number; dashed?: boolean
   )
 }
 
+function scoreKeys(block: AnswerBlock) {
+  return questionNumbers(block.range).flatMap((number, questionIndex) => {
+    const count = block.answerSlotCounts?.[questionIndex] ?? 0
+    const slots = block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: count }, (_, index) => index + 1)
+    return count > 0 ? slots.map((slot) => `${number}.${slot}`) : [String(number)]
+  })
+}
+
+function questionScore(block: AnswerBlock, key: string) {
+  if (!block.showUnitScore) return undefined
+  if (block.questionScores?.[key] !== undefined) return block.questionScores[key]
+  const keys = scoreKeys(block)
+  if (!keys.length || block.score === undefined) return undefined
+  return Number((block.score / keys.length).toFixed(2))
+}
+
+function QuestionScore({ block, scoreKey }: { block: AnswerBlock; scoreKey: string }) {
+  const score = questionScore(block, scoreKey)
+  return score === undefined ? null : <small className="question-unit-score">（{score}分）</small>
+}
+
 function AnswerMarks({ block }: { block: AnswerBlock }) {
   const numbers = questionNumbers(block.range)
   const mark = block.responseStyle === 'square' ? '□' : '（　）'
-  return <div className="answer-marks">{numbers.map((number) => <span key={number}><b>{number}.</b>{mark}</span>)}</div>
+  return <div className="answer-marks">{numbers.map((number) => <span key={number}><b>{number}.</b><QuestionScore block={block} scoreKey={String(number)} />{mark}</span>)}</div>
 }
 
 function GridPaper({ rows = 8, cells, variant = 'grid' }: { rows?: number; cells?: number; variant?: 'grid' | 'tian' | 'mi' }) {
@@ -85,7 +106,7 @@ function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { bl
   const dashed = block.lineStyle === 'dashed'
   if (fillModule && !block.answerSlotCounts?.length) {
     const fullLineCount = Math.max(2, Math.floor((block.height - 48) / Math.max(12, lineHeight)))
-    return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b key={number}>{number}.</b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
+    return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b key={number}>{number}.<QuestionScore block={block} scoreKey={String(number)} /></b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
   }
   if (block.answerSlotCounts?.length && numbers.length > 0) {
     return (
@@ -97,7 +118,7 @@ function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { bl
             <div key={no} className="short-answer-slot-row">
               <b>{no}.</b>
               {Array.from({ length: slotCount }, (_, slotIndex) => (
-                <span key={slotIndex} className={`slot-style-${block.responseStyle ?? 'lines'}`}><em>{slotCount > 1 ? `(${slotNumbers[slotIndex] ?? slotIndex + 1})` : ''}</em><i /></span>
+                <span key={slotIndex} className={`slot-style-${block.responseStyle ?? 'lines'}`}><em>{slotCount > 1 ? `(${slotNumbers[slotIndex] ?? slotIndex + 1})` : ''}<QuestionScore block={block} scoreKey={`${no}.${slotNumbers[slotIndex] ?? slotIndex + 1}`} /></em><i /></span>
               ))}
             </div>
           )
@@ -113,11 +134,11 @@ function ShortAnswerContent({ block, fillModule = false, lineHeight = 16 }: { bl
     const linesPerQuestion = Math.max(2, Math.floor(count / numbers.length))
     return (
       <div className="short-answer-groups">
-        {numbers.map((no) => <div key={no}><b>{no}.</b><RuledLines count={linesPerQuestion} dashed={dashed} /></div>)}
+        {numbers.map((no) => <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><RuledLines count={linesPerQuestion} dashed={dashed} /></div>)}
       </div>
     )
   }
-  return <div className="single-short-answer"><b>{numbers[0] ?? '　'}.</b><RuledLines count={count} dashed={dashed} /></div>
+  return <div className="single-short-answer"><b>{numbers[0] ?? '　'}.<QuestionScore block={block} scoreKey={String(numbers[0] ?? '')} /></b><RuledLines count={count} dashed={dashed} /></div>
 }
 
 function RichElements({ elements = [] }: { elements?: ContentElement[] }) {
@@ -511,7 +532,6 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
           </button>
         ) : <strong>{block.title}</strong>}
         {block.showQuestionCount && questionCount > 0 && <small>共 {questionCount} 题</small>}
-        {block.showUnitScore && block.score !== undefined && questionCount > 0 && <small>{block.score % questionCount === 0 ? `每题 ${block.score / questionCount} 分` : '分值不等'}</small>}
         {block.showScore && block.score !== undefined && <small>共 {block.score} 分</small>}
         {locked && <span><LockKeyhole size={11} /> 已锁定</span>}
       </span>}
@@ -542,6 +562,7 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       )}
       {block.kind === 'essay' && (
         <div className={`essay-area ${block.writingLayout === 'separate' ? 'essay-separated' : ''}`}>
+          {questionNumbers(block.range).map((number) => <div key={number} className="subjective-question-label"><b>{number}.</b><QuestionScore block={block} scoreKey={String(number)} /></div>)}
           <p>{block.hint ?? (block.responseStyle === 'grid' ? `作文格作答区；当前设置 ${block.wordCount ?? 600} 字，可在选中后调整字数` : '请在指定区域内完成作文，超出区域的答案无效。')}</p>
           {!!block.leadingBlankLines && <div className="essay-leading-space" style={{ height: `${block.leadingBlankLines * 14}px` }} aria-label={`作文前空 ${block.leadingBlankLines} 行`} />}
           {block.responseStyle === 'grid' ? <GridPaper rows={block.lineCount ?? 10} cells={block.wordCount} /> : block.writingLayout === 'separate' ? (
