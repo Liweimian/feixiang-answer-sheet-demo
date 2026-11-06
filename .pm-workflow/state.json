@@ -105,7 +105,8 @@
     "7879a4b Stage 4 v2.3.8: edit and constrain forbidden zones",
     "3a08b12 Stage 4 v2.3.9: reuse editor toolbar for forbidden zones",
     "9429091 Stage 4 v2.3.10: unlock forbidden zone movement",
-    "65b28b6 Stage 4 v2.3.11: clarify score display labels"
+    "65b28b6 Stage 4 v2.3.11: clarify score display labels",
+    "ff94eba Stage 4 v2.3.12: refine score and ordering layout"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-07T02:25:00+08:00"
