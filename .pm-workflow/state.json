@@ -30,8 +30,8 @@
       "status": "completed",
       "startedAt": "2026-11-03T17:10:00+08:00",
       "completedAt": "2026-11-04T12:00:00+08:00",
-      "version": "1.6.6",
-      "iterationCount": 53,
+      "version": "1.6.7",
+      "iterationCount": 54,
       "awaitingUserConfirmation": true,
       "scope": ["单一飞象模式", "大型考试表头模板", "北京官方样例结构", "深圳官方字段规则抽象", "首面与续面表头", "表头块级拖动缩放", "表头碰撞与安全区", "完整文档快照", "画布直接编辑", "题块自由坐标拖动", "多选合并与切割", "左侧通用配置", "打印发布"],
       "outputs": ["src/data/headerTemplates.ts", "src/components/AnswerSheetHeader.tsx", "src/features/answer-sheet/headerGeometry.ts", "src/components/AnswerSheetConfigPanel.tsx", "src/components/AnswerSheetCanvas.tsx", "src/features/answer-sheet/preflight.ts", "docs/changelog.md"],
@@ -77,5 +77,5 @@
     "f8a2ac3 Stage 4 v1.6.6: reuse per-question answer area controls"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
-  "updatedAt": "2026-11-06T12:30:00+08:00"
+  "updatedAt": "2026-11-06T13:10:00+08:00"
 }

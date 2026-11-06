@@ -347,53 +347,6 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
       <button type="button" className="block-select-toggle" title="选择模块，可与其他模块合并" aria-label={`${multiSelected ? '取消选择' : '选择'}${block.title}`} aria-pressed={multiSelected} onClick={(event) => { event.stopPropagation(); onSelect(true) }}>{multiSelected ? '✓' : ''}</button>
       {selected && block.kind !== 'forbidden' && (block.kind !== 'objective' || block.mergedParts?.length) && (
         <div className="block-floating-tools" onClick={(event) => event.stopPropagation()}>
-          {isSubjectiveAnswerBlock && (
-            <div className="answer-area-controls" aria-label="作答区设置">
-              <strong>作答区</strong>
-              <span>作答线</span>
-              <MetisSwitch
-                size="small"
-                checked={effectiveSubjectiveStyle === 'lines'}
-                onChange={(checked) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: checked ? 'lines' : 'blank' })}
-              />
-              {effectiveSubjectiveStyle === 'lines' && (
-                <MetisInputNumber
-                  size="small"
-                  min={1}
-                  max={40}
-                  value={block.lineCount ?? 4}
-                  addonAfter="行"
-                  aria-label="作答线行数"
-                  onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })}
-                />
-              )}
-              {block.answerAreaOverride && <button type="button" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>跟随整卡</button>}
-            </div>
-          )}
-          {block.kind === 'essay' && (
-            <div className="essay-answer-controls" aria-label="作文作答区设置">
-              <button
-                type="button"
-                onClick={() => onUpdateBlock?.({ leadingBlankLines: ((block.leadingBlankLines ?? 0) + 1) % 4 })}
-                title="在作文作答区前增加空行，最多 3 行"
-              >空行{block.leadingBlankLines ? ` ${block.leadingBlankLines}` : ''}</button>
-              <span>作答样式</span>
-              <MetisRadio.Group
-                className="essay-style-radio"
-                value={block.responseStyle === 'grid' ? 'grid' : 'lines'}
-                options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]}
-                onChange={(event) => onUpdateBlock?.({ responseStyle: event.target.value as AnswerBlock['responseStyle'] })}
-              />
-              <span>字数</span>
-              <MetisSelect
-                size="small"
-                value={block.wordCount ?? 600}
-                options={[400, 600, 800, 1000, 1200].map((value) => ({ value, label: `${value}` }))}
-                onChange={(value) => onUpdateBlock?.({ wordCount: Number(value) })}
-                aria-label="作文字数"
-              />
-            </div>
-          )}
           {block.kind !== 'objective' && onToggleContent && <>
             <button type="button" onClick={onUndo} title="撤销"><Undo2 size={12} /></button>
             <button type="button" onClick={onRedo} title="重做"><Redo2 size={12} /></button>
@@ -426,8 +379,55 @@ export function AnswerBlockView({ block, layout, selected, multiSelected = false
           </>}
         </div>
       )}
-      {selected && onInsertAfter && (
-        <div className="block-insert-tools" onClick={(event) => event.stopPropagation()}>
+      {onInsertAfter && (
+        <div className="block-module-tools" onClick={(event) => event.stopPropagation()}>
+          {isSubjectiveAnswerBlock && (
+            <div className="answer-area-controls" aria-label="作答区设置">
+              <strong>作答区</strong>
+              <span>作答线</span>
+              <MetisSwitch
+                size="small"
+                checked={effectiveSubjectiveStyle === 'lines'}
+                onChange={(checked) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: checked ? 'lines' : 'blank' })}
+              />
+              {effectiveSubjectiveStyle === 'lines' && (
+                <MetisInputNumber
+                  size="small"
+                  min={1}
+                  max={40}
+                  value={block.lineCount ?? 4}
+                  addonAfter="行"
+                  aria-label="作答线行数"
+                  onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })}
+                />
+              )}
+              {block.answerAreaOverride && <button type="button" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>跟随整卡</button>}
+            </div>
+          )}
+          {block.kind === 'essay' && (
+            <div className="essay-answer-controls" aria-label="作文作答区设置">
+              <button
+                type="button"
+                onClick={() => onUpdateBlock?.({ leadingBlankLines: ((block.leadingBlankLines ?? 0) + 1) % 4 })}
+                title="在作文作答区前增加空行，最多 3 行"
+              >题内空行{block.leadingBlankLines ? ` ${block.leadingBlankLines}` : ''}</button>
+              <span>作答样式</span>
+              <MetisRadio.Group
+                className="essay-style-radio"
+                value={block.responseStyle === 'grid' ? 'grid' : 'lines'}
+                options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]}
+                onChange={(event) => onUpdateBlock?.({ responseStyle: event.target.value as AnswerBlock['responseStyle'] })}
+              />
+              <span>字数</span>
+              <MetisSelect
+                size="small"
+                value={block.wordCount ?? 600}
+                options={[400, 600, 800, 1000, 1200].map((value) => ({ value, label: `${value}` }))}
+                onChange={(value) => onUpdateBlock?.({ wordCount: Number(value) })}
+                aria-label="作文字数"
+              />
+            </div>
+          )}
           <span><Plus size={11} /> 在模块后插入</span>
           <button type="button" onClick={() => onInsertAfter('response-area', 'blank')}>空白区</button>
           <button type="button" onClick={() => onInsertAfter('forbidden')}>禁答区</button>
