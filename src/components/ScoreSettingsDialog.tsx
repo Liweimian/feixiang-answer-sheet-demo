@@ -23,7 +23,7 @@ function buildGroups(block?: AnswerBlock): ScoreGroup[] {
     return {
       number,
       items: nested
-        ? slotNumbers.map((slotNumber) => ({ key: `${number}.${slotNumber}`, label: `(${slotNumber})`, ariaLabel: `第${number}题第${slotNumber}小题分值` }))
+        ? slotNumbers.map((slotNumber) => ({ key: `${number}.${slotNumber}`, label: `题(${slotNumber})`, ariaLabel: `第${number}题第${slotNumber}小题分值` }))
         : [{ key: String(number), label: `${number}.`, ariaLabel: `第${number}题分值` }],
     }
   })
@@ -57,9 +57,12 @@ export function ScoreSettingsDialog({ open, block, onClose, onSave }: ScoreSetti
 
   if (!block) return null
   const total = Object.values(scores).reduce((sum, score) => sum + score, 0)
-  const applyBatch = () => setScores(Object.fromEntries(items.map((item) => [item.key, batchScore])))
-  const applyGroupBatch = (group: ScoreGroup) => {
-    const value = groupBatchScores[String(group.number)] ?? 0
+  const setAllScores = (value: number) => {
+    setBatchScore(value)
+    setScores(Object.fromEntries(items.map((item) => [item.key, value])))
+  }
+  const setGroupScores = (group: ScoreGroup, value: number) => {
+    setGroupBatchScores((current) => ({ ...current, [String(group.number)]: value }))
     setScores((current) => ({ ...current, ...Object.fromEntries(group.items.map((item) => [item.key, value])) }))
   }
   const scoreInput = (item: ScoreItem) => <label key={item.key} className="score-question-item">
@@ -73,15 +76,16 @@ export function ScoreSettingsDialog({ open, block, onClose, onSave }: ScoreSetti
 
   return <MetisDialog open={open} title="分值设置" width={680} footer={footer} onCancel={onClose}>
     <div className="score-settings-dialog">
-      <header>
-        <div><strong>{block.title}</strong><span>共 {groups.length} 题{nested ? ` / ${items.length} 小题` : ''}，当前共 {Number(total.toFixed(2))} 分</span></div>
-        <label><span>{nested ? '每小题' : '每题'}设为</span><MetisInputNumber value={batchScore} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label="批量分值" onChange={(value) => setBatchScore(Number(value ?? 0))} /><MetisButton type="bordered" onClick={applyBatch}>应用全部</MetisButton></label>
+      <header className="score-section-heading">
+        <div><strong>{block.title}</strong><span>（共 {groups.length} 题{nested ? ` / ${items.length} 小题` : ''}）　|　共 {Number(total.toFixed(2))} 分</span></div>
+        <span className="score-collapse-mark">▴</span>
       </header>
+      <label className="score-batch-row"><span>每题</span><MetisInputNumber value={batchScore} min={0} max={100} precision={2} controls={false} placeholder="输入分数" addonAfter="分" aria-label="批量分值" onChange={(value) => setAllScores(Number(value ?? 0))} /></label>
       {nested ? <div className="score-major-list">
         {groups.map((group) => <section key={group.number} className="score-major-group">
           <header>
-            <div><strong>题 {group.number}</strong><span>共 {group.items.length} 小题　|　共 {Number(group.items.reduce((sum, item) => sum + (scores[item.key] ?? 0), 0).toFixed(2))} 分</span></div>
-            <label><span>每小题</span><MetisInputNumber value={groupBatchScores[String(group.number)] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={`第${group.number}题批量分值`} onChange={(value) => setGroupBatchScores((current) => ({ ...current, [String(group.number)]: Number(value ?? 0) }))} /><MetisButton type="borderless" onClick={() => applyGroupBatch(group)}>应用</MetisButton></label>
+            <div><span className="score-group-arrow">▾</span><strong>题 {group.number}</strong><span>（共 {group.items.length} 小题）　|　共 {Number(group.items.reduce((sum, item) => sum + (scores[item.key] ?? 0), 0).toFixed(2))} 分</span></div>
+            <label><span>每小题</span><MetisInputNumber value={groupBatchScores[String(group.number)] ?? 0} min={0} max={100} precision={2} controls={false} placeholder="输入分数" aria-label={`第${group.number}题批量分值`} onChange={(value) => setGroupScores(group, Number(value ?? 0))} /></label>
           </header>
           <div className="score-question-grid">{group.items.map(scoreInput)}</div>
         </section>)}
