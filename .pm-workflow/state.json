@@ -94,7 +94,8 @@
     "2b602aa Stage 4 v2.2.0: flatten question type actions",
     "f0447f9 Stage 4 v2.2.1: edit scores in question structure",
     "d822df3 Stage 4 v2.2.2: fix daily quiz QR position",
-    "a3a1d23 Stage 4 v2.3.0: add compact score settings"
+    "a3a1d23 Stage 4 v2.3.0: add compact score settings",
+    "2acb7ea Stage 4 v2.3.1: preserve score hierarchy"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-06T23:45:00+08:00"
