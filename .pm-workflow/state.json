@@ -107,7 +107,8 @@
     "9429091 Stage 4 v2.3.10: unlock forbidden zone movement",
     "65b28b6 Stage 4 v2.3.11: clarify score display labels",
     "ff94eba Stage 4 v2.3.12: refine score and ordering layout",
-    "eaf13ac Stage 4 v2.3.13: show scores beside subjective questions"
+    "eaf13ac Stage 4 v2.3.13: show scores beside subjective questions",
+    "c46e1e4 Stage 4 v2.3.16: compact modules with shared borders"
   ],
   "createdAt": "2026-11-03T00:00:00+08:00",
   "updatedAt": "2026-11-07T03:10:00+08:00"
