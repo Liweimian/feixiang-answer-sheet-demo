@@ -132,7 +132,6 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
     } as CSSProperties
   })()
   const scanEnabled = settings.reviewMode !== 'manual'
-  const manualScoreEnabled = settings.reviewMode !== 'online'
   const dailyQuizIdentity = settings.identityFields.includes('学号') && !settings.identityFields.includes('准考证号')
   const hiddenItemIds = header.hiddenItemIds ?? []
   const isHeaderItemHidden = (id: string) => hiddenItemIds.includes(id)
@@ -265,8 +264,6 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
           </div>}
         </div>
       )}
-      {manualScoreEnabled && <div className="manual-score-strip"><b>手批评分栏</b><span>得分：________</span><span>阅卷人：________</span></div>}
-
       <div className={`paper-blocks columns-${columns}`} style={{ height: contentHeight }}>
         {selectionToolbarStyle && <div className="canvas-selection-toolbar" style={selectionToolbarStyle}>{selectionToolbar}</div>}
         {pageBlocks.map((block) => {
@@ -310,6 +307,9 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
             objectiveMerge={settings.objectiveMerge}
             subjectiveAnswerStyle={settings.subjectiveAnswerStyle}
             subjectiveLineHeight={settings.subjectiveLineHeight}
+            subjectiveManualGrading={settings.subjectiveManualGrading}
+            manualScoreStyle={settings.manualScoreStyle}
+            allowHalfScore={settings.allowHalfScore}
             questionContext={paper.sections.filter((section) => {
               const blockNumbers = new Set(questionNumbers(block.range))
               return questionNumbers(section.range).some((number) => blockNumbers.has(number))

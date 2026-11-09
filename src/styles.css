@@ -467,7 +467,7 @@
 .block-module-tools button:hover, .block-module-tools button[aria-expanded='true'] { background: var(--fx_brand_soft); color: var(--fx_brand); }
 .block-module-tools .module-tool-divider { width: 1px; height: 15px; margin: 0 2px; padding: 0; background: var(--fx_border); }
 .block-module-tools button.danger:hover { background: var(--fx_danger_soft, #fff1f0); color: var(--fx_danger, #d4380d); }
-.block-settings-popover { position: absolute; z-index: 14; top: calc(100% + 46px); left: 50%; width: 280px; padding: 10px; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_3); background: var(--fx_surface); box-shadow: var(--fx_shadow_md); color: var(--fx_text_1); transform: translateX(-50%); }
+.block-settings-popover { position: absolute; z-index: 14; top: calc(100% + 46px); left: 50%; width: 280px; max-height: 420px; overflow: auto; padding: 10px; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_3); background: var(--fx_surface); box-shadow: var(--fx_shadow_md); color: var(--fx_text_1); transform: translateX(-50%); }
 .block-settings-title, .slot-number-section-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .block-settings-title { margin-bottom: 8px; }
 .block-settings-title strong, .slot-number-section-title strong { font-size: 10px; }
@@ -568,7 +568,6 @@
 .answer-block.kind-section-title .answer-block-heading { height: 100%; border: 1px solid var(--fx_paper_ink); background: var(--fx_surface_subtle); }
 .answer-block.kind-section-title.borderless .answer-block-heading { border-color: transparent; }
 .rich-image { min-width: 92px; background: linear-gradient(145deg, transparent 50%, var(--fx_surface_sunken) 50%); }
-.manual-grading-settings { display: grid; gap: var(--fx_sp_3); padding-top: var(--fx_sp_3); border-top: 1px solid var(--fx_border); }
 .manual-score-list { position: absolute; z-index: 2; top: 24px; right: 6px; display: grid; gap: 3px; max-width: calc(100% - 18px); font-size: 7px; }
 .manual-score-item { display: flex; align-items: stretch; justify-content: flex-end; background: var(--fx_paper); }
 .manual-score-item > b { min-width: 22px; display: grid; place-items: center; padding: 0 3px; border: 1px solid var(--fx_paper_rule); white-space: nowrap; }

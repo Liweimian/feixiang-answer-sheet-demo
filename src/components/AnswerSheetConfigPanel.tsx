@@ -194,6 +194,20 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             </div>
           </div>
           <div className="config-meta-row">
+            <span>主观题手批</span>
+            <MetisCheckbox checked={!!settings.subjectiveManualGrading} onChange={(event) => props.onSettingsChange({ subjectiveManualGrading: event.target.checked })}>启用</MetisCheckbox>
+          </div>
+          {settings.subjectiveManualGrading && <>
+            <div className="config-meta-row">
+              <span>手批方式</span>
+              <MetisRadio.Group className="config-inline-options" value={settings.manualScoreStyle ?? 'handwrite'} options={[{ value: 'handwrite', label: '手写' }, { value: 'slash', label: '划线' }]} onChange={(event) => props.onSettingsChange({ manualScoreStyle: event.target.value as AnswerSheetSettings['manualScoreStyle'] })} />
+            </div>
+            {(settings.manualScoreStyle ?? 'handwrite') === 'slash' && <div className="config-meta-row">
+              <span>半分</span>
+              <MetisCheckbox checked={!!settings.allowHalfScore} onChange={(event) => props.onSettingsChange({ allowHalfScore: event.target.checked })}>显示独立 0.5 格</MetisCheckbox>
+            </div>}
+          </>}
+          <div className="config-meta-row">
             <span>解答题作答</span>
             <div className="subjective-answer-controls">
               <MetisRadio.Group

@@ -173,6 +173,9 @@ export interface AnswerSheetSettings {
   subjectiveMerge: boolean
   subjectiveAnswerStyle: SubjectiveAnswerStyle
   subjectiveLineHeight: number
+  subjectiveManualGrading?: boolean
+  manualScoreStyle?: 'handwrite' | 'slash'
+  allowHalfScore?: boolean
   noticeText: string
   showFooter: boolean
   footerText: string
