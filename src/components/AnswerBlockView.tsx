@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisInput, MetisInputNumber, MetisRadio, MetisSelect } from '@yuanfudao/metis-web-component'
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Square, SquareDashed, Sigma, Table2, Trash2, Underline, Undo2 } from 'lucide-react'
-import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type FillSlotSetting, type FillSlotStyle, type ObjectiveSortMode } from '../features/answer-sheet/types'
+import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type FillSlotSetting, type FillSlotStyle, type ObjectiveSortMode, type SubquestionNumberStyle } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
 
 interface AnswerBlockViewProps {
@@ -58,6 +58,16 @@ function RuledLines({ count, dashed = false }: { count: number; dashed?: boolean
       {Array.from({ length: count }, (_, index) => <span key={index} />)}
     </div>
   )
+}
+
+const circledNumbers = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫', '⑬', '⑭', '⑮', '⑯', '⑰', '⑱', '⑲', '⑳']
+const chineseNumbers = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十']
+
+function formatSubquestionNumber(value: number, style: SubquestionNumberStyle = 'paren') {
+  if (style === 'circle') return circledNumbers[value - 1] ?? `㊉${value}`
+  if (style === 'plain') return `${value}.`
+  if (style === 'chinese') return `${chineseNumbers[value - 1] ?? value}、`
+  return `（${value}）`
 }
 
 function scoreKeys(block: AnswerBlock) {
@@ -129,8 +139,9 @@ function ShortAnswerContent({
     return <div className="solution-question-groups">{numbers.map((no, questionIndex) => {
       const subCount = block.answerSlotCounts?.[questionIndex] ?? 0
       const totalLines = block.questionLineCounts?.[String(no)] ?? Math.max(2, Math.floor(count / Math.max(1, numbers.length)))
-      const slots = subCount > 0 ? Array.from({ length: subCount }, (_, index) => index + 1) : [0]
-      return <section key={no}><b>{no}.</b>{slots.map((slot) => <div key={slot} className="solution-subquestion">{slot > 0 && <em>（{slot}）<QuestionScore block={block} scoreKey={`${no}.${slot}`} /></em>}{slot === 0 && <QuestionScore block={block} scoreKey={String(no)} />}<RuledLines count={Math.max(1, Math.floor(totalLines / slots.length))} dashed={dashed} /></div>)}</section>
+      const slots = subCount > 0 ? (block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: subCount }, (_, index) => index + 1)) : [0]
+      const numberStyle = block.answerSlotNumberStyles?.[questionIndex] ?? 'paren'
+      return <section key={no}><b>{no}.</b>{slots.map((slot) => <div key={slot} className="solution-subquestion">{slot > 0 && <em>{formatSubquestionNumber(slot, numberStyle)}<QuestionScore block={block} scoreKey={`${no}.${slot}`} /></em>}{slot === 0 && <QuestionScore block={block} scoreKey={String(no)} />}<RuledLines count={Math.max(1, Math.floor(totalLines / slots.length))} dashed={dashed} /></div>)}</section>
     })}</div>
   }
   if (block.answerSlotCounts?.length && numbers.length > 0) {
@@ -139,6 +150,7 @@ function ShortAnswerContent({
         {numbers.map((no, questionIndex) => {
           const slotCount = Math.max(1, block.answerSlotCounts?.[questionIndex] ?? 1)
           const slotNumbers = block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: slotCount }, (_, index) => index + 1)
+          const numberStyle = block.answerSlotNumberStyles?.[questionIndex] ?? 'paren'
           return (
             <div key={no} className="short-answer-slot-row">
               <b>{no}.</b>
@@ -161,7 +173,7 @@ function ShortAnswerContent({
                     event.stopPropagation()
                     onSlotClick(slotKey)
                   } : undefined}
-                ><em>{slotCount > 1 ? `(${slotNumber})` : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span></span>
+                ><em>{slotCount > 1 ? formatSubquestionNumber(slotNumber, numberStyle) : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span></span>
               })}
             </div>
           )
@@ -506,7 +518,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       {onInsertAfter && (
         <div className="block-module-tools" onClick={(event) => event.stopPropagation()}>
           {hasAnswerSettings && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={() => { setActiveSlotKey(null); openAnswerSettings() }}>作答设置</button>}
-          {canEditSlotNumbers && <button type="button" aria-expanded={settingsPanel === 'subquestion'} onClick={() => { openAnswerSettings(); setSettingsPanel('subquestion') }}>小题设置</button>}
+          {canEditSlotNumbers && <button type="button" aria-expanded={settingsPanel === 'subquestion'} onClick={() => { openAnswerSettings(); setSettingsPanel('subquestion') }}>题号设置</button>}
           <button type="button" aria-expanded={settingsPanel === 'insert'} onClick={() => setSettingsPanel('insert')}><Plus size={11} /> 插入 <ChevronDown size={11} /></button>
           {block.userInserted && <>
             <span className="module-tool-divider" />
@@ -590,12 +602,17 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
         </>}
       </div> : null}
       {settingsPanel === 'subquestion' && canEditSlotNumbers ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>
-        <div className="block-settings-title"><strong>小题设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
+        <div className="block-settings-title"><strong>题号设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
         <div className="slot-number-section standalone">
           <div className="slot-number-section-title"><span>支持连续序号或跳号，如 1,2,3 / 3,5</span></div>
-          {questionNumbers(block.range).map((number, questionIndex) => <label key={number}>
+          {questionNumbers(block.range).map((number, questionIndex) => <label className="slot-number-config-row" key={number}>
             <span>{number}题</span>
             <MetisInput size="small" value={slotNumberDrafts[questionIndex] ?? ''} placeholder="如 1,2,3" aria-label={`${number}题小题序号`} onChange={(event) => setSlotNumberDrafts((drafts) => drafts.map((draft, index) => index === questionIndex ? event.target.value : draft))} onKeyDown={(event) => { if (event.key === 'Enter') commitSlotNumbers() }} />
+            <MetisSelect size="small" value={block.answerSlotNumberStyles?.[questionIndex] ?? 'paren'} options={[{ value: 'paren', label: '（1）' }, { value: 'circle', label: '①' }, { value: 'plain', label: '1.' }, { value: 'chinese', label: '一、' }]} aria-label={`${number}题题号样式`} onChange={(value) => {
+              const styles = questionNumbers(block.range).map((_, index) => block.answerSlotNumberStyles?.[index] ?? 'paren')
+              styles[questionIndex] = value as SubquestionNumberStyle
+              onUpdateBlock?.({ answerSlotNumberStyles: styles })
+            }} />
           </label>)}
           <button type="button" className="primary" onClick={commitSlotNumbers}>应用序号</button>
         </div>

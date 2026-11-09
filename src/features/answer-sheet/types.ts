@@ -23,6 +23,7 @@ export type HeaderEvidence = 'product-default' | 'official-sample' | 'official-r
 export type HeaderModuleKind = 'title' | 'identity' | 'candidate-number' | 'barcode' | 'notice' | 'fill-sample' | 'absence-mark'
 export type ResponseStyle = 'lines' | 'grid' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
 export type FillSlotStyle = 'lines' | 'tian' | 'mi' | 'four-line'
+export type SubquestionNumberStyle = 'paren' | 'circle' | 'plain' | 'chinese'
 export interface FillSlotSetting {
   style: FillSlotStyle
   count?: number
@@ -94,6 +95,7 @@ export interface AnswerBlock {
   lineCount?: number
   answerSlotCounts?: number[]
   answerSlotNumbers?: number[][]
+  answerSlotNumberStyles?: SubquestionNumberStyle[]
   answerSlotSettings?: Record<string, FillSlotSetting>
   questionLineCounts?: Record<string, number>
   answerVariant?: 'fill' | 'solution'

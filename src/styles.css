@@ -480,6 +480,8 @@
 .slot-number-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--fx_border); }
 .slot-number-section-title span { color: var(--fx_text_3); font-size: 8px; }
 .slot-number-section label { display: grid; grid-template-columns: 42px minmax(0, 1fr); align-items: center; gap: 6px; margin-top: 6px; font-size: 9px; }
+.slot-number-section label.slot-number-config-row { grid-template-columns: 42px minmax(0, 1fr) 72px; }
+.slot-number-config-row .mc-select { width: 100%; }
 .slot-number-section > button.primary { float: right; height: 24px; margin-top: 8px; padding: 0 10px; border: 1px solid var(--fx_brand); border-radius: var(--fx_radius_2); background: var(--fx_brand); color: #fff; cursor: pointer; font-size: 8px; }
 .slot-number-section::after { display: block; clear: both; content: ''; }
 .module-insert-menu { position: absolute; z-index: 14; top: calc(100% + 46px); left: 50%; width: 112px; padding: 5px; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_3); background: var(--fx_surface); box-shadow: var(--fx_shadow_md); transform: translateX(-50%); }

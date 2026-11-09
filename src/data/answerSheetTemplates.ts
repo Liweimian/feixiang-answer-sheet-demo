@@ -255,6 +255,7 @@ export function instantiateTemplate(template: AnswerSheetTemplate): AnswerSheetD
       ...block,
       answerSlotCounts: block.answerSlotCounts ? [...block.answerSlotCounts] : undefined,
       answerSlotNumbers: block.answerSlotNumbers?.map((numbers) => [...numbers]),
+      answerSlotNumberStyles: block.answerSlotNumberStyles ? [...block.answerSlotNumberStyles] : undefined,
       answerSlotSettings: block.answerSlotSettings ? structuredClone(block.answerSlotSettings) : undefined,
       questionScores: block.questionScores ? { ...block.questionScores } : undefined,
       objectiveAnswers: block.objectiveAnswers ? Object.fromEntries(Object.entries(block.objectiveAnswers).map(([number, answers]) => [number, [...answers]])) : undefined,
