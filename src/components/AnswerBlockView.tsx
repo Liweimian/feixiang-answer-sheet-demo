@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { MetisInput, MetisInputNumber, MetisRadio, MetisSelect } from '@yuanfudao/metis-web-component'
+import { MetisCheckbox, MetisInput, MetisInputNumber, MetisRadio, MetisSelect } from '@yuanfudao/metis-web-component'
 import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Square, SquareDashed, Sigma, Table2, Trash2, Underline, Undo2 } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type FillSlotSetting, type FillSlotStyle, type ObjectiveSortMode } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
@@ -194,10 +194,15 @@ function RichElements({ elements = [] }: { elements?: ContentElement[] }) {
 
 function ScoreBox({ block }: { block: AnswerBlock }) {
   if (!block.showScoreBox) return null
-  const score = Math.max(1, block.score ?? 1)
-  const step = Math.max(0.5, block.scoreStep ?? 1)
-  const cells = Math.min(8, Math.max(2, Math.ceil(score / step)))
-  return <div className="score-box"><b>评分栏</b>{Array.from({ length: cells }, (_, index) => <span key={index} />)}</div>
+  const keys = scoreKeys(block)
+  const fallback = (block.score ?? 0) / Math.max(1, keys.length)
+  return <div className={`manual-score-list style-${block.manualScoreStyle ?? 'handwrite'}`}>{keys.map((key) => {
+    const score = Math.max(0, block.questionScores?.[key] ?? fallback)
+    if ((block.manualScoreStyle ?? 'handwrite') === 'handwrite') return <div className="manual-score-item" key={key}><b>{key}</b><span className="handwrite-score-box" aria-label={`${key}题手写分数框`} /></div>
+    const wholeMax = Math.floor(score)
+    const highScore = wholeMax > 20
+    return <div className="manual-score-item" key={key}><b>{key}</b>{highScore ? <div className="digit-score-rail"><span>十位</span>{Array.from({ length: Math.floor(wholeMax / 10) + 1 }, (_, value) => <i key={`t${value}`}>{value}</i>)}<span>个位</span>{Array.from({ length: 10 }, (_, value) => <i key={`o${value}`}>{value}</i>)}{block.allowHalfScore && <i className="half-score">0.5</i>}</div> : <div className="slash-score-rail">{Array.from({ length: wholeMax + 1 }, (_, index) => wholeMax - index).map((value) => <i key={value}>{value}</i>)}{block.allowHalfScore && <i className="half-score">0.5</i>}</div>}</div>
+  })}</div>
 }
 
 export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLeft = false, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onDeleteBlock, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true, subjectiveAnswerStyle = 'lines', subjectiveLineHeight = 16 }: AnswerBlockViewProps) {
@@ -580,6 +585,13 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           </div>}
           {block.answerAreaOverride && <button type="button" className="follow-card-action" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>恢复跟随整卡</button>}
         </>}
+        <div className="manual-grading-settings">
+          <MetisCheckbox checked={!!block.showScoreBox} onChange={(event) => onUpdateBlock?.({ showScoreBox: event.target.checked, manualScoreStyle: block.manualScoreStyle ?? 'handwrite' })}>主观题手批</MetisCheckbox>
+          {block.showScoreBox && <>
+            <div className="block-settings-row"><span>手批样式</span><MetisRadio.Group value={block.manualScoreStyle ?? 'handwrite'} options={[{ value: 'handwrite', label: '手写' }, { value: 'slash', label: '划线' }]} onChange={(event) => onUpdateBlock?.({ manualScoreStyle: event.target.value as AnswerBlock['manualScoreStyle'] })} /></div>
+            {block.manualScoreStyle === 'slash' && <MetisCheckbox checked={!!block.allowHalfScore} onChange={(event) => onUpdateBlock?.({ allowHalfScore: event.target.checked })}>允许半分</MetisCheckbox>}
+          </>}
+        </div>
       </div> : null}
       {settingsPanel === 'subquestion' && canEditSlotNumbers ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>
         <div className="block-settings-title"><strong>小题设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>

@@ -568,9 +568,15 @@
 .answer-block.kind-section-title .answer-block-heading { height: 100%; border: 1px solid var(--fx_paper_ink); background: var(--fx_surface_subtle); }
 .answer-block.kind-section-title.borderless .answer-block-heading { border-color: transparent; }
 .rich-image { min-width: 92px; background: linear-gradient(145deg, transparent 50%, var(--fx_surface_sunken) 50%); }
-.score-box { display: flex; align-items: stretch; justify-content: flex-end; min-height: 20px; padding: 3px 8px; font-size: 7px; }
-.score-box b, .score-box span { min-width: 20px; display: grid; place-items: center; border: 1px solid var(--fx_paper_rule); }
-.score-box span { border-left: 0; }
+.manual-grading-settings { display: grid; gap: var(--fx_sp_3); padding-top: var(--fx_sp_3); border-top: 1px solid var(--fx_border); }
+.manual-score-list { position: absolute; z-index: 2; top: 24px; right: 6px; display: grid; gap: 3px; max-width: calc(100% - 18px); font-size: 7px; }
+.manual-score-item { display: flex; align-items: stretch; justify-content: flex-end; background: var(--fx_paper); }
+.manual-score-item > b { min-width: 22px; display: grid; place-items: center; padding: 0 3px; border: 1px solid var(--fx_paper_rule); white-space: nowrap; }
+.handwrite-score-box { width: 30px; height: 24px; border: 1px dashed var(--fx_paper_rule); border-left: 0; }
+.slash-score-rail, .digit-score-rail { display: flex; align-items: stretch; min-width: 0; }
+.slash-score-rail i, .digit-score-rail i, .digit-score-rail > span { min-width: 20px; min-height: 20px; display: grid; place-items: center; border: 1px solid var(--fx_paper_rule); border-left: 0; font-style: normal; }
+.digit-score-rail > span { padding: 0 3px; background: var(--fx_surface_muted); }
+.slash-score-rail .half-score, .digit-score-rail .half-score { min-width: 24px; font-weight: 700; }
 .mixed-area { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; }
 .mixed-area > section { min-width: 0; overflow: hidden; border: 1px solid var(--fx_paper_rule); }
 .mixed-area > section > b { display: block; padding: 3px 6px; border-bottom: 1px solid var(--fx_paper_rule); font-size: 7px; }

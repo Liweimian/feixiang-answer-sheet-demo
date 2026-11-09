@@ -121,6 +121,8 @@ export interface AnswerBlock {
   showQuestionCount?: boolean
   showUnitScore?: boolean
   showScoreBox?: boolean
+  manualScoreStyle?: 'handwrite' | 'slash'
+  allowHalfScore?: boolean
   scoreStep?: number
   userInserted?: boolean
   borderStyle?: 'bordered' | 'borderless'

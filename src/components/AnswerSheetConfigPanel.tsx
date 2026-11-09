@@ -138,30 +138,26 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
 
         <section className="config-flat-section config-preset-section">
           <div className="config-flat-title">表头模板</div>
-          <MetisRadio.Group
-            className="config-inline-options"
-            value={candidatePreset}
-            options={[{ value: 'quiz', label: '日常测验' }, { value: 'exam', label: '大型考试' }]}
-            onChange={(event) => applyCandidatePreset(event.target.value as 'quiz' | 'exam')}
-          />
-        </section>
-
-        {candidatePreset === 'exam' && <section className="config-flat-section config-header-template-section">
-          <div className="config-flat-title">大考样式</div>
           <div className="header-template-control">
             <MetisSelect
               className="header-template-select"
-              value={document.header.templateId}
-              options={examHeaderTemplates.map((template) => ({
-                value: template.id,
-                label: `${template.shortName} · ${template.evidenceLabel}`,
-              }))}
-              onChange={(value) => props.onHeaderTemplateChange(value as HeaderTemplateId)}
+              value={candidatePreset === 'quiz' ? 'daily-quiz' : document.header.templateId}
+              options={[
+                { value: 'daily-quiz', label: '日常测验' },
+                ...examHeaderTemplates.map((template) => ({ value: template.id, label: template.shortName })),
+              ]}
+              onChange={(value) => {
+                if (value === 'daily-quiz') {
+                  applyCandidatePreset('quiz')
+                  return
+                }
+                props.onHeaderTemplateChange(value as HeaderTemplateId)
+              }}
             />
             {document.header.customized && <MetisButton size="s" onClick={props.onRestoreHeaderTemplate}>恢复</MetisButton>}
           </div>
-          <p className="header-template-source">{document.header.sourceNote}</p>
-        </section>}
+          {candidatePreset === 'exam' && <p className="header-template-source">{document.header.sourceNote}</p>}
+        </section>
 
         <section className="config-flat-section">
           <div className="config-meta-row config-score-meta-row">
