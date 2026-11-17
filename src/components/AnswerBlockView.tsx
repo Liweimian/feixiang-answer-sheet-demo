@@ -646,6 +646,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
             ]}
             onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: value as AnswerBlock['responseStyle'] })}
             /> : <MetisRadio.Group
+              className="answer-style-radio"
               value={effectiveSubjectiveStyle === 'blank' ? 'blank' : effectiveSubjectiveStyle === 'grid' ? 'grid' : 'lines'}
               options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '作答线' }, { value: 'grid', label: '作文格' }]}
               onChange={(event) => {

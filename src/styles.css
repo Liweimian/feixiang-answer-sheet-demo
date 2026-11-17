@@ -484,6 +484,8 @@
 .block-settings-title button { height: 22px; padding: 0 7px; border: 0; border-radius: var(--fx_radius_2); background: transparent; color: var(--fx_brand); cursor: pointer; font-size: 8px; }
 .block-settings-row { min-height: 32px; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 8px; border-top: 1px solid var(--fx_border_subtle); font-size: 9px; }
 .block-settings-row .mc-input-number-group-wrapper, .block-settings-row .mc-select { width: 100%; }
+.answer-style-radio { display: flex; align-items: center; flex-wrap: nowrap; gap: 10px; white-space: nowrap; }
+.answer-style-radio label { margin: 0; white-space: nowrap; }
 .follow-card-action { margin: 4px 0 2px 66px; padding: 0; border: 0; background: transparent; color: var(--fx_brand); cursor: pointer; font-size: 8px; }
 .slot-number-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--fx_border); }
 .slot-number-section-title span { color: var(--fx_text_3); font-size: 8px; }
