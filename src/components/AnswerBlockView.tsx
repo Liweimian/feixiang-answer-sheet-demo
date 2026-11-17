@@ -178,20 +178,20 @@ function ShortAnswerContent({
                 const setting = block.answerSlotSettings?.[slotKey]
                 const style = setting?.style ?? block.responseStyle ?? 'lines'
                 const cellCount = style === 'tian' ? Math.max(1, Math.min(20, setting?.count ?? 4)) : 1
-                return <span
-                  key={slotIndex}
-                  className={`slot-style-${style} ${onSlotClick ? 'fill-slot-clickable' : ''} ${activeSlotKey === slotKey ? 'active-slot' : ''}`}
-                  role={onSlotClick ? 'button' : undefined}
-                  tabIndex={onSlotClick ? 0 : undefined}
-                  aria-label={onSlotClick ? `设置第${no}题第${slotNumber}空` : undefined}
-                  onClick={onSlotClick ? (event) => { event.stopPropagation(); onSlotClick(slotKey) } : undefined}
-                  onKeyDown={onSlotClick ? (event) => {
-                    if (event.key !== 'Enter' && event.key !== ' ') return
-                    event.preventDefault()
-                    event.stopPropagation()
-                    onSlotClick(slotKey)
-                  } : undefined}
-                ><em>{slotCount > 1 ? formatSubquestionNumber(slotNumber, numberStyle) : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span>{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${slotKey}题手写分数框`} />}{showInlineSlashScore && <ManualScoreRail score={Math.max(0, block.questionScores?.[slotKey] ?? (block.score ?? 0) / Math.max(1, scoreKeys(block).length))} allowHalfScore={allowHalfScore} inline />}{activeSlotKey === slotKey && onSlotSettingChange ? <span className="inline-slot-editor" role="dialog" aria-label={`第${no}题第${slotNumber}空作答样式`} onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+                return <span key={slotIndex} className={`fill-slot-item slot-style-${style}`}>
+                  <span
+                    className={`${onSlotClick ? 'fill-slot-clickable' : ''} ${activeSlotKey === slotKey ? 'active-slot' : ''}`}
+                    role={onSlotClick ? 'button' : undefined}
+                    tabIndex={onSlotClick ? 0 : undefined}
+                    aria-label={onSlotClick ? `设置第${no}题第${slotNumber}空` : undefined}
+                    onClick={onSlotClick ? (event) => { event.stopPropagation(); onSlotClick(slotKey) } : undefined}
+                    onKeyDown={onSlotClick ? (event) => {
+                      if (event.key !== 'Enter' && event.key !== ' ') return
+                      event.preventDefault()
+                      event.stopPropagation()
+                      onSlotClick(slotKey)
+                    } : undefined}
+                  ><em>{slotCount > 1 ? formatSubquestionNumber(slotNumber, numberStyle) : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span>{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${slotKey}题手写分数框`} />}{showInlineSlashScore && <ManualScoreRail score={Math.max(0, block.questionScores?.[slotKey] ?? (block.score ?? 0) / Math.max(1, scoreKeys(block).length))} allowHalfScore={allowHalfScore} inline />}</span>{activeSlotKey === slotKey && onSlotSettingChange ? <span className="inline-slot-editor" role="dialog" aria-label={`第${no}题第${slotNumber}空作答样式`} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
                   <MetisSelect
                     size="small"
                     value={style}
@@ -201,7 +201,10 @@ function ShortAnswerContent({
                       { value: 'mi', label: '米字格' },
                       { value: 'four-line', label: '四线三格' },
                     ]}
-                    onChange={(value) => onSlotSettingChange(slotKey, { style: value as FillSlotStyle })}
+                    onChange={(value) => {
+                      const nextStyle = typeof value === 'string' ? value : String((value as { value?: unknown } | null)?.value ?? '')
+                      if (nextStyle) onSlotSettingChange(slotKey, { style: nextStyle as FillSlotStyle })
+                    }}
                     aria-label="当前空作答样式"
                   />
                   {style === 'tian' ? <MetisInputNumber
