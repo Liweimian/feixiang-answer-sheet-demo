@@ -177,7 +177,7 @@ function ShortAnswerContent({
                 const slotKey = `${no}.${slotNumber}`
                 const setting = block.answerSlotSettings?.[slotKey]
                 const style = setting?.style ?? block.responseStyle ?? 'lines'
-                const cellCount = style === 'tian' ? Math.max(1, Math.min(20, setting?.count ?? 4)) : 1
+                const cellCount = style === 'tian' || style === 'mi' ? Math.max(1, Math.min(20, setting?.count ?? 4)) : 1
                 return <span key={slotIndex} className={`fill-slot-item slot-style-${style}`}>
                   <span
                     className={`${onSlotClick ? 'fill-slot-clickable' : ''} ${activeSlotKey === slotKey ? 'active-slot' : ''}`}
@@ -207,13 +207,13 @@ function ShortAnswerContent({
                     }}
                     aria-label="当前空作答样式"
                   />
-                  {style === 'tian' ? <MetisInputNumber
+                  {(style === 'tian' || style === 'mi') ? <MetisInputNumber
                     size="small"
                     min={1}
                     max={20}
                     value={setting?.count ?? 4}
                     addonAfter="格"
-                    aria-label="当前空田字格数量"
+                    aria-label={`当前空${style === 'tian' ? '田字格' : '米字格'}数量`}
                     onChange={(value) => onSlotSettingChange(slotKey, { count: Number(value ?? 4) })}
                   /> : null}
                 </span> : null}</span>
