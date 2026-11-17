@@ -128,13 +128,13 @@ function GridPaper({ rows = 8, cells, variant = 'grid' }: { rows?: number; cells
 const compositionRowHeight = 18
 const compositionRowGap = 5
 
-function compositionRowsForHeight(height: number, reservedHeight: number) {
-  return Math.max(1, Math.floor((Math.max(height, reservedHeight + compositionRowHeight) - reservedHeight + compositionRowGap) / (compositionRowHeight + compositionRowGap)))
-}
-
 function compositionBlockHeight(rows: number, reservedHeight: number) {
   const safeRows = Math.max(1, Math.min(40, Math.round(rows)))
   return reservedHeight + safeRows * compositionRowHeight + Math.max(0, safeRows - 1) * compositionRowGap
+}
+
+function compositionRowsForWords(words: number) {
+  return Math.max(1, Math.ceil(Math.max(20, words) / 20))
 }
 
 function ShortAnswerContent({
@@ -166,9 +166,13 @@ function ShortAnswerContent({
     return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b key={number}>{number}.<QuestionScore block={block} scoreKey={String(number)} /></b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
   }
   if (block.responseStyle === 'grid' && numbers.length > 0) {
-    const totalRows = Math.max(1, block.lineCount ?? 7)
-    const rowsPerQuestion = Math.max(1, Math.floor(totalRows / numbers.length))
-    return <div className="short-answer-groups composition-answer-groups">{numbers.map((no) => <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><GridPaper rows={rowsPerQuestion} cells={rowsPerQuestion * 20} /></div>)}</div>
+    const totalRows = compositionRowsForWords(block.wordCount ?? 400)
+    const baseRows = Math.floor(totalRows / numbers.length)
+    const remainder = totalRows % numbers.length
+    return <div className="short-answer-groups composition-answer-groups">{numbers.map((no, index) => {
+      const rows = Math.max(1, baseRows + (index < remainder ? 1 : 0))
+      return <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><GridPaper rows={rows} cells={rows * 20} /></div>
+    })}</div>
   }
   if (block.answerVariant === 'solution' && numbers.length > 0) {
     return <div className="solution-question-groups">{numbers.map((no, questionIndex) => {
@@ -597,11 +601,22 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
         {block.kind === 'essay' ? <>
           <div className="block-settings-row">
             <span>全部空</span>
-            <MetisRadio.Group value={block.responseStyle === 'grid' ? 'grid' : 'lines'} options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]} onChange={(event) => onUpdateBlock?.({ responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />
+            <MetisRadio.Group value={block.responseStyle === 'grid' ? 'grid' : 'lines'} options={[{ value: 'grid', label: '格子' }, { value: 'lines', label: '横线' }]} onChange={(event) => {
+              const responseStyle = event.target.value as AnswerBlock['responseStyle']
+              if (responseStyle !== 'grid') {
+                onUpdateBlock?.({ responseStyle })
+                return
+              }
+              const wordCount = block.wordCount ?? 600
+              onUpdateBlock?.({ responseStyle, wordCount, height: compositionBlockHeight(compositionRowsForWords(wordCount), 72) })
+            }} />
           </div>
           <div className="block-settings-row">
             <span>字数</span>
-            <MetisSelect size="small" value={block.wordCount ?? 600} options={[400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))} onChange={(value) => onUpdateBlock?.({ wordCount: Number(value) })} aria-label="作文字数" />
+            <MetisSelect size="small" value={block.wordCount ?? 600} options={[200, 400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))} onChange={(value) => {
+              const wordCount = Number(value)
+              onUpdateBlock?.({ wordCount, ...(block.responseStyle === 'grid' ? { height: compositionBlockHeight(compositionRowsForWords(wordCount), 72) } : {}) })
+            }} aria-label="作文字数" />
           </div>
         </> : <>
           <div className="block-settings-row">
@@ -625,10 +640,10 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
                   onUpdateBlock?.({ answerAreaOverride: true, responseStyle })
                   return
                 }
-                const rows = block.lineCount ?? 7
+                const wordCount = block.wordCount ?? 400
                 const questionCount = Math.max(1, questionNumbers(block.range).length)
                 const reservedHeight = 68 + Math.max(0, questionCount - 1) * 14
-                onUpdateBlock?.({ answerAreaOverride: true, responseStyle, lineCount: rows, height: compositionBlockHeight(rows, reservedHeight) })
+                onUpdateBlock?.({ answerAreaOverride: true, responseStyle, wordCount, height: compositionBlockHeight(compositionRowsForWords(wordCount), reservedHeight) })
               }}
             />}
           </div>
@@ -637,19 +652,17 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
             <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label="作答线行数" onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
           </div>}
           {effectiveSubjectiveStyle === 'grid' && <div className="block-settings-row">
-            <span>作文格</span>
-            <MetisInputNumber
+            <span>字数</span>
+            <MetisSelect
               size="small"
-              min={1}
-              max={40}
-              value={block.lineCount ?? 7}
-              addonAfter="行"
-              aria-label="作文格行数"
+              value={block.wordCount ?? 400}
+              options={[200, 400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))}
+              aria-label="作文字数"
               onChange={(value) => {
-                const rows = Math.max(1, Math.min(40, Number(value ?? 7)))
+                const wordCount = Number(value)
                 const questionCount = Math.max(1, questionNumbers(block.range).length)
                 const reservedHeight = 68 + Math.max(0, questionCount - 1) * 14
-                onUpdateBlock?.({ answerAreaOverride: true, lineCount: rows, height: compositionBlockHeight(rows, reservedHeight) })
+                onUpdateBlock?.({ answerAreaOverride: true, wordCount, height: compositionBlockHeight(compositionRowsForWords(wordCount), reservedHeight) })
               }}
             />
           </div>}
@@ -728,7 +741,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           return <section key={part.id} className="merged-subjective-part" style={{ flexGrow: Math.max(1, part.height) }}>
             {part.kind === 'short-answer' && <ShortAnswerContent block={{ ...part, responseStyle: partStyle }} fillModule={partStyle === 'lines'} lineHeight={subjectiveLineHeight} />}
             {part.kind === 'essay' && (part.responseStyle === 'grid'
-              ? <GridPaper rows={compositionRowsForHeight(part.height, 66)} cells={compositionRowsForHeight(part.height, 66) * 20} />
+              ? <GridPaper rows={compositionRowsForWords(part.wordCount ?? 600)} cells={part.wordCount ?? 600} />
               : <RuledLines dashed={part.lineStyle === 'dashed'} count={part.lineCount ?? 10} />)}
             {part.kind === 'drawing' && <div className="drawing-area">作图区</div>}
             {part.kind === 'table' && <RichElements elements={['table']} />}
@@ -757,7 +770,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           {questionNumbers(block.range).map((number) => <div key={number} className="subjective-question-label"><b>{number}.</b><QuestionScore block={block} scoreKey={String(number)} /></div>)}
           <p>{block.hint ?? (block.responseStyle === 'grid' ? `作文格作答区；当前设置 ${block.wordCount ?? 600} 字，可在选中后调整字数` : '请在指定区域内完成作文，超出区域的答案无效。')}</p>
           {!!block.leadingBlankLines && <div className="essay-leading-space" style={{ height: `${block.leadingBlankLines * 14}px` }} aria-label={`作文前空 ${block.leadingBlankLines} 行`} />}
-          {block.responseStyle === 'grid' ? <GridPaper rows={compositionRowsForHeight(block.height, 72)} cells={compositionRowsForHeight(block.height, 72) * 20} /> : block.writingLayout === 'separate' ? (
+          {block.responseStyle === 'grid' ? <GridPaper rows={compositionRowsForWords(block.wordCount ?? 600)} cells={block.wordCount ?? 600} /> : block.writingLayout === 'separate' ? (
             <div className="essay-choice-areas">
               <section><b>选项 A 作答区</b><RuledLines dashed={block.lineStyle === 'dashed'} count={Math.max(4, Math.floor((block.lineCount ?? 12) / 2))} /></section>
               <section><b>选项 B 作答区</b><RuledLines dashed={block.lineStyle === 'dashed'} count={Math.max(4, Math.floor((block.lineCount ?? 12) / 2))} /></section>
