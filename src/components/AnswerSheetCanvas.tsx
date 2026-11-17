@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { MetisButton, MetisDropdown, MetisInput } from '@yuanfudao/metis-web-component'
-import { Combine, Eye, EyeOff, LockKeyhole, Pencil, QrCode, Scissors, X } from 'lucide-react'
+import { Combine, Eye, EyeOff, LockKeyhole, Pencil, QrCode, Scissors } from 'lucide-react'
 import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, HeaderLayout, RulePack } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { questionNumbers } from '../features/answer-sheet/range'
@@ -328,6 +328,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
 
 export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>(props.selectedBlockId ? [props.selectedBlockId] : [])
+  const [marquee, setMarquee] = useState<{ page: number; startX: number; startY: number; currentX: number; currentY: number } | null>(null)
 
   useEffect(() => {
     if (!props.selectedBlockId) return
@@ -339,10 +340,59 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
     page?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [props.activePage])
 
+  useEffect(() => {
+    const clearWithEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      const target = event.target as HTMLElement | null
+      if (target?.matches('input, textarea, [contenteditable="true"]')) return
+      setSelectedIds([])
+      setMarquee(null)
+    }
+    window.addEventListener('keydown', clearWithEscape)
+    return () => window.removeEventListener('keydown', clearWithEscape)
+  }, [])
+
   const selectBlock = (id: string, additive: boolean) => {
     setSelectedIds((current) => additive
       ? current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
       : [id])
+  }
+
+  const beginMarquee = (page: number, event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return
+    const target = event.target as HTMLElement
+    if (target.closest('.answer-block, .answer-sheet-header, .candidate-notice, button, input, textarea, select, [contenteditable="true"]')) return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    setMarquee({ page, startX: event.clientX, startY: event.clientY, currentX: event.clientX, currentY: event.clientY })
+  }
+
+  const moveMarquee = (event: ReactPointerEvent<HTMLDivElement>) => {
+    setMarquee((current) => current ? { ...current, currentX: event.clientX, currentY: event.clientY } : current)
+  }
+
+  const finishMarquee = (page: number, event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!marquee || marquee.page !== page) return
+    const left = Math.min(marquee.startX, event.clientX)
+    const right = Math.max(marquee.startX, event.clientX)
+    const top = Math.min(marquee.startY, event.clientY)
+    const bottom = Math.max(marquee.startY, event.clientY)
+    const isClick = right - left < 5 && bottom - top < 5
+    if (isClick) {
+      setSelectedIds([])
+      setMarquee(null)
+      return
+    }
+    const frame = event.currentTarget
+    const ids = Array.from(frame.querySelectorAll<HTMLElement>('.answer-block[data-block-id]'))
+      .filter((block) => {
+        const rect = block.getBoundingClientRect()
+        return rect.left < right && rect.right > left && rect.top < bottom && rect.bottom > top
+      })
+      .map((block) => block.dataset.blockId)
+      .filter((id): id is string => Boolean(id))
+    setSelectedIds(ids)
+    if (ids[0]) props.onSelectBlock(ids[0])
+    setMarquee(null)
   }
 
   const selectedBlocks = props.blocks.filter((block) => selectedIds.includes(block.id))
@@ -391,7 +441,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   }
 
   const selectionToolbar = (selectedIds.length > 1 || selectedMergedBlock) ? <>
-    <span>{selectedMergedBlock ? `已选合并模块（${selectedMergedBlock.mergedParts?.length} 个）` : `已选 ${selectedIds.length} 个模块`}</span>
+    <span>{selectedMergedBlock ? `已合并 ${selectedMergedBlock.mergedParts?.length} 个模块` : `已选 ${selectedIds.length} 个`}</span>
     {selectedMergedBlock ? (
       <MetisButton
         type="primary"
@@ -399,7 +449,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
         icon={<Scissors size={13} />}
         onClick={() => props.onSplitMerged(selectedMergedBlock.id)}
       >
-        分割模块
+        分割
       </MetisButton>
     ) : (
       <MetisButton
@@ -409,10 +459,9 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
         disabled={!canMerge}
         onClick={mergeSelection}
       >
-        合并模块
+        合并
       </MetisButton>
     )}
-    <MetisButton size="s" icon={<X size={13} />} onClick={() => setSelectedIds([])}>取消选择</MetisButton>
   </> : undefined
 
   return (
@@ -420,7 +469,14 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
       <div className="paper-viewport">
         <div className="paper-stack">
           {Array.from({ length: props.pageCount }, (_, index) => index + 1).map((page) => (
-            <div className="paper-frame" key={page}>
+            <div
+              className={`paper-frame ${marquee?.page === page ? 'is-marquee-selecting' : ''}`}
+              key={page}
+              onPointerDown={(event) => beginMarquee(page, event)}
+              onPointerMove={moveMarquee}
+              onPointerUp={(event) => finishMarquee(page, event)}
+              onPointerCancel={() => setMarquee(null)}
+            >
               <PaperPage
                 paper={props.paper}
                 blocks={props.blocks}
@@ -450,6 +506,15 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
               <button type="button" className={`paper-page-badge ${page === props.activePage ? 'active' : ''}`} onClick={() => props.onPageChange(page)} aria-label={`定位第 ${page} 面`}>{page}/{props.pageCount}</button>
             </div>
           ))}
+          {marquee && <div
+            className="canvas-marquee-selection"
+            style={{
+              left: Math.min(marquee.startX, marquee.currentX),
+              top: Math.min(marquee.startY, marquee.currentY),
+              width: Math.abs(marquee.currentX - marquee.startX),
+              height: Math.abs(marquee.currentY - marquee.startY),
+            }}
+          />}
         </div>
       </div>
 
