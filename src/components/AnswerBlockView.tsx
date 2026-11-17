@@ -153,6 +153,10 @@ function ShortAnswerContent({
     const fullLineCount = Math.max(2, Math.floor((block.height - 48) / Math.max(12, lineHeight)))
     return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b key={number}>{number}.<QuestionScore block={block} scoreKey={String(number)} /></b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
   }
+  if (block.responseStyle === 'grid' && numbers.length > 0) {
+    const rowsPerQuestion = Math.max(1, Math.floor(count / numbers.length))
+    return <div className="short-answer-groups composition-answer-groups">{numbers.map((no) => <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><GridPaper rows={rowsPerQuestion} /></div>)}</div>
+  }
   if (block.answerVariant === 'solution' && numbers.length > 0) {
     return <div className="solution-question-groups">{numbers.map((no, questionIndex) => {
       const subCount = block.answerSlotCounts?.[questionIndex] ?? 0
@@ -599,11 +603,15 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
               { value: 'four-line', label: '四线三格' },
             ]}
             onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: value as AnswerBlock['responseStyle'] })}
-            /> : <MetisRadio.Group value={effectiveSubjectiveStyle === 'blank' ? 'blank' : 'lines'} options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '作答线' }]} onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />}
+            /> : <MetisRadio.Group
+              value={effectiveSubjectiveStyle === 'blank' ? 'blank' : effectiveSubjectiveStyle === 'grid' ? 'grid' : 'lines'}
+              options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '作答线' }, { value: 'grid', label: '作文格' }]}
+              onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })}
+            />}
           </div>
-          {effectiveSubjectiveStyle === 'lines' && <div className="block-settings-row">
-            <span>作答线</span>
-            <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label="作答线行数" onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
+          {(effectiveSubjectiveStyle === 'lines' || effectiveSubjectiveStyle === 'grid') && <div className="block-settings-row">
+            <span>{effectiveSubjectiveStyle === 'grid' ? '作文格' : '作答线'}</span>
+            <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label={effectiveSubjectiveStyle === 'grid' ? '作文格行数' : '作答线行数'} onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
           </div>}
           {block.answerAreaOverride && <button type="button" className="follow-card-action" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>恢复跟随整卡</button>}
         </>}
