@@ -333,6 +333,7 @@
 .paper-frame.is-marquee-selecting { cursor: crosshair; user-select: none; }
 .print-pages { display: none; }
 .answer-paper { position: relative; width: var(--fx_paper_width); min-height: var(--fx_paper_height); display: inline-block; padding: 28px 34px 24px; overflow: hidden; border: 1px solid var(--fx_paper_line); background: var(--fx_paper); box-shadow: var(--fx_shadow_paper); color: var(--fx_paper_ink); text-align: left; }
+.answer-paper:has(.answer-block.selected) { z-index: 3; overflow: visible; }
 .standard-paper { padding-right: 46px; border-color: var(--fx_paper_ink); }
 .paper-header { position: relative; padding-bottom: var(--fx_sp_2); border-bottom: 2px solid var(--fx_paper_ink); }
 .paper-title { text-align: center; }
