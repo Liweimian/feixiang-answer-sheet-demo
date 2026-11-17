@@ -524,6 +524,7 @@
 .slot-response-cells { min-width: 26px; display: flex; align-items: end; gap: 1px; flex: 1; }
 .short-answer-slot-row .slot-response-cells i { min-width: 0; height: 1px; flex: 1; border-bottom: 1px solid var(--fx_paper_rule); }
 .inline-handwrite-score-box { width: 24px; height: 18px; flex: 0 0 24px; align-self: center; box-sizing: border-box; border: 1px dashed var(--fx_paper_rule); background: var(--fx_paper); }
+.inline-score-rail { flex: 0 0 auto; align-self: center; }
 .ruled-lines { display: grid; align-content: start; gap: 7px; margin-top: var(--fx_sp_1); }
 .ruled-lines span { height: 1px; display: block; border-bottom: 1px solid var(--fx_paper_rule); }
 .ruled-lines.dashed span { border-bottom-style: dashed; }
@@ -579,6 +580,7 @@
 .handwrite-score-box { width: 30px; height: 24px; box-sizing: border-box; border: 1px dashed var(--fx_paper_rule); }
 .slash-score-rail, .digit-score-rail { display: flex; align-items: stretch; min-width: 0; }
 .slash-score-rail i, .digit-score-rail i, .digit-score-rail > span { min-width: 20px; min-height: 20px; display: grid; place-items: center; border: 1px solid var(--fx_paper_rule); border-left: 0; font-style: normal; }
+.inline-score-rail i:first-child, .inline-score-rail > span:first-child, .manual-score-item .slash-score-rail i:first-child, .manual-score-item .digit-score-rail > span:first-child { border-left: 1px solid var(--fx_paper_rule); }
 .digit-score-rail > span { padding: 0 3px; background: var(--fx_surface_muted); }
 .slash-score-rail .half-score, .digit-score-rail .half-score { min-width: 24px; font-weight: 700; }
 .mixed-area { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; }

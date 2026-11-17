@@ -91,6 +91,15 @@ function QuestionScore({ block, scoreKey }: { block: AnswerBlock; scoreKey: stri
   return score === undefined ? null : <small className="question-unit-score">（{score}分）</small>
 }
 
+function ManualScoreRail({ score, allowHalfScore = false, inline = false }: { score: number; allowHalfScore?: boolean; inline?: boolean }) {
+  const wholeMax = Math.floor(Math.max(0, score))
+  const highScore = wholeMax > 20
+  if (highScore) {
+    return <div className={`digit-score-rail ${inline ? 'inline-score-rail' : ''}`}><span>十位</span>{Array.from({ length: Math.floor(wholeMax / 10) + 1 }, (_, value) => <i key={`t${value}`}>{value}</i>)}<span>个位</span>{Array.from({ length: 10 }, (_, value) => <i key={`o${value}`}>{value}</i>)}{allowHalfScore && <i className="half-score">0.5</i>}</div>
+  }
+  return <div className={`slash-score-rail ${inline ? 'inline-score-rail' : ''}`}>{Array.from({ length: wholeMax + 1 }, (_, index) => wholeMax - index).map((value) => <i key={value}>{value}</i>)}{allowHalfScore && <i className="half-score">0.5</i>}</div>
+}
+
 function AnswerMarks({ block }: { block: AnswerBlock }) {
   const numbers = questionNumbers(block.range)
   const mark = block.responseStyle === 'square' ? '□' : '（　）'
@@ -122,6 +131,8 @@ function ShortAnswerContent({
   activeSlotKey,
   onSlotClick,
   showInlineHandwriteScore = false,
+  showInlineSlashScore = false,
+  allowHalfScore = false,
 }: {
   block: AnswerBlock
   fillModule?: boolean
@@ -129,6 +140,8 @@ function ShortAnswerContent({
   activeSlotKey?: string | null
   onSlotClick?: (slotKey: string) => void
   showInlineHandwriteScore?: boolean
+  showInlineSlashScore?: boolean
+  allowHalfScore?: boolean
 }) {
   const count = block.lineCount ?? 4
   const numbers = questionNumbers(block.range)
@@ -175,7 +188,7 @@ function ShortAnswerContent({
                     event.stopPropagation()
                     onSlotClick(slotKey)
                   } : undefined}
-                ><em>{slotCount > 1 ? formatSubquestionNumber(slotNumber, numberStyle) : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span>{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${slotKey}题手写分数框`} />}</span>
+                ><em>{slotCount > 1 ? formatSubquestionNumber(slotNumber, numberStyle) : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span>{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${slotKey}题手写分数框`} />}{showInlineSlashScore && <ManualScoreRail score={Math.max(0, block.questionScores?.[slotKey] ?? (block.score ?? 0) / Math.max(1, scoreKeys(block).length))} allowHalfScore={allowHalfScore} inline />}</span>
               })}
             </div>
           )
@@ -216,9 +229,7 @@ function ScoreBox({ block, enabled, style = 'handwrite', allowHalfScore = false 
   return <div className={`manual-score-list style-${style}`}>{keys.map((key) => {
     const score = Math.max(0, block.questionScores?.[key] ?? fallback)
     if (style === 'handwrite') return <div className="manual-score-item" key={key}><span className="handwrite-score-box" aria-label={`${key}题手写分数框`} /></div>
-    const wholeMax = Math.floor(score)
-    const highScore = wholeMax > 20
-    return <div className="manual-score-item" key={key}><b>{key}</b>{highScore ? <div className="digit-score-rail"><span>十位</span>{Array.from({ length: Math.floor(wholeMax / 10) + 1 }, (_, value) => <i key={`t${value}`}>{value}</i>)}<span>个位</span>{Array.from({ length: 10 }, (_, value) => <i key={`o${value}`}>{value}</i>)}{allowHalfScore && <i className="half-score">0.5</i>}</div> : <div className="slash-score-rail">{Array.from({ length: wholeMax + 1 }, (_, index) => wholeMax - index).map((value) => <i key={value}>{value}</i>)}{allowHalfScore && <i className="half-score">0.5</i>}</div>}</div>
+    return <div className="manual-score-item" key={key}><ManualScoreRail score={score} allowHalfScore={allowHalfScore} /></div>
   })}</div>
 }
 
@@ -667,7 +678,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
         <div className="question-stem-preview"><b>原卷题目</b><span>{questionContext || block.title}{block.range ? ` · ${block.range}` : ''}</span></div>
       )}
       <RichElements elements={block.contentElements} />
-      <ScoreBox block={block} enabled={subjectiveManualGrading && hasAnswerSettings && !(isFillAnswerBlock && manualScoreStyle === 'handwrite')} style={manualScoreStyle} allowHalfScore={allowHalfScore} />
+      <ScoreBox block={block} enabled={subjectiveManualGrading && hasAnswerSettings && !isFillAnswerBlock} style={manualScoreStyle} allowHalfScore={allowHalfScore} />
       {block.kind === 'objective' && <ObjectiveGrid block={block} sortMode={objectiveSortMode} merged={objectiveMerge} />}
       {mergedSubjectiveParts && <div className="merged-subjective-parts">
         {mergedSubjectiveParts.map((part) => {
@@ -682,7 +693,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           </section>
         })}
       </div>}
-      {!mergedSubjectiveParts && block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} activeSlotKey={activeSlotKey} onSlotClick={isFillAnswerBlock ? openSlotSettings : undefined} showInlineHandwriteScore={isFillAnswerBlock && subjectiveManualGrading && manualScoreStyle === 'handwrite'} />}
+      {!mergedSubjectiveParts && block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} activeSlotKey={activeSlotKey} onSlotClick={isFillAnswerBlock ? openSlotSettings : undefined} showInlineHandwriteScore={isFillAnswerBlock && subjectiveManualGrading && manualScoreStyle === 'handwrite'} showInlineSlashScore={isFillAnswerBlock && subjectiveManualGrading && manualScoreStyle === 'slash'} allowHalfScore={allowHalfScore} />}
       {!mergedSubjectiveParts && block.kind === 'mixed' && (
         <div className="mixed-area">
           {(() => {
