@@ -125,6 +125,13 @@ function GridPaper({ rows = 8, cells, variant = 'grid' }: { rows?: number; cells
   )
 }
 
+const compositionRowHeight = 18
+const compositionRowGap = 5
+
+function compositionRowsForHeight(height: number, reservedHeight: number) {
+  return Math.max(1, Math.floor((Math.max(height, reservedHeight + compositionRowHeight) - reservedHeight + compositionRowGap) / (compositionRowHeight + compositionRowGap)))
+}
+
 function ShortAnswerContent({
   block,
   fillModule = false,
@@ -154,7 +161,8 @@ function ShortAnswerContent({
     return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b key={number}>{number}.<QuestionScore block={block} scoreKey={String(number)} /></b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
   }
   if (block.responseStyle === 'grid' && numbers.length > 0) {
-    const rowsPerQuestion = Math.max(1, Math.floor(count / numbers.length))
+    const totalRows = compositionRowsForHeight(block.height, 68 + Math.max(0, numbers.length - 1) * 14)
+    const rowsPerQuestion = Math.max(1, Math.floor(totalRows / numbers.length))
     return <div className="short-answer-groups composition-answer-groups">{numbers.map((no) => <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><GridPaper rows={rowsPerQuestion} cells={rowsPerQuestion * 20} /></div>)}</div>
   }
   if (block.answerVariant === 'solution' && numbers.length > 0) {
@@ -609,10 +617,11 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
               onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })}
             />}
           </div>
-          {(effectiveSubjectiveStyle === 'lines' || effectiveSubjectiveStyle === 'grid') && <div className="block-settings-row">
-            <span>{effectiveSubjectiveStyle === 'grid' ? '作文格' : '作答线'}</span>
-            <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label={effectiveSubjectiveStyle === 'grid' ? '作文格行数' : '作答线行数'} onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
+          {effectiveSubjectiveStyle === 'lines' && <div className="block-settings-row">
+            <span>作答线</span>
+            <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label="作答线行数" onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
           </div>}
+          {effectiveSubjectiveStyle === 'grid' && <div className="block-settings-row composition-auto-row"><span>作文格</span><b>随模块高度自动调整</b></div>}
           {block.answerAreaOverride && <button type="button" className="follow-card-action" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>恢复跟随整卡</button>}
         </>}
       </div> : null}
@@ -688,7 +697,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           return <section key={part.id} className="merged-subjective-part" style={{ flexGrow: Math.max(1, part.height) }}>
             {part.kind === 'short-answer' && <ShortAnswerContent block={{ ...part, responseStyle: partStyle }} fillModule={partStyle === 'lines'} lineHeight={subjectiveLineHeight} />}
             {part.kind === 'essay' && (part.responseStyle === 'grid'
-              ? <GridPaper rows={part.lineCount ?? 10} cells={part.wordCount} />
+              ? <GridPaper rows={compositionRowsForHeight(part.height, 66)} cells={compositionRowsForHeight(part.height, 66) * 20} />
               : <RuledLines dashed={part.lineStyle === 'dashed'} count={part.lineCount ?? 10} />)}
             {part.kind === 'drawing' && <div className="drawing-area">作图区</div>}
             {part.kind === 'table' && <RichElements elements={['table']} />}
@@ -717,7 +726,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           {questionNumbers(block.range).map((number) => <div key={number} className="subjective-question-label"><b>{number}.</b><QuestionScore block={block} scoreKey={String(number)} /></div>)}
           <p>{block.hint ?? (block.responseStyle === 'grid' ? `作文格作答区；当前设置 ${block.wordCount ?? 600} 字，可在选中后调整字数` : '请在指定区域内完成作文，超出区域的答案无效。')}</p>
           {!!block.leadingBlankLines && <div className="essay-leading-space" style={{ height: `${block.leadingBlankLines * 14}px` }} aria-label={`作文前空 ${block.leadingBlankLines} 行`} />}
-          {block.responseStyle === 'grid' ? <GridPaper rows={block.lineCount ?? 10} cells={block.wordCount} /> : block.writingLayout === 'separate' ? (
+          {block.responseStyle === 'grid' ? <GridPaper rows={compositionRowsForHeight(block.height, 72)} cells={compositionRowsForHeight(block.height, 72) * 20} /> : block.writingLayout === 'separate' ? (
             <div className="essay-choice-areas">
               <section><b>选项 A 作答区</b><RuledLines dashed={block.lineStyle === 'dashed'} count={Math.max(4, Math.floor((block.lineCount ?? 12) / 2))} /></section>
               <section><b>选项 B 作答区</b><RuledLines dashed={block.lineStyle === 'dashed'} count={Math.max(4, Math.floor((block.lineCount ?? 12) / 2))} /></section>

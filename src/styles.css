@@ -514,8 +514,8 @@
 .short-answer-groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--fx_sp_3); }
 .short-answer-groups.composition-answer-groups { width: 100%; height: calc(100% - 24px); max-height: calc(100% - 24px); grid-template-columns: minmax(0, 1fr); gap: var(--fx_sp_2); box-sizing: border-box; overflow: hidden; }
 .composition-answer-groups > div { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
-.composition-answer-groups .writing-grid { width: 100%; height: 100%; min-width: 0; min-height: 0; box-sizing: border-box; overflow: hidden; align-content: stretch; grid-auto-rows: minmax(0, 1fr); }
-.composition-answer-groups .writing-grid i { min-height: 0; aspect-ratio: auto; }
+.composition-answer-groups .writing-grid { width: 100%; min-width: 0; min-height: 0; box-sizing: border-box; overflow: hidden; align-content: start; grid-auto-rows: 18px; }
+.composition-answer-groups .writing-grid i { height: 18px; min-height: 18px; aspect-ratio: auto; }
 .short-answer-groups > div, .single-short-answer { font-size: 9px; }
 .single-short-answer { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: var(--fx_sp_1); }
 .full-module-answer { height: calc(100% - 24px); min-height: 48px; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 2px; box-sizing: border-box; padding: 6px 10px 10px; }
@@ -549,8 +549,9 @@
 .writing-grid-composition::before { left: 10px; }
 .writing-grid-composition::after { right: 10px; }
 .answer-block.kind-essay > .essay-area { height: calc(100% - 24px); max-height: calc(100% - 24px); display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden; }
-.answer-block.kind-essay > .essay-area > .writing-grid { min-height: 0; flex: 1; box-sizing: border-box; overflow: hidden; align-content: stretch; grid-auto-rows: minmax(0, 1fr); }
-.answer-block.kind-essay > .essay-area > .writing-grid i { min-height: 0; aspect-ratio: auto; }
+.answer-block.kind-essay > .essay-area > .writing-grid { min-height: 0; box-sizing: border-box; overflow: hidden; align-content: start; grid-auto-rows: 18px; }
+.answer-block.kind-essay > .essay-area > .writing-grid i { height: 18px; min-height: 18px; aspect-ratio: auto; }
+.composition-auto-row b { color: var(--fx_text_3); font-size: 8px; font-weight: 400; }
 .writing-count-marker { position: absolute; z-index: 2; right: 12px; padding-left: 4px; background: var(--fx_paper); color: var(--fx_paper_ink); font-size: 7px; font-weight: 700; line-height: 12px; transform: translateY(-100%); white-space: nowrap; }
 .writing-grid-tian i { background: linear-gradient(90deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%), linear-gradient(0deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%); }
 .writing-grid-mi i { background: linear-gradient(45deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%), linear-gradient(-45deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%), linear-gradient(90deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%), linear-gradient(0deg, transparent 49%, var(--fx_paper_rule) 49%, var(--fx_paper_rule) 51%, transparent 51%); }
