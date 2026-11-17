@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { MetisButton, MetisDropdown, MetisInput } from '@yuanfudao/metis-web-component'
-import { Combine, Eye, EyeOff, LockKeyhole, Pencil, QrCode, Scissors } from 'lucide-react'
+import { Combine, Eye, EyeOff, LockKeyhole, Pencil, QrCode } from 'lucide-react'
 import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, HeaderLayout, RulePack } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { questionNumbers } from '../features/answer-sheet/range'
@@ -58,6 +58,7 @@ interface PaperPageProps {
   onUndo?: () => void
   onRedo?: () => void
   onMergeBlocks?: (ids: string[], layout?: { x: number; y: number; width: number; height: number }) => void
+  onSplitMerged?: (id: string) => void
   onSelectionChange?: (id: string, additive: boolean) => void
   onHeaderChange?: (header: HeaderLayout) => void
   selectionToolbar?: ReactNode
@@ -73,7 +74,7 @@ function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
   })}</>
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onDeleteInsertedBlock, onUndo, onRedo, onMergeBlocks, onSelectionChange, onHeaderChange, selectionToolbar }: PaperPageProps) {
+function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onSplitMerged, onDeleteInsertedBlock, onUndo, onRedo, onMergeBlocks, onSelectionChange, onHeaderChange, selectionToolbar }: PaperPageProps) {
   const standard = mode === 'standard'
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
@@ -290,7 +291,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
             seamlessTop={seamlessTop}
             seamlessLeft={seamlessLeft}
             selected={selectedBlockIds.length === 1 && selectedBlockIds.includes(block.id)}
-            multiSelected={selectedBlockIds.includes(block.id)}
+            multiSelected={selectedBlockIds.length > 1 && selectedBlockIds.includes(block.id)}
             locked={standard && Boolean(block.locked)}
             onSelect={(additive) => { onSelectBlock?.(block.id); onSelectionChange?.(block.id, Boolean(additive)) }}
             onTitleCommit={onBlockTitleCommit ? (title) => onBlockTitleCommit(block.id, title) : undefined}
@@ -299,6 +300,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
             onToggleContent={onToggleBlockContent ? (element) => onToggleBlockContent(block.id, element) : undefined}
             onUpdateBlock={onUpdateBlock ? (patch) => onUpdateBlock(block.id, patch) : undefined}
             onInsertAfter={onInsertAfter ? (kind, responseStyle, position) => onInsertAfter(block.id, kind, responseStyle, position) : undefined}
+            onSplitMerged={block.mergedParts?.length && onSplitMerged ? () => onSplitMerged(block.id) : undefined}
             onDeleteBlock={onDeleteInsertedBlock && block.userInserted ? () => onDeleteInsertedBlock(block.id) : undefined}
             onUndo={onUndo}
             onRedo={onRedo}
@@ -400,7 +402,6 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   const canMerge = selectedBlocks.length > 1
     && selectedBlocks.every((block) => block.page === selectedBlocks[0].page && isQuestionBlockKind(block.kind) && !block.locked)
     && selectedBlocks.every((block) => (block.kind === 'objective' ? 'objective' : 'subjective') === selectedCategory)
-  const selectedMergedBlock = selectedBlocks.length === 1 && selectedBlocks[0].mergedParts?.length ? selectedBlocks[0] : undefined
   const toolbarPage = selectedBlocks.length > 0 && selectedBlocks.every((block) => block.page === selectedBlocks[0].page)
     ? selectedBlocks[0].page
     : undefined
@@ -440,18 +441,8 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
     if (mergedBlockId) setSelectedIds([mergedBlockId])
   }
 
-  const selectionToolbar = (selectedIds.length > 1 || selectedMergedBlock) ? <>
-    <span>{selectedMergedBlock ? `已合并 ${selectedMergedBlock.mergedParts?.length} 个模块` : `已选 ${selectedIds.length} 个`}</span>
-    {selectedMergedBlock ? (
-      <MetisButton
-        type="primary"
-        size="s"
-        icon={<Scissors size={13} />}
-        onClick={() => props.onSplitMerged(selectedMergedBlock.id)}
-      >
-        分割
-      </MetisButton>
-    ) : (
+  const selectionToolbar = selectedIds.length > 1 ? <>
+    <span>{`已选 ${selectedIds.length} 个`}</span>
       <MetisButton
         type="primary"
         size="s"
@@ -461,7 +452,6 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
       >
         合并
       </MetisButton>
-    )}
   </> : undefined
 
   return (
@@ -496,6 +486,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
                 onToggleBlockContent={props.onToggleBlockContent}
                 onUpdateBlock={props.onUpdateBlock}
                 onInsertAfter={props.onInsertAfter}
+                onSplitMerged={props.onSplitMerged}
                 onDeleteInsertedBlock={props.onDeleteInsertedBlock}
                 onUndo={props.onUndo}
                 onRedo={props.onRedo}

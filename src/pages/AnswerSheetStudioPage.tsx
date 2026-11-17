@@ -72,6 +72,8 @@ interface AnswerSheetStudioPageProps {
 
 export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetStudioPageProps) {
   const [document, setDocument] = useState<AnswerSheetDocument>(() => initialDocument ? structuredClone(initialDocument) : cloneDefaultDocument())
+  const documentRef = useRef(document)
+  documentRef.current = document
   const [history, setHistory] = useState<AnswerSheetDocument[]>([])
   const [future, setFuture] = useState<AnswerSheetDocument[]>([])
   const [selectedBlockId, setSelectedBlockId] = useState(document.blocks[0]?.id ?? '')
@@ -133,8 +135,9 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
 
   const commitDocument = (nextDocument: AnswerSheetDocument) => {
     const version = ensureNextDraft()
-    setHistory((items) => [...items.slice(-9), document])
+    setHistory((items) => [...items.slice(-9), documentRef.current])
     setFuture([])
+    documentRef.current = nextDocument
     setDocument(nextDocument)
     syncSelection(nextDocument)
     scheduleSave(nextDocument, version)
@@ -403,9 +406,10 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
   }
 
   const splitCanvasBlock = (id: string) => {
-    const next = splitMergedBlock(blocks, id)
-    if (next === blocks) return
-    commitBlocks(next)
+    const currentDocument = documentRef.current
+    const next = splitMergedBlock(currentDocument.blocks, id)
+    if (next === currentDocument.blocks) return
+    commitDocument({ ...currentDocument, blocks: next })
     const first = next.find((block) => block.id === id)
     if (first) setSelectedBlockId(first.id)
     MetisMessage.success('已恢复合并前的题块')

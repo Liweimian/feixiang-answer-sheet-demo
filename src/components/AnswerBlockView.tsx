@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { MetisInput, MetisInputNumber, MetisRadio, MetisSelect } from '@yuanfudao/metis-web-component'
-import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Square, SquareDashed, Sigma, Table2, Trash2, Underline, Undo2 } from 'lucide-react'
+import { AlignCenter, AlignLeft, AlignRight, Bold, ChevronDown, GripVertical, Image, Italic, LockKeyhole, Omega, Pencil, Plus, Redo2, Scissors, Square, SquareDashed, Sigma, Table2, Trash2, Underline, Undo2 } from 'lucide-react'
 import { isQuestionBlockKind, type AnswerBlock, type AnswerBlockKind, type ContentElement, type FillSlotSetting, type FillSlotStyle, type ObjectiveSortMode, type SubquestionNumberStyle } from '../features/answer-sheet/types'
 import { formatQuestionRange, questionNumbers } from '../features/answer-sheet/range'
 
@@ -19,6 +19,7 @@ interface AnswerBlockViewProps {
   onToggleContent?: (element: ContentElement) => void
   onUpdateBlock?: (patch: Partial<AnswerBlock>) => void
   onInsertAfter?: (kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position?: 'before' | 'after') => void
+  onSplitMerged?: () => void
   onDeleteBlock?: () => void
   onUndo?: () => void
   onRedo?: () => void
@@ -233,7 +234,7 @@ function ScoreBox({ block, enabled, style = 'handwrite', allowHalfScore = false 
   })}</div>
 }
 
-export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLeft = false, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onDeleteBlock, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true, subjectiveAnswerStyle = 'lines', subjectiveLineHeight = 16, subjectiveManualGrading = false, manualScoreStyle = 'handwrite', allowHalfScore = false }: AnswerBlockViewProps) {
+export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLeft = false, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onSplitMerged, onDeleteBlock, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true, subjectiveAnswerStyle = 'lines', subjectiveLineHeight = 16, subjectiveManualGrading = false, manualScoreStyle = 'handwrite', allowHalfScore = false }: AnswerBlockViewProps) {
   const [resizeHeight, setResizeHeight] = useState(block.height)
   const [draftLayout, setDraftLayout] = useState(layout)
   const style = {
@@ -532,6 +533,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
         <div className="block-module-tools" onClick={(event) => event.stopPropagation()}>
           {hasAnswerSettings && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={() => { setActiveSlotKey(null); openAnswerSettings() }}>作答设置</button>}
           {canEditSlotNumbers && <button type="button" aria-expanded={settingsPanel === 'subquestion'} onClick={() => { openAnswerSettings(); setSettingsPanel('subquestion') }}>题号设置</button>}
+          {block.mergedParts?.length && onSplitMerged ? <button type="button" onClick={(event) => { event.stopPropagation(); onSplitMerged() }}><Scissors size={11} /> 分割</button> : null}
           <button type="button" aria-expanded={settingsPanel === 'insert'} onClick={() => setSettingsPanel('insert')}><Plus size={11} /> 插入 <ChevronDown size={11} /></button>
           {block.userInserted && <>
             <span className="module-tool-divider" />
