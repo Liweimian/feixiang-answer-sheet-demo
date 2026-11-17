@@ -215,7 +215,7 @@ function ScoreBox({ block, enabled, style = 'handwrite', allowHalfScore = false 
   const fallback = (block.score ?? 0) / Math.max(1, keys.length)
   return <div className={`manual-score-list style-${style}`}>{keys.map((key) => {
     const score = Math.max(0, block.questionScores?.[key] ?? fallback)
-    if (style === 'handwrite') return <div className="manual-score-item" key={key}><b>{key}</b><span className="handwrite-score-box" aria-label={`${key}题手写分数框`} /></div>
+    if (style === 'handwrite') return <div className="manual-score-item" key={key}><span className="handwrite-score-box" aria-label={`${key}题手写分数框`} /></div>
     const wholeMax = Math.floor(score)
     const highScore = wholeMax > 20
     return <div className="manual-score-item" key={key}><b>{key}</b>{highScore ? <div className="digit-score-rail"><span>十位</span>{Array.from({ length: Math.floor(wholeMax / 10) + 1 }, (_, value) => <i key={`t${value}`}>{value}</i>)}<span>个位</span>{Array.from({ length: 10 }, (_, value) => <i key={`o${value}`}>{value}</i>)}{allowHalfScore && <i className="half-score">0.5</i>}</div> : <div className="slash-score-rail">{Array.from({ length: wholeMax + 1 }, (_, index) => wholeMax - index).map((value) => <i key={value}>{value}</i>)}{allowHalfScore && <i className="half-score">0.5</i>}</div>}</div>

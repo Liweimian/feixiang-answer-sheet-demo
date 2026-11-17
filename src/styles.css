@@ -576,7 +576,7 @@
 .manual-score-list { position: absolute; z-index: 2; top: 24px; right: 6px; display: grid; gap: 3px; max-width: calc(100% - 18px); font-size: 7px; }
 .manual-score-item { display: flex; align-items: stretch; justify-content: flex-end; background: var(--fx_paper); }
 .manual-score-item > b { min-width: 22px; display: grid; place-items: center; padding: 0 3px; border: 1px solid var(--fx_paper_rule); white-space: nowrap; }
-.handwrite-score-box { width: 30px; height: 24px; border: 1px dashed var(--fx_paper_rule); border-left: 0; }
+.handwrite-score-box { width: 30px; height: 24px; box-sizing: border-box; border: 1px dashed var(--fx_paper_rule); }
 .slash-score-rail, .digit-score-rail { display: flex; align-items: stretch; min-width: 0; }
 .slash-score-rail i, .digit-score-rail i, .digit-score-rail > span { min-width: 20px; min-height: 20px; display: grid; place-items: center; border: 1px solid var(--fx_paper_rule); border-left: 0; font-style: normal; }
 .digit-score-rail > span { padding: 0 3px; background: var(--fx_surface_muted); }
