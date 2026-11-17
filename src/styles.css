@@ -171,13 +171,13 @@
 .original-paper-minimized b { font-size: 11px; }
 .original-paper-minimized small { max-width: 178px; overflow: hidden; color: var(--fx_text_3); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
 .editor-workbench-wrap > [class*='alert'] { margin-bottom: var(--fx_sp_2); }
-.editor-workbench { min-height: 720px; display: grid; grid-template-columns: 340px minmax(640px, 1fr); gap: var(--fx_sp_3); }
+.editor-workbench { height: calc(100vh - 104px); min-height: 720px; display: grid; grid-template-columns: 340px minmax(640px, 1fr); gap: var(--fx_sp_3); }
 .question-outline, .answer-canvas, .inspector-panel { min-width: 0; overflow: hidden; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_5); background: var(--fx_surface); box-shadow: var(--fx_shadow_sm); }
-.answer-sheet-config { min-width: 0; max-height: calc(100vh - 104px); overflow: hidden; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_5); background: var(--fx_surface); box-shadow: var(--fx_shadow_sm); }
+.answer-sheet-config { min-width: 0; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_5); background: var(--fx_surface); box-shadow: var(--fx_shadow_sm); }
 .config-panel-head { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: var(--fx_sp_2); padding: 0 14px; border-bottom: 1px solid var(--fx_border); }
 .config-panel-head > div { display: grid; }
 .config-panel-head strong { font-size: 14px; }
-.config-scroll { height: calc(100vh - 164px); min-height: 600px; overflow-y: auto; padding-bottom: var(--fx_sp_6); }
+.config-scroll { min-height: 0; overflow-y: auto; padding-bottom: var(--fx_sp_6); }
 .config-flat-section { display: grid; gap: 10px; padding: 13px 14px; border-bottom: 1px solid var(--fx_border); }
 .config-preset-section { grid-template-columns: 74px minmax(0, 1fr); align-items: center; }
 .config-header-template-section { grid-template-columns: 74px minmax(0, 1fr); align-items: center; background: var(--fx_brand_subtle); }
