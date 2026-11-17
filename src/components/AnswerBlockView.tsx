@@ -531,9 +531,9 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       )}
       {onInsertAfter && (
         <div className="block-module-tools" onClick={(event) => event.stopPropagation()}>
+          {block.mergedParts?.length && onSplitMerged ? <button type="button" onClick={(event) => { event.stopPropagation(); onSplitMerged() }}><Scissors size={11} /> 分割</button> : null}
           {hasAnswerSettings && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={() => { setActiveSlotKey(null); openAnswerSettings() }}>作答设置</button>}
           {canEditSlotNumbers && <button type="button" aria-expanded={settingsPanel === 'subquestion'} onClick={() => { openAnswerSettings(); setSettingsPanel('subquestion') }}>题号设置</button>}
-          {block.mergedParts?.length && onSplitMerged ? <button type="button" onClick={(event) => { event.stopPropagation(); onSplitMerged() }}><Scissors size={11} /> 分割</button> : null}
           <button type="button" aria-expanded={settingsPanel === 'insert'} onClick={() => setSettingsPanel('insert')}><Plus size={11} /> 插入 <ChevronDown size={11} /></button>
           {block.userInserted && <>
             <span className="module-tool-divider" />
