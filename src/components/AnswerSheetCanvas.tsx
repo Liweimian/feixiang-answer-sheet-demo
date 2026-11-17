@@ -82,16 +82,33 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
   const gapPercent = 0
   const defaultWidth = (100 - gapPercent * (columns - 1)) / columns
   const columnBottoms = Array.from({ length: columns }, () => 0)
-  const blockLayouts = new Map(pageBlocks.map((block) => {
-    if (block.canvasX !== undefined && block.canvasY !== undefined) {
-      const layout = { x: block.canvasX, y: block.canvasY, width: block.canvasWidth ?? defaultWidth }
-      return [block.id, layout] as const
-    }
+  const placedLayouts: Array<{ x: number; y: number; width: number; height: number }> = []
+  const blockLayouts = new Map<string, { x: number; y: number; width: number }>()
+  pageBlocks.forEach((block) => {
     const column = columnBottoms.indexOf(Math.min(...columnBottoms))
-    const layout = { x: column * (defaultWidth + gapPercent), y: columnBottoms[column], width: block.canvasWidth ?? defaultWidth }
-    columnBottoms[column] += block.height
-    return [block.id, layout] as const
-  }))
+    const width = block.canvasWidth ?? defaultWidth
+    const x = block.canvasX ?? column * (defaultWidth + gapPercent)
+    let y = block.canvasY ?? columnBottoms[column]
+    let collision = true
+    while (collision) {
+      const overlaps = placedLayouts.filter((item) => (
+        x < item.x + item.width
+        && x + width > item.x
+        && y < item.y + item.height
+        && y + block.height > item.y
+      ))
+      collision = overlaps.length > 0
+      if (collision) y = Math.max(...overlaps.map((item) => item.y + item.height))
+    }
+    const layout = { x, y, width }
+    blockLayouts.set(block.id, layout)
+    placedLayouts.push({ ...layout, height: block.height })
+    columnBottoms.forEach((bottom, index) => {
+      const columnLeft = index * (defaultWidth + gapPercent)
+      const columnRight = columnLeft + defaultWidth
+      if (x < columnRight && x + width > columnLeft) columnBottoms[index] = Math.max(bottom, y + block.height)
+    })
+  })
   const minimumCanvasHeight = paperSize === 'a3' ? 390 : paperSize === '16k' ? 450 : paperSize === '8k' ? 650 : 720
   const contentHeight = Math.max(minimumCanvasHeight, ...pageBlocks.map((block) => {
     const layout = blockLayouts.get(block.id)

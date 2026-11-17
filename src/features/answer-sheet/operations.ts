@@ -349,7 +349,50 @@ export function mergeSelectedBlocks(blocks: AnswerBlock[], ids: string[], layout
   }
   const remaining = blocks.filter((block) => !selectedIds.has(block.id))
   const beforeCount = blocks.slice(0, insertionIndex).filter((block) => !selectedIds.has(block.id)).length
-  return [...remaining.slice(0, beforeCount), merged, ...remaining.slice(beforeCount)]
+  const mergedBlocks = [...remaining.slice(0, beforeCount), merged, ...remaining.slice(beforeCount)]
+
+  // A merge can make the new module taller than either source module. Keep the
+  // merged module fixed and cascade every intersecting module below it so a
+  // later module can never cover the merged result.
+  if (merged.canvasY === undefined) return mergedBlocks
+  const pageBlocks = mergedBlocks
+    .filter((block) => block.page === merged.page && block.id !== merged.id && block.canvasY !== undefined)
+    .sort((left, right) => Number(left.canvasY) - Number(right.canvasY))
+  const placed = [{
+    id: merged.id,
+    x: merged.canvasX ?? 0,
+    y: merged.canvasY,
+    width: merged.canvasWidth ?? 100,
+    height: merged.height,
+  }]
+  const shifted = new Map<string, number>()
+
+  pageBlocks.forEach((block) => {
+    const x = block.canvasX ?? 0
+    const width = block.canvasWidth ?? 100
+    let y = Number(block.canvasY)
+    // Modules already fully above the merged area keep their position.
+    if (y + block.height <= merged.canvasY!) {
+      placed.push({ id: block.id, x, y, width, height: block.height })
+      return
+    }
+    let collision = true
+    while (collision) {
+      const overlaps = placed.filter((item) => (
+        x < item.x + item.width
+        && x + width > item.x
+        && y < item.y + item.height
+        && y + block.height > item.y
+      ))
+      collision = overlaps.length > 0
+      if (collision) y = Math.max(...overlaps.map((item) => item.y + item.height))
+    }
+    if (y !== block.canvasY) shifted.set(block.id, y)
+    placed.push({ id: block.id, x, y, width, height: block.height })
+  })
+
+  if (!shifted.size) return mergedBlocks
+  return mergedBlocks.map((block) => shifted.has(block.id) ? { ...block, canvasY: shifted.get(block.id) } : block)
 }
 
 /** Restore a block that was produced by mergeSelectedBlocks. */

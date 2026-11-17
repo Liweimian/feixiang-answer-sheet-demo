@@ -490,10 +490,11 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
   const hasAnswerSettings = isSubjectiveAnswerBlock || block.kind === 'essay'
   const canEditSlotNumbers = isSubjectiveAnswerBlock && questionNumbers(block.range).length > 0
   const isFillAnswerBlock = block.answerVariant === 'fill'
+  const isPlainBlankRegion = block.kind === 'response-area' && block.responseStyle === 'blank' && block.userInserted
 
   return (
     <div
-      className={`answer-block kind-${block.kind} ${seamlessTop ? 'seamless-top' : ''} ${seamlessLeft ? 'seamless-left' : ''} ${block.contentElements?.includes('table') ? 'has-content-table' : ''} ${block.borderStyle === 'borderless' ? 'borderless' : ''} ${block.userInserted ? 'user-inserted' : ''} ${selected ? 'selected' : ''} ${multiSelected ? 'multi-selected' : ''}`}
+      className={`answer-block kind-${block.kind} ${isPlainBlankRegion ? 'plain-blank-region' : ''} ${seamlessTop ? 'seamless-top' : ''} ${seamlessLeft ? 'seamless-left' : ''} ${block.contentElements?.includes('table') ? 'has-content-table' : ''} ${block.borderStyle === 'borderless' ? 'borderless' : ''} ${block.userInserted ? 'user-inserted' : ''} ${selected ? 'selected' : ''} ${multiSelected ? 'multi-selected' : ''}`}
       data-block-id={block.id}
       data-block-kind={block.kind}
       data-block-range={block.range ?? ''}
@@ -637,7 +638,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
         <button type="button" onClick={() => { onInsertAfter?.('response-area', 'blank', 'after'); setSettingsPanel(null) }}>空白区</button>
         <button type="button" onClick={() => { onInsertAfter?.('forbidden', undefined, 'after'); setSettingsPanel(null) }}>禁答区</button>
       </div> : null}
-      {block.kind !== 'forbidden' && <span className="answer-block-heading">
+      {block.kind !== 'forbidden' && !isPlainBlankRegion && <span className="answer-block-heading">
         {editingTitle && onTitleCommit ? (
           <input
             className="block-title-input"
@@ -772,7 +773,9 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
         <div className="table-area">{Array.from({ length: 8 }, (_, index) => <span key={index} />)}</div>
       )}
       {block.kind === 'notice' && <div className="notice-area">{block.contentText || '请在指定区域内作答，超出边框的答案无效。'}</div>}
-      {block.kind === 'response-area' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} />}
+      {block.kind === 'response-area' && (isPlainBlankRegion
+        ? <div className="blank-response-area" aria-label="空白区域" />
+        : <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} />)}
       {!locked && onResizeCommit && <button type="button" className="block-resize-handle" aria-label={`调整${block.title}宽度和高度`} onPointerDown={beginResize} onClick={(event) => event.stopPropagation()} />}
     </div>
   )
