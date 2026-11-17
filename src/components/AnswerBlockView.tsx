@@ -131,6 +131,7 @@ function ShortAnswerContent({
   lineHeight = 16,
   activeSlotKey,
   onSlotClick,
+  onSlotSettingChange,
   showInlineHandwriteScore = false,
   showInlineSlashScore = false,
   allowHalfScore = false,
@@ -140,6 +141,7 @@ function ShortAnswerContent({
   lineHeight?: number
   activeSlotKey?: string | null
   onSlotClick?: (slotKey: string) => void
+  onSlotSettingChange?: (slotKey: string, patch: Partial<FillSlotSetting>) => void
   showInlineHandwriteScore?: boolean
   showInlineSlashScore?: boolean
   allowHalfScore?: boolean
@@ -189,7 +191,29 @@ function ShortAnswerContent({
                     event.stopPropagation()
                     onSlotClick(slotKey)
                   } : undefined}
-                ><em>{slotCount > 1 ? formatSubquestionNumber(slotNumber, numberStyle) : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span>{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${slotKey}题手写分数框`} />}{showInlineSlashScore && <ManualScoreRail score={Math.max(0, block.questionScores?.[slotKey] ?? (block.score ?? 0) / Math.max(1, scoreKeys(block).length))} allowHalfScore={allowHalfScore} inline />}</span>
+                ><em>{slotCount > 1 ? formatSubquestionNumber(slotNumber, numberStyle) : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span>{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${slotKey}题手写分数框`} />}{showInlineSlashScore && <ManualScoreRail score={Math.max(0, block.questionScores?.[slotKey] ?? (block.score ?? 0) / Math.max(1, scoreKeys(block).length))} allowHalfScore={allowHalfScore} inline />}{activeSlotKey === slotKey && onSlotSettingChange ? <span className="inline-slot-editor" role="dialog" aria-label={`第${no}题第${slotNumber}空作答样式`} onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+                  <MetisSelect
+                    size="small"
+                    value={style}
+                    options={[
+                      { value: 'lines', label: '横线' },
+                      { value: 'tian', label: '田字格' },
+                      { value: 'mi', label: '米字格' },
+                      { value: 'four-line', label: '四线三格' },
+                    ]}
+                    onChange={(value) => onSlotSettingChange(slotKey, { style: value as FillSlotStyle })}
+                    aria-label="当前空作答样式"
+                  />
+                  {style === 'tian' ? <MetisInputNumber
+                    size="small"
+                    min={1}
+                    max={20}
+                    value={setting?.count ?? 4}
+                    addonAfter="格"
+                    aria-label="当前空田字格数量"
+                    onChange={(value) => onSlotSettingChange(slotKey, { count: Number(value ?? 4) })}
+                  /> : null}
+                </span> : null}</span>
               })}
             </div>
           )
@@ -278,8 +302,8 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
   }
 
   const openSlotSettings = (slotKey: string) => {
-    setActiveSlotKey(slotKey)
-    openAnswerSettings()
+    setSettingsPanel(null)
+    setActiveSlotKey((current) => current === slotKey ? null : slotKey)
   }
 
   const commitSlotNumbers = () => {
@@ -574,42 +598,6 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
             onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: value as AnswerBlock['responseStyle'] })}
             /> : <MetisRadio.Group value={effectiveSubjectiveStyle === 'blank' ? 'blank' : 'lines'} options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '作答线' }]} onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })} />}
           </div>
-          {isFillAnswerBlock && block.answerSlotCounts?.some((count) => count > 0) && <div className="fill-slot-settings">
-            <div className="fill-slot-settings-title">逐空设置</div>
-            {questionNumbers(block.range).flatMap((number, questionIndex) => {
-              const count = block.answerSlotCounts?.[questionIndex] ?? 0
-              const slots = block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: count }, (_, index) => index + 1)
-              return slots.map((slotNumber) => {
-                const slotKey = `${number}.${slotNumber}`
-                const setting = block.answerSlotSettings?.[slotKey]
-                const style = setting?.style ?? (effectiveSubjectiveStyle === 'tian' || effectiveSubjectiveStyle === 'mi' || effectiveSubjectiveStyle === 'four-line' ? effectiveSubjectiveStyle : 'lines')
-                return <div className={`fill-slot-setting-row ${activeSlotKey === slotKey ? 'active' : ''}`} key={slotKey}>
-                  <b>{number}({slotNumber})</b>
-                  <MetisSelect
-                    size="small"
-                    value={style}
-                    options={[
-                      { value: 'lines', label: '横线' },
-                      { value: 'tian', label: '田字格' },
-                      { value: 'mi', label: '米字格' },
-                      { value: 'four-line', label: '四线三格' },
-                    ]}
-                    onChange={(value) => updateSlotSetting(slotKey, { style: value as FillSlotStyle })}
-                    aria-label={`${number}题第${slotNumber}空作答样式`}
-                  />
-                  {style === 'tian' ? <MetisInputNumber
-                    size="small"
-                    min={1}
-                    max={20}
-                    value={setting?.count ?? 4}
-                    addonAfter="格"
-                    aria-label={`${number}题第${slotNumber}空田字格数量`}
-                    onChange={(value) => updateSlotSetting(slotKey, { count: Number(value ?? 4) })}
-                  /> : <span />}
-                </div>
-              })
-            })}
-          </div>}
           {effectiveSubjectiveStyle === 'lines' && <div className="block-settings-row">
             <span>作答线</span>
             <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label="作答线行数" onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
@@ -696,7 +684,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           </section>
         })}
       </div>}
-      {!mergedSubjectiveParts && block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} activeSlotKey={activeSlotKey} onSlotClick={isFillAnswerBlock ? openSlotSettings : undefined} showInlineHandwriteScore={isFillAnswerBlock && subjectiveManualGrading && manualScoreStyle === 'handwrite'} showInlineSlashScore={isFillAnswerBlock && subjectiveManualGrading && manualScoreStyle === 'slash'} allowHalfScore={allowHalfScore} />}
+      {!mergedSubjectiveParts && block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} activeSlotKey={activeSlotKey} onSlotClick={isFillAnswerBlock ? openSlotSettings : undefined} onSlotSettingChange={isFillAnswerBlock ? updateSlotSetting : undefined} showInlineHandwriteScore={isFillAnswerBlock && subjectiveManualGrading && manualScoreStyle === 'handwrite'} showInlineSlashScore={isFillAnswerBlock && subjectiveManualGrading && manualScoreStyle === 'slash'} allowHalfScore={allowHalfScore} />}
       {!mergedSubjectiveParts && block.kind === 'mixed' && (
         <div className="mixed-area">
           {(() => {
