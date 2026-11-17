@@ -523,6 +523,7 @@
 .short-answer-slot-row em { flex: none; font-style: normal; }
 .slot-response-cells { min-width: 26px; display: flex; align-items: end; gap: 1px; flex: 1; }
 .short-answer-slot-row .slot-response-cells i { min-width: 0; height: 1px; flex: 1; border-bottom: 1px solid var(--fx_paper_rule); }
+.inline-handwrite-score-box { width: 24px; height: 18px; flex: 0 0 24px; align-self: center; box-sizing: border-box; border: 1px dashed var(--fx_paper_rule); background: var(--fx_paper); }
 .ruled-lines { display: grid; align-content: start; gap: 7px; margin-top: var(--fx_sp_1); }
 .ruled-lines span { height: 1px; display: block; border-bottom: 1px solid var(--fx_paper_rule); }
 .ruled-lines.dashed span { border-bottom-style: dashed; }

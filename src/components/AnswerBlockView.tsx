@@ -121,12 +121,14 @@ function ShortAnswerContent({
   lineHeight = 16,
   activeSlotKey,
   onSlotClick,
+  showInlineHandwriteScore = false,
 }: {
   block: AnswerBlock
   fillModule?: boolean
   lineHeight?: number
   activeSlotKey?: string | null
   onSlotClick?: (slotKey: string) => void
+  showInlineHandwriteScore?: boolean
 }) {
   const count = block.lineCount ?? 4
   const numbers = questionNumbers(block.range)
@@ -173,7 +175,7 @@ function ShortAnswerContent({
                     event.stopPropagation()
                     onSlotClick(slotKey)
                   } : undefined}
-                ><em>{slotCount > 1 ? formatSubquestionNumber(slotNumber, numberStyle) : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span></span>
+                ><em>{slotCount > 1 ? formatSubquestionNumber(slotNumber, numberStyle) : ''}<QuestionScore block={block} scoreKey={slotKey} /></em><span className="slot-response-cells">{Array.from({ length: cellCount }, (_, cellIndex) => <i key={cellIndex} />)}</span>{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${slotKey}题手写分数框`} />}</span>
               })}
             </div>
           )
@@ -665,7 +667,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
         <div className="question-stem-preview"><b>原卷题目</b><span>{questionContext || block.title}{block.range ? ` · ${block.range}` : ''}</span></div>
       )}
       <RichElements elements={block.contentElements} />
-      <ScoreBox block={block} enabled={subjectiveManualGrading && hasAnswerSettings} style={manualScoreStyle} allowHalfScore={allowHalfScore} />
+      <ScoreBox block={block} enabled={subjectiveManualGrading && hasAnswerSettings && !(isFillAnswerBlock && manualScoreStyle === 'handwrite')} style={manualScoreStyle} allowHalfScore={allowHalfScore} />
       {block.kind === 'objective' && <ObjectiveGrid block={block} sortMode={objectiveSortMode} merged={objectiveMerge} />}
       {mergedSubjectiveParts && <div className="merged-subjective-parts">
         {mergedSubjectiveParts.map((part) => {
@@ -680,7 +682,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           </section>
         })}
       </div>}
-      {!mergedSubjectiveParts && block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} activeSlotKey={activeSlotKey} onSlotClick={isFillAnswerBlock ? openSlotSettings : undefined} />}
+      {!mergedSubjectiveParts && block.kind === 'short-answer' && <ShortAnswerContent block={{ ...block, responseStyle: effectiveSubjectiveStyle }} fillModule={effectiveSubjectiveStyle === 'lines'} lineHeight={subjectiveLineHeight} activeSlotKey={activeSlotKey} onSlotClick={isFillAnswerBlock ? openSlotSettings : undefined} showInlineHandwriteScore={isFillAnswerBlock && subjectiveManualGrading && manualScoreStyle === 'handwrite'} />}
       {!mergedSubjectiveParts && block.kind === 'mixed' && (
         <div className="mixed-area">
           {(() => {
