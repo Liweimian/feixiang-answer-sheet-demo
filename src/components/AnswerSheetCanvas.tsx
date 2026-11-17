@@ -400,13 +400,13 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   const canMerge = selectedBlocks.length > 1
     && selectedBlocks.every((block) => block.page === selectedBlocks[0].page && isQuestionBlockKind(block.kind) && !block.locked)
     && selectedBlocks.every((block) => (block.kind === 'objective' ? 'objective' : 'subjective') === selectedCategory)
-    && (selectedCategory === 'objective' ? props.settings.objectiveMerge : props.settings.subjectiveMerge)
   const selectedMergedBlock = selectedBlocks.length === 1 && selectedBlocks[0].mergedParts?.length ? selectedBlocks[0] : undefined
   const toolbarPage = selectedBlocks.length > 0 && selectedBlocks.every((block) => block.page === selectedBlocks[0].page)
     ? selectedBlocks[0].page
     : undefined
 
   const mergeSelection = () => {
+    const mergedBlockId = props.blocks.find((block) => selectedIds.includes(block.id))?.id
     const firstSelected = document.querySelector(`.paper-stack [data-block-id="${CSS.escape(selectedIds[0] ?? '')}"]`) as HTMLElement | null
     const paperBlocks = firstSelected?.closest('.paper-blocks') as HTMLElement | null
     if (!paperBlocks) {
@@ -437,7 +437,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
       width: (right - left) / paperBlocks.offsetWidth * 100,
       height: bottom - top,
     })
-    setSelectedIds([selectedIds[0]])
+    if (mergedBlockId) setSelectedIds([mergedBlockId])
   }
 
   const selectionToolbar = (selectedIds.length > 1 || selectedMergedBlock) ? <>

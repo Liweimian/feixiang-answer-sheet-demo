@@ -397,7 +397,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
       return
     }
     commitBlocks(next)
-    const merged = next.find((block) => block.id === ids[0])
+    const merged = next.find((block) => block.mergedParts?.length && ids.every((id) => block.mergedParts?.some((part) => part.id === id)))
     if (merged) setSelectedBlockId(merged.id)
     MetisMessage.success('题块已合并，可在画布中随时切割恢复')
   }
