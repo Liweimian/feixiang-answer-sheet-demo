@@ -556,7 +556,11 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       data-block-range={block.range ?? ''}
       data-block-locked={block.locked ? 'true' : 'false'}
       style={style}
-      onClick={(event) => onSelect(event.metaKey || event.ctrlKey || event.shiftKey)}
+      onClick={(event) => {
+        const target = event.target as HTMLElement
+        if (target.closest('.block-settings-popover, .metis-select-dropdown, [role="listbox"], [role="option"]')) return
+        onSelect(event.metaKey || event.ctrlKey || event.shiftKey)
+      }}
       onKeyDown={(event) => {
         if (event.key === 'Enter' && event.target === event.currentTarget) onSelect(false)
       }}
@@ -604,7 +608,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           </>}
         </div>
       )}
-      {settingsPanel === 'answer' && hasAnswerSettings ? <div className="block-settings-popover" onClick={(event) => event.stopPropagation()}>
+      {settingsPanel === 'answer' && hasAnswerSettings ? <div className="block-settings-popover answer-settings-popover" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
         <div className="block-settings-title"><strong>作答设置</strong><button type="button" onClick={() => setSettingsPanel(null)}>完成</button></div>
         {block.kind === 'essay' ? <>
           <div className="block-settings-row">
@@ -621,10 +625,12 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           </div>
           <div className="block-settings-row">
             <span>字数</span>
-            <MetisSelect size="small" value={block.wordCount ?? 600} options={[200, 400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))} onChange={(value) => {
-              const wordCount = selectNumber(value, block.wordCount ?? 600)
+            <select className="word-count-native-select" value={block.wordCount ?? 600} aria-label="作文字数" onChange={(event) => {
+              const wordCount = selectNumber(event.target.value, block.wordCount ?? 600)
               onUpdateBlock?.({ wordCount, ...(block.responseStyle === 'grid' ? { height: compositionBlockHeight(compositionRowsForWords(wordCount), 72) } : {}) })
-            }} aria-label="作文字数" />
+            }}>
+              {[200, 400, 600, 800, 1000, 1200].map((value) => <option key={value} value={value}>{value}</option>)}
+            </select>
           </div>
         </> : <>
           <div className="block-settings-row">
@@ -661,18 +667,19 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           </div>}
           {effectiveSubjectiveStyle === 'grid' && <div className="block-settings-row">
             <span>字数</span>
-            <MetisSelect
-              size="small"
+            <select
+              className="word-count-native-select"
               value={block.wordCount ?? 400}
-              options={[200, 400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))}
               aria-label="作文字数"
-              onChange={(value) => {
-                const wordCount = selectNumber(value, block.wordCount ?? 400)
+              onChange={(event) => {
+                const wordCount = selectNumber(event.target.value, block.wordCount ?? 400)
                 const questionCount = Math.max(1, questionNumbers(block.range).length)
                 const reservedHeight = 68 + Math.max(0, questionCount - 1) * 14
                 onUpdateBlock?.({ answerAreaOverride: true, wordCount, height: compositionBlockHeight(compositionRowsForWords(wordCount), reservedHeight) })
               }}
-            />
+            >
+              {[200, 400, 600, 800, 1000, 1200].map((value) => <option key={value} value={value}>{value}</option>)}
+            </select>
           </div>}
           {block.answerAreaOverride && <button type="button" className="follow-card-action" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>恢复跟随整卡</button>}
         </>}
