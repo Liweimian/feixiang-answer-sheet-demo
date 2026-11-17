@@ -512,6 +512,8 @@
 .bubble-row b { padding-right: var(--fx_sp_1); text-align: right; }
 .short-answer-groups, .single-short-answer, .essay-area { padding: var(--fx_sp_2) var(--fx_sp_3); }
 .short-answer-groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--fx_sp_3); }
+.short-answer-groups.composition-answer-groups { grid-template-columns: minmax(0, 1fr); gap: var(--fx_sp_2); width: 100%; }
+.composition-answer-groups > div, .composition-answer-groups .writing-grid { width: 100%; min-width: 0; }
 .short-answer-groups > div, .single-short-answer { font-size: 9px; }
 .single-short-answer { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: var(--fx_sp_1); }
 .full-module-answer { height: calc(100% - 24px); min-height: 48px; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 2px; box-sizing: border-box; padding: 6px 10px 10px; }
