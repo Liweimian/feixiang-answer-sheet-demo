@@ -132,6 +132,11 @@ function compositionRowsForHeight(height: number, reservedHeight: number) {
   return Math.max(1, Math.floor((Math.max(height, reservedHeight + compositionRowHeight) - reservedHeight + compositionRowGap) / (compositionRowHeight + compositionRowGap)))
 }
 
+function compositionBlockHeight(rows: number, reservedHeight: number) {
+  const safeRows = Math.max(1, Math.min(40, Math.round(rows)))
+  return reservedHeight + safeRows * compositionRowHeight + Math.max(0, safeRows - 1) * compositionRowGap
+}
+
 function ShortAnswerContent({
   block,
   fillModule = false,
@@ -161,7 +166,7 @@ function ShortAnswerContent({
     return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b key={number}>{number}.<QuestionScore block={block} scoreKey={String(number)} /></b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
   }
   if (block.responseStyle === 'grid' && numbers.length > 0) {
-    const totalRows = compositionRowsForHeight(block.height, 68 + Math.max(0, numbers.length - 1) * 14)
+    const totalRows = Math.max(1, block.lineCount ?? 7)
     const rowsPerQuestion = Math.max(1, Math.floor(totalRows / numbers.length))
     return <div className="short-answer-groups composition-answer-groups">{numbers.map((no) => <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><GridPaper rows={rowsPerQuestion} cells={rowsPerQuestion * 20} /></div>)}</div>
   }
@@ -614,14 +619,40 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
             /> : <MetisRadio.Group
               value={effectiveSubjectiveStyle === 'blank' ? 'blank' : effectiveSubjectiveStyle === 'grid' ? 'grid' : 'lines'}
               options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '作答线' }, { value: 'grid', label: '作文格' }]}
-              onChange={(event) => onUpdateBlock?.({ answerAreaOverride: true, responseStyle: event.target.value as AnswerBlock['responseStyle'] })}
+              onChange={(event) => {
+                const responseStyle = event.target.value as AnswerBlock['responseStyle']
+                if (responseStyle !== 'grid') {
+                  onUpdateBlock?.({ answerAreaOverride: true, responseStyle })
+                  return
+                }
+                const rows = block.lineCount ?? 7
+                const questionCount = Math.max(1, questionNumbers(block.range).length)
+                const reservedHeight = 68 + Math.max(0, questionCount - 1) * 14
+                onUpdateBlock?.({ answerAreaOverride: true, responseStyle, lineCount: rows, height: compositionBlockHeight(rows, reservedHeight) })
+              }}
             />}
           </div>
           {effectiveSubjectiveStyle === 'lines' && <div className="block-settings-row">
             <span>作答线</span>
             <MetisInputNumber size="small" min={1} max={40} value={block.lineCount ?? 4} addonAfter="行" aria-label="作答线行数" onChange={(value) => onUpdateBlock?.({ answerAreaOverride: true, lineCount: Number(value ?? 4) })} />
           </div>}
-          {effectiveSubjectiveStyle === 'grid' && <div className="block-settings-row composition-auto-row"><span>作文格</span><b>随模块高度自动调整</b></div>}
+          {effectiveSubjectiveStyle === 'grid' && <div className="block-settings-row">
+            <span>作文格</span>
+            <MetisInputNumber
+              size="small"
+              min={1}
+              max={40}
+              value={block.lineCount ?? 7}
+              addonAfter="行"
+              aria-label="作文格行数"
+              onChange={(value) => {
+                const rows = Math.max(1, Math.min(40, Number(value ?? 7)))
+                const questionCount = Math.max(1, questionNumbers(block.range).length)
+                const reservedHeight = 68 + Math.max(0, questionCount - 1) * 14
+                onUpdateBlock?.({ answerAreaOverride: true, lineCount: rows, height: compositionBlockHeight(rows, reservedHeight) })
+              }}
+            />
+          </div>}
           {block.answerAreaOverride && <button type="button" className="follow-card-action" onClick={() => onUpdateBlock?.({ answerAreaOverride: false })}>恢复跟随整卡</button>}
         </>}
       </div> : null}
