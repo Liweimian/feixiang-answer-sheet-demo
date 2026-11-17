@@ -155,7 +155,7 @@ function ShortAnswerContent({
   }
   if (block.responseStyle === 'grid' && numbers.length > 0) {
     const rowsPerQuestion = Math.max(1, Math.floor(count / numbers.length))
-    return <div className="short-answer-groups composition-answer-groups">{numbers.map((no) => <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><GridPaper rows={rowsPerQuestion} /></div>)}</div>
+    return <div className="short-answer-groups composition-answer-groups">{numbers.map((no) => <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><GridPaper rows={rowsPerQuestion} cells={rowsPerQuestion * 20} /></div>)}</div>
   }
   if (block.answerVariant === 'solution' && numbers.length > 0) {
     return <div className="solution-question-groups">{numbers.map((no, questionIndex) => {
