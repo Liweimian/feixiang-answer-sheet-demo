@@ -137,6 +137,14 @@ function compositionRowsForWords(words: number) {
   return Math.max(1, Math.ceil(Math.max(20, words) / 20))
 }
 
+function selectNumber(value: unknown, fallback: number) {
+  const raw = typeof value === 'object' && value !== null && 'value' in value
+    ? (value as { value?: unknown }).value
+    : value
+  const next = Number(raw)
+  return Number.isFinite(next) ? next : fallback
+}
+
 function ShortAnswerContent({
   block,
   fillModule = false,
@@ -614,7 +622,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
           <div className="block-settings-row">
             <span>字数</span>
             <MetisSelect size="small" value={block.wordCount ?? 600} options={[200, 400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))} onChange={(value) => {
-              const wordCount = Number(value)
+              const wordCount = selectNumber(value, block.wordCount ?? 600)
               onUpdateBlock?.({ wordCount, ...(block.responseStyle === 'grid' ? { height: compositionBlockHeight(compositionRowsForWords(wordCount), 72) } : {}) })
             }} aria-label="作文字数" />
           </div>
@@ -659,7 +667,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
               options={[200, 400, 600, 800, 1000, 1200].map((value) => ({ value, label: String(value) }))}
               aria-label="作文字数"
               onChange={(value) => {
-                const wordCount = Number(value)
+                const wordCount = selectNumber(value, block.wordCount ?? 400)
                 const questionCount = Math.max(1, questionNumbers(block.range).length)
                 const reservedHeight = 68 + Math.max(0, questionCount - 1) * 14
                 onUpdateBlock?.({ answerAreaOverride: true, wordCount, height: compositionBlockHeight(compositionRowsForWords(wordCount), reservedHeight) })
