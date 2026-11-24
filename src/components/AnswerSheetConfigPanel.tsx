@@ -243,7 +243,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             </div>
           </div>
           <div className="config-meta-row">
-            <span>作答线行高</span>
+            <span title="同时作用于填空题和解答题">作答线行高</span>
             <MetisInputNumber
               className="subjective-line-height"
               value={settings.subjectiveLineHeight}
@@ -251,7 +251,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               max={40}
               addonAfter="px"
               onChange={(value) => props.onSettingsChange({ subjectiveLineHeight: Number(value ?? 16) })}
-              aria-label="作答线行高"
+              aria-label="填空题和解答题作答线行高"
             />
           </div>
         </section>

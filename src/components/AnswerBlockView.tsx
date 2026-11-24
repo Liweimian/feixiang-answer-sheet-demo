@@ -872,9 +872,10 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       ? (block.responseStyle ?? 'lines')
       : inheritedSubjectiveStyle
   useLayoutEffect(() => {
-    if (block.answerVariant !== 'solution' || block.preserveAnswerAreaHeight || effectiveSubjectiveStyle !== 'lines' || !onUpdateBlock) return
+    const supportsSharedLineHeight = block.answerVariant === 'solution' || block.answerVariant === 'fill'
+    if (!supportsSharedLineHeight || (block.answerVariant === 'solution' && block.preserveAnswerAreaHeight) || effectiveSubjectiveStyle !== 'lines' || !onUpdateBlock) return
     const root = blockRef.current
-    const content = root?.querySelector<HTMLElement>('.solution-question-groups')
+    const content = root?.querySelector<HTMLElement>(block.answerVariant === 'fill' ? '.short-answer-slots' : '.solution-question-groups')
     if (!root || !content) return
     const requiredHeight = Math.ceil(content.offsetTop + content.scrollHeight + 2)
     if (requiredHeight > block.height + 1) onUpdateBlock({ height: requiredHeight })
