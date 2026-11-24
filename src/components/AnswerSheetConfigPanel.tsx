@@ -92,7 +92,7 @@ function uniformValue(values: number[]) {
 
 export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const { document } = props
-  const { blocks, pageCount, settings } = document
+  const { blocks, settings } = document
   const outlineBlocks = blocks.filter((block) => block.kind !== 'forbidden')
   const answerSheetTotalScore = blocks
     .filter((block) => isQuestionBlockKind(block.kind))
@@ -102,6 +102,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const blankCard = document.paper.sections.length === 0
   const standaloneCard = !settings.linkedPaperId
   const [addKind, setAddKind] = useState<AnswerBlockKind>('short-answer')
+  const [activeConfigView, setActiveConfigView] = useState<'questions' | 'card'>(standaloneCard ? 'questions' : 'card')
   const candidatePreset = document.header.preset
 
   const updateScores = (block: AnswerBlock, patch: Record<string, number>) => {
@@ -124,9 +125,14 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         <MetisTag preset="primary">{outlineBlocks.length} 个题块</MetisTag>
       </div>
 
-      <div className="config-scroll">
-        <section className="config-flat-section config-layout-inline">
-          <div className="config-flat-title">版面设置</div>
+      <nav className="config-view-switch" aria-label="答题卡配置分类">
+        <button type="button" className={activeConfigView === 'card' ? 'active' : ''} aria-current={activeConfigView === 'card' ? 'page' : undefined} onClick={() => setActiveConfigView('card')}>卡面设置</button>
+        <button type="button" className={activeConfigView === 'questions' ? 'active' : ''} aria-current={activeConfigView === 'questions' ? 'page' : undefined} onClick={() => setActiveConfigView('questions')}>题目与分值</button>
+      </nav>
+
+      <div className="config-scroll" data-view={activeConfigView}>
+        <section className="config-flat-section config-layout-inline config-card-view">
+          <div className="config-flat-title">纸张与分栏</div>
           <MetisCascader
             className="layout-cascader"
             value={[settings.paperSize, settings.frontColumns]}
@@ -141,7 +147,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           />
         </section>
 
-        <section className="config-flat-section config-preset-section">
+        <section className="config-flat-section config-preset-section config-card-view">
           <div className="config-flat-title">表头模板</div>
           <div className="header-template-control">
             <MetisSelect
@@ -163,36 +169,22 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </div>
         </section>
 
-        <section className="config-flat-section">
+        <section className="config-flat-section config-card-view">
           <div className="config-meta-row config-score-meta-row">
-            <span>题量与分值</span>
+            <span>题数与分值显示</span>
             <div className="config-check-list config-score-primary">
-              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showQuestionCount)} onChange={(event) => props.onMetaVisibilityChange('showQuestionCount', event.target.checked)}>模块总题量</MetisCheckbox>
-              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showScore)} onChange={(event) => props.onMetaVisibilityChange('showScore', event.target.checked)}>模块总分</MetisCheckbox>
+              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showQuestionCount)} onChange={(event) => props.onMetaVisibilityChange('showQuestionCount', event.target.checked)}>题组题数</MetisCheckbox>
+              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showScore)} onChange={(event) => props.onMetaVisibilityChange('showScore', event.target.checked)}>题组总分</MetisCheckbox>
             </div>
             <div className="config-check-list config-score-secondary">
-              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showUnitScore)} onChange={(event) => props.onMetaVisibilityChange('showUnitScore', event.target.checked)}>单题分值</MetisCheckbox>
+              <MetisCheckbox checked={blocks.filter((block) => isQuestionBlockKind(block.kind)).every((block) => block.showUnitScore)} onChange={(event) => props.onMetaVisibilityChange('showUnitScore', event.target.checked)}>每题分值</MetisCheckbox>
             </div>
           </div>
         </section>
 
-        <section className="config-flat-section">
-          {standaloneCard && <div className="config-meta-row config-question-order-row">
-            <span>题号编排</span>
-            <MetisRadio.Group
-              className="config-inline-options"
-              value={(settings.questionNumberOrder as string) === 'minor' || settings.questionNumberOrder === 'whole-paper-continuous'
-                ? 'whole-paper-continuous'
-                : 'within-major-continuous'}
-              options={[
-                { value: 'within-major-continuous', label: '大题内部连续' },
-                { value: 'whole-paper-continuous', label: '全卷连续' },
-              ]}
-              onChange={(event) => props.onSettingsChange({ questionNumberOrder: event.target.value as AnswerSheetSettings['questionNumberOrder'] })}
-            />
-          </div>}
+        <section className="config-flat-section config-card-view">
           <div className="config-meta-row config-objective-sort-row">
-            <span>客观题排列</span>
+            <span>客观题填涂排列</span>
             <MetisSelect
               className="objective-sort-select"
               value={settings.objectiveSortMode}
@@ -205,7 +197,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             />
           </div>
           <div className="config-meta-row config-module-merge-row">
-            <span>模块合并</span>
+            <span>题块合并</span>
             <div className="config-check-list config-module-merge-options">
               <MetisCheckbox checked={settings.objectiveMerge} onChange={(event) => props.onModuleMergeChange('objective', event.target.checked)}>客观题</MetisCheckbox>
               <MetisCheckbox checked={settings.subjectiveMerge} onChange={(event) => props.onModuleMergeChange('subjective', event.target.checked)}>主观题</MetisCheckbox>
@@ -256,11 +248,24 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </div>
         </section>
 
-        <section className="config-flat-section config-block-section">
-          <div className="config-flat-title"><span>题目结构</span><small>{pageCount} 面 · {outlineBlocks.length} 个题块</small></div>
+        <section className="config-flat-section config-block-section config-questions-view">
           <div className="config-flat-body">
+            {standaloneCard && <div className="config-meta-row config-question-order-row">
+              <span>题号规则</span>
+              <MetisRadio.Group
+                className="config-inline-options"
+                value={(settings.questionNumberOrder as string) === 'minor' || settings.questionNumberOrder === 'whole-paper-continuous'
+                  ? 'whole-paper-continuous'
+                  : 'within-major-continuous'}
+                options={[
+                  { value: 'within-major-continuous', label: '大题内部连续' },
+                  { value: 'whole-paper-continuous', label: '全卷连续' },
+                ]}
+                onChange={(event) => props.onSettingsChange({ questionNumberOrder: event.target.value as AnswerSheetSettings['questionNumberOrder'] })}
+              />
+            </div>}
             {standaloneCard && <div className="question-type-actions">
-              {([['single', '单选题'], ['multiple', '多选题'], ['judge', '判断题'], ['fill', '填空题'], ['solution', '解答题'], ['essay', '作文题'], ['comprehensive', '综合题']] as const).map(([type, label]) => <MetisButton key={type} type="bordered" icon={<Plus size={13} />} onClick={() => props.onAddQuestionGroup(type)}>{label}</MetisButton>)}
+              {([['single', '单选题'], ['multiple', '多选题'], ['judge', '判断题'], ['fill', '填空题'], ['solution', '解答题'], ['essay', '作文题'], ['comprehensive', '综合题']] as const).filter(([type]) => type !== 'essay' || document.paper.subject === '语文').map(([type, label]) => <MetisButton key={type} type="bordered" icon={<Plus size={13} />} onClick={() => props.onAddQuestionGroup(type)}>{label}</MetisButton>)}
             </div>}
             <div className="answer-sheet-total-score" aria-live="polite">
               <span>答题卡总分</span>
@@ -278,8 +283,8 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                 const selected = block.id === props.selectedBlockId
                 return (
                   <div key={block.id} className={`config-outline-group ${selected ? 'selected' : ''}`} aria-current={selected ? 'true' : undefined}>
-                    <div className="config-block-row">
-                      <button type="button" onClick={() => props.onSelect(block.id)}>
+                    <div className={`config-block-row ${standaloneCard ? '' : 'config-block-row-linked'}`}>
+                      <button type="button" className="config-block-title-button" onClick={() => props.onSelect(block.id)}>
                         <b>{block.title}</b>
                         <small className={isQuestion && !standaloneCard ? 'computed-group-summary' : undefined}>{isQuestion
                           ? standaloneCard
@@ -322,7 +327,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
         </section>
 
         {blankCard && selected && !standaloneCard && (
-          <section className="config-flat-section config-selected-section">
+          <section className="config-flat-section config-selected-section config-questions-view">
             <div className="config-flat-title"><span>所选题块</span><small title={selected.title}>{selected.title}</small></div>
             <div className="config-flat-body">
               <Field label="模块标题"><MetisInput value={selected.title} onChange={(event) => props.onUpdateBlock({ title: event.target.value })} /></Field>

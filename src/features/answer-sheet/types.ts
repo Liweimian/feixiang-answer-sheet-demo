@@ -22,7 +22,7 @@ export type HeaderTemplateId = 'daily-quiz' | 'exam-general' | 'beijing-exam-ref
 export type HeaderEvidence = 'product-default' | 'official-sample' | 'official-rules' | 'reference-layout'
 export type HeaderModuleKind = 'title' | 'identity' | 'candidate-number' | 'barcode' | 'notice' | 'fill-sample' | 'absence-mark'
 export type ResponseStyle = 'lines' | 'grid' | 'squares' | 'composition' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
-export type FillSlotStyle = 'lines' | 'squares' | 'composition' | 'tian' | 'mi' | 'four-line'
+export type FillSlotStyle = 'lines' | 'bracket' | 'squares' | 'composition' | 'tian' | 'mi' | 'four-line'
 export type SubquestionNumberStyle = 'paren' | 'circle' | 'plain' | 'chinese'
 export interface FillSlotSetting {
   style: FillSlotStyle

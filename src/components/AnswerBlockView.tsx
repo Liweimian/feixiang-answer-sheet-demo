@@ -292,7 +292,7 @@ function ShortAnswerContent({
                 const slotKey = `${no}.${slotNumber}`
                 const setting = block.answerSlotSettings?.[slotKey]
                 const rawStyle = setting?.style ?? block.responseStyle ?? 'lines'
-                const style: FillSlotStyle = ['lines', 'squares', 'composition', 'tian', 'mi', 'four-line'].includes(rawStyle)
+                const style: FillSlotStyle = ['lines', 'bracket', 'squares', 'composition', 'tian', 'mi', 'four-line'].includes(rawStyle)
                   ? rawStyle as FillSlotStyle
                   : 'lines'
                 const cellCount = ['tian', 'mi', 'squares', 'composition'].includes(style)
@@ -321,6 +321,7 @@ function ShortAnswerContent({
                     value={style}
                     options={[
                       { value: 'lines', label: '作答线' },
+                      { value: 'bracket', label: '括号' },
                       { value: 'squares', label: '方格' },
                       { value: 'composition', label: '作文格' },
                       { value: 'tian', label: '田字格' },
@@ -994,6 +995,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
             value={effectiveSubjectiveStyle}
             options={[
               { value: 'lines', label: '作答线' },
+              { value: 'bracket', label: '括号' },
               { value: 'squares', label: '方格' },
               { value: 'composition', label: '作文格' },
               { value: 'tian', label: '田字格' },

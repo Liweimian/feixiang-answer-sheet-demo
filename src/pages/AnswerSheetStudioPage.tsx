@@ -708,6 +708,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               fromPaper={fromPaper}
               originalPaperOpen={originalPaperOpen}
               onOriginalPaper={() => setOriginalPaperOpen((open) => !open)}
+              onStageSubjectChange={(grade, subject) => commitDocument({ ...document, paper: { ...paper, grade, subject } })}
               onBack={() => onBack ? onBack() : MetisMessage.info('演示：返回组卷页；当前答题卡草稿已自动保存')}
               onUndo={undo}
               onRedo={redo}
@@ -799,7 +800,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
         onDownload={() => printSnapshot(published?.snapshot ?? document)}
         onDownloadPublished={() => printSnapshot(published?.snapshot ?? document)}
       />
-      <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} type={questionGroupType} initialValue={editingQuestionGroupId ? blocks.find((block) => block.id === editingQuestionGroupId)?.questionGroupDraft : undefined} onClose={() => { setQuestionGroupOpen(false); setEditingQuestionGroupId('') }} onSubmit={addQuestionGroup} />
+      <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} type={questionGroupType} subject={paper.subject} initialValue={editingQuestionGroupId ? blocks.find((block) => block.id === editingQuestionGroupId)?.questionGroupDraft : undefined} onClose={() => { setQuestionGroupOpen(false); setEditingQuestionGroupId('') }} onSubmit={addQuestionGroup} />
       <ObjectiveAnswerDialog open={objectiveAnswerOpen} blocks={blocks} onClose={() => setObjectiveAnswerOpen(false)} onSave={saveAnswers} />
     </>
   )
