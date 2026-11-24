@@ -273,6 +273,7 @@
 .config-block-row b, .config-block-row small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .config-block-row b { flex: 0 1 auto; font-size: 10px; }
 .config-block-row small { color: var(--fx_text_3); font-size: 8px; }
+.config-block-row small.computed-group-summary { color: var(--fx_text_1); font-size: 9px; font-weight: 500; }
 .config-block-batch-score { position: relative; display: block; color: var(--fx_text_3); font-size: 8px; }
 .config-block-batch-score > span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .config-block-batch-score > div { width: 100%; }

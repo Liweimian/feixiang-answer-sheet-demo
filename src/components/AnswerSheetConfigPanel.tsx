@@ -281,7 +281,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                     <div className="config-block-row">
                       <button type="button" onClick={() => props.onSelect(block.id)}>
                         <b>{block.title}</b>
-                        <small>{isQuestion
+                        <small className={isQuestion && !standaloneCard ? 'computed-group-summary' : undefined}>{isQuestion
                           ? standaloneCard
                             ? `（共 ${questionCount} 题，共 ${Number(computedGroupScore.toFixed(2))} 分）`
                             : `共 ${questionCount} 题　共 ${Number(computedGroupScore.toFixed(2))} 分`
