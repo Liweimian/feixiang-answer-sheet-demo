@@ -1,10 +1,11 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect } from '@yuanfudao/metis-web-component'
-import { ArrowRight, ChevronLeft, ChevronRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, Search, Upload } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, ListChecks, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
 import { importPaperAsAnswerSheet } from '../features/answer-sheet/importPaper'
 import { SourcePaperPreviewDialog } from '../components/SourcePaperPreviewDialog'
+import { ObjectiveAnswerDialog, type AnswerDialogValue } from '../components/ObjectiveAnswerDialog'
 
 interface AnswerSheetListPageProps {
   onEdit: (document: AnswerSheetDocument, sourceFile?: File) => void
@@ -77,6 +78,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
   const [newSubject, setNewSubject] = useState('英语')
   const [templateId, setTemplateId] = useState('true-blank')
   const [sourceFile, setSourceFile] = useState<File>()
+  const [answerRecord, setAnswerRecord] = useState<AnswerSheetRecord>()
 
   const visibleRecords = useMemo(() => items.filter((record) => {
     const matchesKeyword = !keyword.trim() || record.name.includes(keyword.trim())
@@ -85,11 +87,27 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       && (created === 'all' || (created === 'today' ? ['今天', '刚刚'].some((label) => record.updatedAt.includes(label)) : created === 'yesterday' ? record.updatedAt.includes('昨天') : !['今天', '刚刚', '昨天'].some((label) => record.updatedAt.includes(label))))
   }), [items, keyword, subject, status, created])
 
-  const openRecord = (record: AnswerSheetRecord) => {
-    if (localDocuments[record.id]) { onEdit(structuredClone(localDocuments[record.id]), record.sourceFile); return }
+  const getRecordDocument = useCallback((record: AnswerSheetRecord): AnswerSheetDocument => {
+    if (localDocuments[record.id]) return structuredClone(localDocuments[record.id])
     const template = answerSheetTemplates.find((item) => item.id === record.templateId) ?? answerSheetTemplates[0]
     const document = instantiateTemplate(template)
-    onEdit({ ...document, paper: { ...document.paper, title: record.name, subject: record.subject, sourceLabel: '答题卡工具' }, settings: { ...document.settings, linkedPaperId: '' } })
+    return { ...document, paper: { ...document.paper, title: record.name, subject: record.subject, sourceLabel: '答题卡工具' }, settings: { ...document.settings, linkedPaperId: '' } }
+  }, [localDocuments])
+
+  const openRecord = (record: AnswerSheetRecord) => onEdit(getRecordDocument(record), record.sourceFile)
+  const answerDocument = useMemo(() => answerRecord ? getRecordDocument(answerRecord) : undefined, [answerRecord, getRecordDocument])
+  const saveRecordAnswers = (answers: Record<string, AnswerDialogValue>) => {
+    if (!answerRecord || !answerDocument) return
+    setLocalDocuments((current) => ({ ...current, [answerRecord.id]: {
+      ...answerDocument,
+      blocks: answerDocument.blocks.map((block) => block.questionGroupDraft ? {
+        ...block,
+        objectiveAnswers: answers[block.id]?.objectiveAnswers ?? block.objectiveAnswers,
+        referenceAnswers: answers[block.id]?.referenceAnswers ?? block.referenceAnswers,
+      } : block),
+    } }))
+    setAnswerRecord(undefined)
+    MetisMessage.success('答案已保存')
   }
 
   const createCard = () => {
@@ -170,6 +188,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
           <span>{record.subject}</span><span>{record.pages} 页</span><span>{record.updatedAt}</span>
           <div className="record-actions">
             <MetisButton type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
+            <MetisButton type="borderless" size="s" icon={<ListChecks size={14} />} onClick={() => setAnswerRecord(record)}>设置答案</MetisButton>
             <MetisButton type="borderless" size="s" icon={<Copy size={14} />} onClick={() => { setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft', sourceFile: undefined }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}>复制</MetisButton>
             <MetisButton type="borderless" size="s" icon={<Download size={14} />} onClick={() => MetisMessage.info('演示：下载最新版 PDF')}>下载</MetisButton>
           </div>
@@ -185,5 +204,6 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       </div>
     </MetisDialog>
     <SourcePaperPreviewDialog file={sourceFile} onClose={() => setSourceFile(undefined)} />
+    <ObjectiveAnswerDialog open={Boolean(answerRecord)} blocks={answerDocument?.blocks ?? []} onClose={() => setAnswerRecord(undefined)} onSave={saveRecordAnswers} />
   </div>
 }
