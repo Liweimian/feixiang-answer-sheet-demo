@@ -1,5 +1,6 @@
-import { answerSheetTemplates, instantiateTemplate } from '../../data/answerSheetTemplates'
+import { answerSheetTemplates, defaultAnswerSheetDocument, instantiateTemplate } from '../../data/answerSheetTemplates'
 import type { AnswerBlock, AnswerSheetDocument, QuestionGroupDraft, QuestionGroupType } from './types'
+import { questionNumbers } from './range'
 
 const questionPattern = /^\s*(\d{1,3})\s*[.．、]\s*(?:[（(]\s*(\d+(?:\.\d+)?)\s*分\s*[）)])?/
 const sectionPattern = /^\s*[一二三四五六七八九十]+[、.．]\s*(.+)$/
@@ -12,6 +13,43 @@ function inferType(label: string): QuestionGroupType {
   if (/综合|阅读理解/.test(label)) return 'comprehensive'
   if (/解答|简答|计算|应用/.test(label)) return 'solution'
   return 'single'
+}
+
+function sampleAnswerSheet(file: File): AnswerSheetDocument {
+  const sample = structuredClone(defaultAnswerSheetDocument)
+  const blocks = sample.blocks.map((block) => {
+    if (!['objective', 'short-answer', 'essay'].includes(block.kind)) return { ...block, sectionId: undefined, locked: false }
+    const numbers = questionNumbers(block.range)
+    const type: QuestionGroupType = block.kind === 'objective' ? block.objectiveMode ?? 'single' : block.kind === 'essay' ? 'essay' : 'solution'
+    const unitScore = numbers.length ? Number(((block.score ?? 0) / numbers.length).toFixed(2)) : 0
+    const items: QuestionGroupDraft['items'] = numbers.map((number, index) => ({
+      number,
+      score: block.questionScores?.[String(number)] ?? (index === numbers.length - 1 ? Number(((block.score ?? 0) - unitScore * index).toFixed(2)) : unitScore),
+      blankCount: 1,
+      fillStyle: 'lines',
+      lineCount: 3,
+      subquestionCount: block.answerSlotCounts?.[index] ?? 0,
+      optionCount: 4,
+      answer: '',
+    }))
+    const draft: QuestionGroupDraft = {
+      title: block.title,
+      type,
+      groupType: 'normal',
+      startNumber: numbers[0] ?? 1,
+      questionCount: numbers.length,
+      totalScore: block.score ?? 0,
+      optionCount: block.optionCount ?? 4,
+      items,
+    }
+    return { ...block, sectionId: undefined, locked: false, userInserted: true, questionGroupDraft: draft }
+  })
+  return {
+    ...sample,
+    paper: { ...sample.paper, id: `uploaded-${Date.now()}`, title: `${file.name.replace(/\.[^.]+$/, '')}答题卡`, sourceLabel: `上传试卷演示：${file.name}`, sections: [] },
+    settings: { ...sample.settings, linkedPaperId: '' },
+    blocks,
+  }
 }
 
 async function readPaperText(file: File): Promise<string> {
@@ -69,6 +107,7 @@ export async function importPaperAsAnswerSheet(file: File): Promise<AnswerSheetD
     if (!current.questions.some((item) => item.number === number)) current.questions.push({ number, score: Number(question[2] ?? 0) })
   }
   const recognized = groups.filter((group) => group.questions.length > 0)
+  if (!recognized.length) return sampleAnswerSheet(file)
   for (const group of recognized) {
     if (!group.totalScore || group.questions.some((item) => item.score > 0)) continue
     const unitScore = Number((group.totalScore / group.questions.length).toFixed(2))
