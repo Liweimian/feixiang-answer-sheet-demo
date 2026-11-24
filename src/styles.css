@@ -130,11 +130,9 @@
 .tool-ai-hero-body form { display: flex; gap: 12px; min-height: 52px; padding: 7px; border-radius: 10px; background: white; }
 .tool-ai-hero-body input { min-width: 0; flex: 1; padding: 0 12px; border: 0; outline: 0; color: var(--fx_text_1); font: inherit; font-size: 13px; }
 .tool-ai-hero-body form button { padding: 0 18px; border: 0; border-radius: 7px; background: #258575; color: white; cursor: pointer; font-size: 13px; font-weight: 600; }
-.tool-entry-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
-.tool-entry-grid article { min-width: 0; min-height: 145px; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 20px; border: 1px solid var(--fx_border); border-radius: 14px; background: white; }
-.tool-entry-grid article > span { color: #258575; font-size: 11px; font-weight: 700; }
-.tool-entry-grid h2 { margin: 0; color: var(--fx_text_1); font-size: 17px; }
-.tool-entry-grid article > button { margin-top: auto; }
+.tool-manual-entry { display: flex; align-items: center; gap: 22px; margin-bottom: 24px; padding: 16px 20px; border: 1px solid var(--fx_border); border-radius: 12px; background: white; }
+.tool-manual-entry h2 { flex: 0 0 auto; margin: 0; color: var(--fx_text_1); font-size: 16px; }
+.tool-manual-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 .tool-library-section-heading h2 { margin: 0 0 14px; color: var(--fx_text_1); font-size: 19px; }
 .tool-library-section-heading small { margin-left: 5px; color: var(--fx_text_3); font-size: 12px; font-weight: 400; }
 .tool-library-open .library-tool-actions { justify-content: flex-start; margin-bottom: 16px; }
@@ -145,7 +143,7 @@
 .tool-library-open .record-meta { grid-column: 1; grid-row: 2; }
 .tool-library-open .record-actions { grid-column: 1; grid-row: 3; justify-content: start; }
 @media (max-width: 1160px) { .tool-library-open .card-list-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 760px) { .tool-entry-grid, .tool-library-open .card-list-panel { grid-template-columns: 1fr; } .tool-ai-hero-body form { flex-direction: column; } .tool-ai-hero-body form button { min-height: 38px; } }
+@media (max-width: 760px) { .tool-library-open .card-list-panel { grid-template-columns: 1fr; } .tool-ai-hero-body form { flex-direction: column; } .tool-ai-hero-body form button { min-height: 38px; } .tool-manual-entry { align-items: flex-start; flex-direction: column; } }
 .library-tool-actions { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
 .library-create-actions, .library-top-filters { display: flex; align-items: center; gap: 12px; }
 .library-create-actions { flex: 0 0 auto; }
