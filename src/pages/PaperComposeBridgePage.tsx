@@ -14,6 +14,7 @@ export function PaperComposeBridgePage({ onGenerateAnswerSheet, onBack }: PaperC
       const layoutStyle = frameDocument.createElement('style')
       layoutStyle.id = layoutStyleId
       layoutStyle.textContent = `
+        noscript { display: none !important; }
         .metis-document-layout__content-box {
           box-sizing: border-box !important;
           padding-left: 16px !important;
@@ -56,6 +57,7 @@ export function PaperComposeBridgePage({ onGenerateAnswerSheet, onBack }: PaperC
       `
       frameDocument.head.appendChild(layoutStyle)
     }
+    frameDocument.querySelectorAll('noscript').forEach((notice) => notice.remove())
     const buttons = [...frameDocument.querySelectorAll<HTMLButtonElement>('button')]
     const generateButtons = buttons.filter((button) => button.textContent?.replace(/\s+/g, '').includes('生成答题卡'))
     generateButtons.forEach((button) => {
@@ -89,6 +91,6 @@ export function PaperComposeBridgePage({ onGenerateAnswerSheet, onBack }: PaperC
   }, [onBack, onGenerateAnswerSheet])
 
   return <section className="paper-compose-bridge" aria-label="从试卷生成答题卡">
-    <iframe title="飞象星球试卷编辑页" src="./飞象星球.html" sandbox="allow-same-origin" onLoad={(event) => connectGenerateAction(event.currentTarget)} />
+    <iframe title="飞象星球试卷编辑页" src="./飞象星球.html?v=2" sandbox="allow-same-origin" onLoad={(event) => connectGenerateAction(event.currentTarget)} />
   </section>
 }
