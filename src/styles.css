@@ -131,14 +131,15 @@
 .tool-ai-composer input::placeholder { color: var(--fx_text_3); }
 .tool-ai-composer > button[type='submit'] { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border: 0; border-radius: 8px; background: var(--tool-ai-accent); color: white; cursor: pointer; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .tool-ai-composer > button[type='submit']:hover { filter: brightness(0.94); }
-.tool-quick-entry { display: grid; max-width: 940px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 22px auto 0; }
-.tool-quick-entry button { display: flex; min-width: 0; min-height: 76px; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid transparent; border-radius: 12px; background: white; color: var(--fx_text_1); cursor: pointer; font: inherit; text-align: left; }
+.tool-quick-entry { display: grid; max-width: 940px; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 22px auto 0; }
+.tool-quick-entry button { display: flex; min-width: 0; min-height: 76px; align-items: center; gap: 10px; padding: 12px; border: 1px solid transparent; border-radius: 12px; background: white; color: var(--fx_text_1); cursor: pointer; font: inherit; text-align: left; }
 .tool-quick-entry button:hover { border-color: #c7ded4; box-shadow: var(--fx_shadow_sm); }
 .tool-quick-entry button:focus-visible { outline: 2px solid var(--tool-ai-accent); outline-offset: 2px; }
 .tool-quick-icon { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: var(--tool-ai-soft); color: var(--tool-ai-accent); }
 .tool-quick-copy { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
 .tool-quick-entry strong { font-size: 14px; white-space: nowrap; }
 .tool-quick-entry small { overflow: hidden; color: var(--fx_text_3); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 1000px) { .tool-quick-entry { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tool-library-section-heading h2 { display: flex; align-items: baseline; gap: 12px; margin: 0 0 20px; color: var(--fx_text_1); font-size: 27px; line-height: 1.3; }
 .tool-library-section-heading small { color: var(--fx_text_3); font-size: 16px; font-weight: 400; }
 .tool-library-open .library-tool-actions { justify-content: flex-start; margin-bottom: 22px; }
