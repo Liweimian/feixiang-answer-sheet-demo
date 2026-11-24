@@ -67,6 +67,10 @@ export function isQuestionBlockKind(kind: AnswerBlockKind): boolean {
   return questionBlockKinds.includes(kind)
 }
 
+export function isAnswerableBlock(block: AnswerBlock): boolean {
+  return block.kind !== 'essay' && isQuestionBlockKind(block.kind) && Boolean(block.range || block.questionGroupDraft)
+}
+
 export interface PaperSection {
   id: string
   title: string

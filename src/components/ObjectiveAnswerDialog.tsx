@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MetisButton, MetisCheckbox, MetisDialog, MetisInput } from '@yuanfudao/metis-web-component'
 import { CheckCircle2, FileImage, FileText, ScanText, Upload } from 'lucide-react'
-import type { AnswerBlock } from '../features/answer-sheet/types'
+import { isAnswerableBlock, type AnswerBlock } from '../features/answer-sheet/types'
 import { questionNumbers } from '../features/answer-sheet/range'
 
 export interface AnswerDialogValue {
@@ -17,7 +17,7 @@ interface ObjectiveAnswerDialogProps {
 }
 
 export function ObjectiveAnswerDialog(props: ObjectiveAnswerDialogProps) {
-  const answerBlocks = useMemo(() => props.blocks.filter((block) => block.questionGroupDraft && block.questionGroupDraft.type !== 'essay'), [props.blocks])
+  const answerBlocks = useMemo(() => props.blocks.filter(isAnswerableBlock), [props.blocks])
   const [answers, setAnswers] = useState<Record<string, AnswerDialogValue>>({})
   const [ocrState, setOcrState] = useState<'idle' | 'recognizing' | 'done'>('idle')
   const [ocrFile, setOcrFile] = useState<{ name: string; preview: string; image: boolean } | null>(null)

@@ -3,6 +3,7 @@ import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect } from 
 import { ArrowRight, ChevronLeft, ChevronRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, ListChecks, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
+import { isAnswerableBlock } from '../features/answer-sheet/types'
 import { importPaperAsAnswerSheet } from '../features/answer-sheet/importPaper'
 import { SourcePaperPreviewDialog } from '../components/SourcePaperPreviewDialog'
 import { ObjectiveAnswerDialog, type AnswerDialogValue } from '../components/ObjectiveAnswerDialog'
@@ -100,7 +101,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
     if (!answerRecord || !answerDocument) return
     setLocalDocuments((current) => ({ ...current, [answerRecord.id]: {
       ...answerDocument,
-      blocks: answerDocument.blocks.map((block) => block.questionGroupDraft ? {
+      blocks: answerDocument.blocks.map((block) => isAnswerableBlock(block) ? {
         ...block,
         objectiveAnswers: answers[block.id]?.objectiveAnswers ?? block.objectiveAnswers,
         referenceAnswers: answers[block.id]?.referenceAnswers ?? block.referenceAnswers,

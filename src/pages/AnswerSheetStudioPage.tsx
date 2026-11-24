@@ -33,7 +33,7 @@ import type {
   QuestionGroupDraft,
   QuestionGroupType,
 } from '../features/answer-sheet/types'
-import { isQuestionBlockKind } from '../features/answer-sheet/types'
+import { isAnswerableBlock, isQuestionBlockKind } from '../features/answer-sheet/types'
 import { answerSheetService } from '../services/answerSheetService'
 import { EditorToolbar } from '../components/EditorToolbar'
 import { EditorWorkbench } from '../components/EditorWorkbench'
@@ -346,7 +346,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onB
   }
 
   const saveAnswers = (answers: Record<string, AnswerDialogValue>) => {
-    commitBlocks(blocks.map((block) => block.questionGroupDraft ? { ...block, objectiveAnswers: answers[block.id]?.objectiveAnswers ?? block.objectiveAnswers, referenceAnswers: answers[block.id]?.referenceAnswers ?? block.referenceAnswers } : block))
+    commitBlocks(blocks.map((block) => isAnswerableBlock(block) ? { ...block, objectiveAnswers: answers[block.id]?.objectiveAnswers ?? block.objectiveAnswers, referenceAnswers: answers[block.id]?.referenceAnswers ?? block.referenceAnswers } : block))
     setObjectiveAnswerOpen(false)
     MetisMessage.success('答案已保存')
   }
@@ -726,7 +726,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onB
                 downloadAnnotatedAnswerSheet(document, draftVersion)
                 MetisMessage.success('已下载带批改痕迹版，可在浏览器中继续打印为 PDF')
               }}
-              hasAnswerBlocks={blocks.some((block) => block.questionGroupDraft && block.questionGroupDraft.type !== 'essay')}
+              hasAnswerBlocks={blocks.some(isAnswerableBlock)}
               onAnswers={() => setObjectiveAnswerOpen(true)}
         />
         <EditorWorkbench
