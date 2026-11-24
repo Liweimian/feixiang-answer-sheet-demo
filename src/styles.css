@@ -140,6 +140,8 @@
 .record-name > svg { flex: 0 0 auto; color: var(--fx_brand); }
 .record-name > div { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
 .record-name strong { overflow: hidden; color: var(--fx_text_1); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.record-source-link { flex: 0 0 auto; margin-left: 4px; padding: 2px 7px; border: 1px solid var(--fx_border_strong); border-radius: 4px; background: var(--fx_surface); color: var(--fx_brand); font: inherit; cursor: pointer; }
+.record-source-link:hover { border-color: var(--fx_brand); background: var(--fx_brand_soft); }
 .record-name small { color: var(--fx_text_3); }
 .record-actions { display: flex; align-items: center; gap: 2px; }
 .library-empty { display: flex; min-height: 280px; align-items: center; justify-content: center; flex-direction: column; gap: 9px; color: var(--fx_text_3); }

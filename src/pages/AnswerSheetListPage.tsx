@@ -19,6 +19,7 @@ interface AnswerSheetRecord {
   pages: number
   status: 'draft' | 'downloaded' | 'linked'
   creator: string
+  sourceFile?: File
 }
 
 const records: AnswerSheetRecord[] = [
@@ -108,7 +109,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
     try {
       const document = await importPaperAsAnswerSheet(file)
       setLocalDocuments((current) => ({ ...current, [document.paper.id]: document }))
-      setItems((current) => [{ id: document.paper.id, name: document.paper.title, subject: document.paper.subject, templateId: 'true-blank', updatedAt: '刚刚', pages: document.pageCount, status: 'draft', creator: '李老师' }, ...current])
+      setItems((current) => [{ id: document.paper.id, name: document.paper.title, subject: document.paper.subject, templateId: 'true-blank', updatedAt: '刚刚', pages: document.pageCount, status: 'draft', creator: '李老师', sourceFile: file }, ...current])
       MetisMessage.success(document.paper.sourceLabel.includes('演示') ? '已带入示例题型和分值，可修改并继续插入题组' : '已生成答题卡，请核对题号、题型和分值')
       onEdit(document)
     } catch (error) {
@@ -162,12 +163,16 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       <div className="card-list-head"><span>答题卡名称</span><span>学科</span><span>页数</span><span>更新时间</span><span>操作</span></div>
       {visibleRecords.length ? visibleRecords.map((record) => {
         return <div className="card-list-row" key={record.id}>
-          <div className="record-name"><FileText size={18} /><strong>{record.name}</strong></div>
+          <div className="record-name"><FileText size={18} /><strong>{record.name}</strong>{record.sourceFile && <button type="button" className="record-source-link" title={record.sourceFile.name} onClick={() => {
+            const sourceUrl = URL.createObjectURL(record.sourceFile!)
+            window.open(sourceUrl, '_blank', 'noopener,noreferrer')
+            window.setTimeout(() => URL.revokeObjectURL(sourceUrl), 60_000)
+          }}>原卷</button>}</div>
           <span>{record.subject}</span><span>{record.pages} 页</span><span>{record.updatedAt}</span>
           <div className="record-actions">
             <MetisButton type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
             <MetisButton type="borderless" size="s" icon={<Copy size={14} />} onClick={() => { setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft' }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}>复制</MetisButton>
-            <MetisButton type="borderless" size="s" icon={record.status === 'draft' ? <Upload size={14} /> : <Download size={14} />} onClick={() => MetisMessage.info(record.status === 'draft' ? '演示：上传配套原题' : '演示：下载最新版 PDF')}>{record.status === 'draft' ? '上传原题' : '下载'}</MetisButton>
+            <MetisButton type="borderless" size="s" icon={<Download size={14} />} onClick={() => MetisMessage.info('演示：下载最新版 PDF')}>下载</MetisButton>
           </div>
         </div>
       }) : <div className="library-empty"><FileText size={36} /><strong>没有找到答题卡</strong><span>调整筛选条件，或新建一张空白答题卡</span></div>}
