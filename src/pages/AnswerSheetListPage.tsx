@@ -181,10 +181,11 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       </div>
 
     <section className="card-list-panel">
-      <div className="card-list-head"><span>答题卡名称</span><span>学科</span><span>页数</span><span>更新时间</span><span>操作</span></div>
+      <div className="card-list-head"><span>答题卡名称</span><span>原卷</span><span>学科</span><span>页数</span><span>更新时间</span><span>操作</span></div>
       {visibleRecords.length ? visibleRecords.map((record) => {
         return <div className="card-list-row" key={record.id}>
-          <div className="record-name"><FileText size={18} /><strong>{record.name}</strong>{record.sourceFile && <button type="button" className="record-source-link" title={record.sourceFile.name} onClick={() => setSourceFile(record.sourceFile)}>原卷</button>}</div>
+          <div className="record-name"><FileText size={18} /><strong>{record.name}</strong></div>
+          <div className="record-source-cell">{record.sourceFile && <button type="button" className="record-source-link" title={record.sourceFile.name} onClick={() => setSourceFile(record.sourceFile)}>{record.sourceFile.name}</button>}</div>
           <span>{record.subject}</span><span>{record.pages} 页</span><span>{record.updatedAt}</span>
           <div className="record-actions">
             <MetisButton type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>

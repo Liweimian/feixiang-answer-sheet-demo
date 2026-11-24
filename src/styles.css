@@ -132,7 +132,7 @@
 .library-toolbar { display: grid; grid-template-columns: 280px 150px 1fr; align-items: center; gap: 12px; padding: 16px; border: 1px solid var(--fx_border); border-bottom: 0; border-radius: var(--fx_radius_5) var(--fx_radius_5) 0 0; background: var(--fx_surface); }
 .library-toolbar > span { justify-self: end; color: var(--fx_text_3); font-size: 12px; }
 .card-list-panel { overflow: hidden; border: 1px solid var(--fx_border); border-radius: 0 0 var(--fx_radius_5) var(--fx_radius_5); background: var(--fx_surface); box-shadow: var(--fx_shadow_sm); }
-.card-list-head, .card-list-row { display: grid; grid-template-columns: minmax(300px, 2fr) 80px 64px 110px minmax(250px, 1fr); align-items: center; gap: 12px; padding: 0 18px; }
+.card-list-head, .card-list-row { display: grid; grid-template-columns: minmax(260px, 2fr) minmax(160px, 1.2fr) 80px 64px 110px minmax(250px, 1fr); align-items: center; gap: 12px; padding: 0 18px; }
 .card-list-head { height: 42px; background: var(--fx_surface_subtle); color: var(--fx_text_3); font-size: 12px; }
 .card-list-row { min-height: 74px; border-top: 1px solid var(--fx_border); color: var(--fx_text_2); font-size: 12px; }
 .card-list-row:hover { background: var(--fx_brand_soft); }
@@ -140,8 +140,9 @@
 .record-name > svg { flex: 0 0 auto; color: var(--fx_brand); }
 .record-name > div { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
 .record-name strong { overflow: hidden; color: var(--fx_text_1); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.record-source-link { flex: 0 0 auto; margin-left: 4px; padding: 2px 7px; border: 1px solid var(--fx_border_strong); border-radius: 4px; background: var(--fx_surface); color: var(--fx_brand); font: inherit; cursor: pointer; }
-.record-source-link:hover { border-color: var(--fx_brand); background: var(--fx_brand_soft); }
+.record-source-cell { min-width: 0; }
+.record-source-link { display: block; max-width: 100%; overflow: hidden; padding: 2px 0; border: 0; background: transparent; color: var(--fx_brand); font: inherit; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.record-source-link:hover { text-decoration: underline; }
 .record-source-preview { display: grid; min-height: 420px; max-height: 68vh; place-items: center; overflow: auto; background: var(--fx_surface_subtle); }
 .record-source-preview img { max-width: 100%; max-height: 68vh; object-fit: contain; }
 .record-source-preview iframe { width: 100%; height: 68vh; border: 0; background: white; }
