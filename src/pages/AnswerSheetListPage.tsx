@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect, MetisTag } from '@yuanfudao/metis-web-component'
+import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect } from '@yuanfudao/metis-web-component'
 import { ArrowRight, ChevronLeft, ChevronRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
@@ -26,12 +26,6 @@ const records: AnswerSheetRecord[] = [
   { id: 'card-2', name: '九年级物理实验专题', subject: '物理', templateId: 'science-lab-school', updatedAt: '昨天 18:42', pages: 2, status: 'downloaded', creator: '李老师' },
   { id: 'card-3', name: '语文作文训练通用卡', subject: '语文', templateId: 'true-blank', updatedAt: '11-03 09:18', pages: 1, status: 'linked', creator: '备课组' },
 ]
-
-const statusMeta = {
-  draft: { label: '草稿', preset: 'primary' as const },
-  downloaded: { label: '已下载', preset: 'primary' as const },
-  linked: { label: '已关联作业', preset: 'success' as const },
-}
 
 function createDocument(name: string, subject: string, templateId: string) {
   const template = answerSheetTemplates.find((item) => item.id === templateId)
@@ -165,12 +159,11 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       </div>
 
     <section className="card-list-panel">
-      <div className="card-list-head"><span>答题卡名称</span><span>学科</span><span>页数</span><span>创建人</span><span>更新时间</span><span>状态</span><span>操作</span></div>
+      <div className="card-list-head"><span>答题卡名称</span><span>学科</span><span>页数</span><span>更新时间</span><span>操作</span></div>
       {visibleRecords.length ? visibleRecords.map((record) => {
-        const meta = statusMeta[record.status]
         return <div className="card-list-row" key={record.id}>
           <div className="record-name"><FileText size={18} /><strong>{record.name}</strong></div>
-          <span>{record.subject}</span><span>{record.pages} 页</span><span>{record.creator}</span><span>{record.updatedAt}</span><MetisTag preset={meta.preset}>{meta.label}</MetisTag>
+          <span>{record.subject}</span><span>{record.pages} 页</span><span>{record.updatedAt}</span>
           <div className="record-actions">
             <MetisButton type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
             <MetisButton type="borderless" size="s" icon={<Copy size={14} />} onClick={() => { setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft' }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}>复制</MetisButton>
