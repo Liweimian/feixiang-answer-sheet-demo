@@ -55,9 +55,12 @@ function ObjectiveGrid({ block, compact = false, sortMode = 'number-horizontal-o
   )
 }
 
-function RuledLines({ count, dashed = false }: { count: number; dashed?: boolean }) {
+function RuledLines({ count, dashed = false, lineHeight }: { count: number; dashed?: boolean; lineHeight?: number }) {
   return (
-    <div className={`ruled-lines ${dashed ? 'dashed' : ''}`}>
+    <div
+      className={`ruled-lines ${dashed ? 'dashed' : ''}`}
+      style={lineHeight ? { gridAutoRows: `${lineHeight}px` } : undefined}
+    >
       {Array.from({ length: count }, (_, index) => <span key={index} />)}
     </div>
   )
@@ -270,7 +273,7 @@ function ShortAnswerContent({
       const labels = block.answerSlotLabels?.[questionIndex]
       return <section key={no}><b>{no}.</b>{slots.map((slot, slotIndex) => <div key={`${slot}-${slotIndex}`} className="solution-subquestion">{slot > 0
         ? <em>{labels?.[slotIndex] ?? formatSubquestionNumber(slot, numberStyle)}<QuestionScore block={block} scoreKey={`${no}.${slot}`} />{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${no}.${slot}题手写分数框`} />}</em>
-        : <span className="solution-score-label"><QuestionScore block={block} scoreKey={String(no)} />{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${no}题手写分数框`} />}</span>}{block.responseStyle === 'blank' ? <div className="blank-response-area" /> : <RuledLines count={Math.max(1, Math.floor(totalLines / slots.length))} dashed={dashed} />}</div>)}</section>
+        : <span className="solution-score-label"><QuestionScore block={block} scoreKey={String(no)} />{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${no}题手写分数框`} />}</span>}{block.responseStyle === 'blank' ? <div className="blank-response-area" /> : <RuledLines count={Math.max(1, Math.floor(totalLines / slots.length))} dashed={dashed} lineHeight={lineHeight} />}</div>)}</section>
     })}</div>
   }
   if (block.answerSlotCounts?.length && numbers.length > 0) {
@@ -873,7 +876,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       : inheritedSubjectiveStyle
   useLayoutEffect(() => {
     const supportsSharedLineHeight = block.answerVariant === 'solution' || block.answerVariant === 'fill'
-    if (!supportsSharedLineHeight || (block.answerVariant === 'solution' && block.preserveAnswerAreaHeight) || effectiveSubjectiveStyle !== 'lines' || !onUpdateBlock) return
+    if (!supportsSharedLineHeight || effectiveSubjectiveStyle !== 'lines' || !onUpdateBlock) return
     const root = blockRef.current
     const content = root?.querySelector<HTMLElement>(block.answerVariant === 'fill' ? '.short-answer-slots' : '.solution-question-groups')
     if (!root || !content) return

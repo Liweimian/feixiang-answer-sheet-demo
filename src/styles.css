@@ -1153,7 +1153,11 @@
 .solution-subquestion > em .inline-handwrite-score-box, .solution-subquestion > .solution-score-label .inline-handwrite-score-box { margin-left: auto; }
 .solution-subquestion .inline-handwrite-score-box { width: 24px; height: 18px; display: inline-block; vertical-align: middle; }
 .solution-subquestion .ruled-lines { gap: 0; grid-auto-rows: var(--answer-line-height, 16px); margin-top: 0; }
-.solution-subquestion .ruled-lines span { align-self: end; }
+.solution-subquestion .ruled-lines span {
+  align-self: stretch;
+  box-sizing: border-box;
+  height: 100%;
+}
 .solution-subquestion .ruled-lines span:first-child { width: calc(100% - 58px); margin-left: 58px; }
 .objective-answer-dialog { max-height: 560px; display: grid; gap: var(--fx_sp_4); overflow-y: auto; }
 .answer-ocr-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 14px; border: 1px dashed var(--fx_brand); border-radius: var(--fx_radius_4); background: var(--fx_brand_soft); }
