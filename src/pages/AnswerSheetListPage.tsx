@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect, MetisTag } from '@yuanfudao/metis-web-component'
-import { ArrowRight, ChevronLeft, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, Search, Upload } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
 import { importPaperAsAnswerSheet } from '../features/answer-sheet/importPaper'
@@ -74,6 +74,8 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
   const [localDocuments, setLocalDocuments] = useState<Record<string, AnswerSheetDocument>>({})
   const [keyword, setKeyword] = useState('')
   const [subject, setSubject] = useState('all')
+  const [status, setStatus] = useState('all')
+  const [created, setCreated] = useState('all')
   const [createOpen, setCreateOpen] = useState(false)
   const [name, setName] = useState('未命名答题卡')
   const [newSubject, setNewSubject] = useState('英语')
@@ -82,7 +84,9 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
   const visibleRecords = useMemo(() => items.filter((record) => {
     const matchesKeyword = !keyword.trim() || record.name.includes(keyword.trim())
     return matchesKeyword && (subject === 'all' || record.subject === subject)
-  }), [items, keyword, subject])
+      && (status === 'all' || record.status === status)
+      && (created === 'all' || (created === 'today' ? ['今天', '刚刚'].some((label) => record.updatedAt.includes(label)) : created === 'yesterday' ? record.updatedAt.includes('昨天') : !['今天', '刚刚', '昨天'].some((label) => record.updatedAt.includes(label))))
+  }), [items, keyword, subject, status, created])
 
   const openRecord = (record: AnswerSheetRecord) => {
     if (localDocuments[record.id]) { onEdit(structuredClone(localDocuments[record.id])); return }
@@ -122,11 +126,13 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
 
   const footer = <div className="dialog-footer-actions"><MetisButton type="borderless" onClick={() => setCreateOpen(false)}>取消</MetisButton><MetisButton type="primary" onClick={createCard}>创建并开始制卡</MetisButton></div>
 
-  return <div className="answer-sheet-library">
-    <header className="library-header">
-      <div><span>题库卷库 / 答题卡工具</span><h1>{toolOpen ? '制卡工具' : '答题卡工具'}</h1><p>{toolOpen ? '新建空白答题卡，或上传试卷带入可修改的题目与分值。' : '已有题库试卷可从组卷流程生成；没有题库试卷可进入制卡工具。'}</p></div>
-      {toolOpen && <MetisButton type="borderless" icon={<ChevronLeft size={16} />} onClick={() => setToolOpen(false)}>返回入口</MetisButton>}
-    </header>
+  return <div className={`answer-sheet-library${toolOpen ? ' tool-library-open' : ''}`}>
+    {toolOpen ? <header className="tool-library-breadcrumb">
+      <button type="button" className="tool-library-back" aria-label="返回答题卡工具入口" onClick={() => setToolOpen(false)}><ChevronLeft size={22} /></button>
+      <span>首页</span><ChevronRight size={16} /><span>考试管理</span><ChevronRight size={16} /><strong>制卡工具</strong>
+    </header> : <header className="library-header">
+      <div><span>题库卷库 / 答题卡工具</span><h1>答题卡工具</h1><p>已有题库试卷可从组卷流程生成；没有题库试卷可进入制卡工具。</p></div>
+    </header>}
 
     {!toolOpen && <section className="answer-sheet-entry-grid" data-sec="1">
       <article className="answer-sheet-entry-card entry-from-paper active">
@@ -145,24 +151,25 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
 
     {toolOpen && <div className="blank-card-library">
       <div className="library-tool-actions">
-        <MetisButton type="primary" icon={<FilePlus2 size={16} />} onClick={() => setCreateOpen(true)}>新建空白答题卡</MetisButton>
-        <MetisButton type="bordered" icon={<Upload size={16} />} loading={importing} onClick={() => uploadInputRef.current?.click()}>上传试卷生成答题卡</MetisButton>
+        <div className="library-create-actions">
+          <MetisButton type="primary" icon={<FilePlus2 size={16} />} onClick={() => setCreateOpen(true)}>新建空白答题卡</MetisButton>
+          <MetisButton type="bordered" icon={<Upload size={16} />} loading={importing} onClick={() => uploadInputRef.current?.click()}>上传试卷生成答题卡</MetisButton>
+        </div>
         <input ref={uploadInputRef} type="file" hidden onChange={(event) => { void uploadPaper(event.target.files?.[0]); event.currentTarget.value = '' }} />
+        <div className="library-top-filters">
+          <MetisSelect value={created} onChange={(value) => setCreated(String(value))} options={[{ label: '创建日期', value: 'all' }, { label: '今天', value: 'today' }, { label: '昨天', value: 'yesterday' }, { label: '更早', value: 'earlier' }]} />
+          <MetisSelect value={status} onChange={(value) => setStatus(String(value))} options={[{ label: '使用状态', value: 'all' }, { label: '草稿', value: 'draft' }, { label: '已下载', value: 'downloaded' }, { label: '已关联作业', value: 'linked' }]} />
+          <MetisSelect value={subject} onChange={(value) => setSubject(String(value))} options={['学科', '语文', '数学', '英语', '物理'].map((label, index) => ({ label, value: index === 0 ? 'all' : label }))} />
+          <MetisInput prefix={<Search size={16} />} placeholder="搜索答题卡名称" value={keyword} onChange={(event) => setKeyword(event.target.value)} allowClear />
+        </div>
       </div>
-      <div className="library-section-title"><div><h2>我的答题卡</h2><p>继续编辑、复制或下载已创建的答题卡。</p></div></div>
-
-    <section className="library-toolbar">
-      <MetisInput prefix={<Search size={15} />} placeholder="搜索答题卡名称" value={keyword} onChange={(event) => setKeyword(event.target.value)} allowClear />
-      <MetisSelect value={subject} onChange={(value) => setSubject(String(value))} options={['全部学科', '语文', '数学', '英语', '物理'].map((label, index) => ({ label, value: index === 0 ? 'all' : label }))} />
-      <span>{visibleRecords.length} 张答题卡</span>
-    </section>
 
     <section className="card-list-panel">
       <div className="card-list-head"><span>答题卡名称</span><span>学科</span><span>页数</span><span>创建人</span><span>更新时间</span><span>状态</span><span>操作</span></div>
       {visibleRecords.length ? visibleRecords.map((record) => {
         const meta = statusMeta[record.status]
         return <div className="card-list-row" key={record.id}>
-          <div className="record-name"><FileText size={18} /><div><strong>{record.name}</strong><small>无关联试卷 · 可继续编辑题号与版式</small></div></div>
+          <div className="record-name"><FileText size={18} /><strong>{record.name}</strong></div>
           <span>{record.subject}</span><span>{record.pages} 页</span><span>{record.creator}</span><span>{record.updatedAt}</span><MetisTag preset={meta.preset}>{meta.label}</MetisTag>
           <div className="record-actions">
             <MetisButton type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
@@ -178,7 +185,6 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
         <label><span>答题卡名称</span><MetisInput value={name} maxLength={40} onChange={(event) => setName(event.target.value)} /></label>
         <label><span>学科</span><MetisSelect value={newSubject} onChange={(value) => setNewSubject(String(value))} options={['语文', '数学', '英语', '物理', '化学', '道德与法治'].map((value) => ({ label: value, value }))} /></label>
         <label><span>起始模板</span><MetisSelect value={templateId} onChange={(value) => setTemplateId(String(value))} options={answerSheetTemplates.filter((template) => template.id === 'true-blank' || template.id === 'science-lab-school' || template.id === 'beijing-english-standard').map((template) => ({ label: template.id === 'true-blank' ? '纯空白卡' : template.name, value: template.id }))} /></label>
-        <p>模板只作为起点。进入编辑器后可添加题块、拖动、合并、分割，并可删除或隐藏老师插入内容的边框。</p>
       </div>
     </MetisDialog>
   </div>
