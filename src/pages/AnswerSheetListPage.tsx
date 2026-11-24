@@ -192,11 +192,17 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
     </section>}
 
     {toolOpen && <div className="blank-card-library">
+      <section className="tool-ai-hero" aria-label="AI 制卡入口">
+        <div className="tool-ai-hero-heading"><h1>制卡工具</h1><span>✦ AI 制卡助手</span></div>
+        <div className="tool-ai-hero-body"><strong>你想制作什么样的答题卡？</strong><form onSubmit={(event) => { event.preventDefault(); applyCreatePrompt(); setCreateOpen(true) }}><input aria-label="描述答题卡需求" value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} placeholder="如：一张七年级数学答题卡，10 道选择题、6 道填空题" /><button type="submit">创建并开始制卡</button></form></div>
+      </section>
+      <section className="tool-entry-grid" aria-label="制卡方式">
+        <article><span>本地试卷</span><h2>上传试卷生成答题卡</h2><MetisButton type="bordered" icon={<Upload size={16} />} loading={importing} onClick={() => uploadInputRef.current?.click()}>上传试卷生成答题卡</MetisButton></article>
+        <article><span>题库试卷</span><h2>从试卷生成答题卡</h2><MetisButton type="bordered" icon={<FileCheck2 size={16} />} onClick={onExperienceFromPaper}>体验从试卷生成</MetisButton></article>
+        <article><span>从零开始</span><h2>新建空白答题卡</h2><MetisButton type="bordered" icon={<FilePlus2 size={16} />} onClick={() => setCreateOpen(true)}>新建空白答题卡</MetisButton></article>
+      </section>
+      <div className="tool-library-section-heading"><h2>我的答题卡 <small>{items.length}</small></h2></div>
       <div className="library-tool-actions">
-        <div className="library-create-actions">
-          <MetisButton type="primary" icon={<FilePlus2 size={16} />} onClick={() => setCreateOpen(true)}>新建空白答题卡</MetisButton>
-          <MetisButton type="bordered" icon={<Upload size={16} />} loading={importing} onClick={() => uploadInputRef.current?.click()}>上传试卷生成答题卡</MetisButton>
-        </div>
         <input ref={uploadInputRef} type="file" hidden onChange={(event) => { void uploadPaper(event.target.files?.[0]); event.currentTarget.value = '' }} />
         <input ref={associateInputRef} type="file" hidden onChange={(event) => {
           const file = event.target.files?.[0]
@@ -204,9 +210,9 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
           event.currentTarget.value = ''
         }} />
         <div className="library-top-filters">
+          <MetisSelect value={subject} onChange={(value) => setSubject(String(value))} options={['学科', '语文', '数学', '英语', '物理'].map((label, index) => ({ label, value: index === 0 ? 'all' : label }))} />
           <MetisSelect value={created} onChange={(value) => setCreated(String(value))} options={[{ label: '创建日期', value: 'all' }, { label: '今天', value: 'today' }, { label: '昨天', value: 'yesterday' }, { label: '更早', value: 'earlier' }]} />
           <MetisSelect value={status} onChange={(value) => setStatus(String(value))} options={[{ label: '使用状态', value: 'all' }, { label: '草稿', value: 'draft' }, { label: '已下载', value: 'downloaded' }, { label: '已关联作业', value: 'linked' }]} />
-          <MetisSelect value={subject} onChange={(value) => setSubject(String(value))} options={['学科', '语文', '数学', '英语', '物理'].map((label, index) => ({ label, value: index === 0 ? 'all' : label }))} />
           <MetisInput prefix={<Search size={16} />} placeholder="搜索答题卡名称" value={keyword} onChange={(event) => setKeyword(event.target.value)} allowClear />
         </div>
       </div>
