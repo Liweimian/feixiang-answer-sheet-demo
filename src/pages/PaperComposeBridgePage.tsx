@@ -2,9 +2,10 @@ import { useCallback } from 'react'
 
 interface PaperComposeBridgePageProps {
   onGenerateAnswerSheet: () => void
+  onBack: () => void
 }
 
-export function PaperComposeBridgePage({ onGenerateAnswerSheet }: PaperComposeBridgePageProps) {
+export function PaperComposeBridgePage({ onGenerateAnswerSheet, onBack }: PaperComposeBridgePageProps) {
   const connectGenerateAction = useCallback((frame: HTMLIFrameElement) => {
     const frameDocument = frame.contentDocument
     if (!frameDocument) return
@@ -67,7 +68,25 @@ export function PaperComposeBridgePage({ onGenerateAnswerSheet }: PaperComposeBr
         onGenerateAnswerSheet()
       }, { capture: true, once: true })
     })
-  }, [onGenerateAnswerSheet])
+    const returnTargets = [
+      frameDocument.querySelector<HTMLElement>('.md-page-header-back'),
+      ...[...frameDocument.querySelectorAll<HTMLElement>('.index_custom-breadcrumb-link__FstEZ')].filter((element) => ['首页', '题库'].includes(element.textContent?.trim() ?? '')),
+    ].filter((element): element is HTMLElement => Boolean(element))
+    returnTargets.forEach((element) => {
+      if (element.dataset.answerSheetBackBound) return
+      element.dataset.answerSheetBackBound = 'true'
+      element.setAttribute('role', 'button')
+      element.setAttribute('tabindex', '0')
+      element.setAttribute('aria-label', '返回答题卡工具入口')
+      element.style.cursor = 'pointer'
+      element.addEventListener('click', (event) => { event.preventDefault(); event.stopPropagation(); onBack() })
+      element.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return
+        event.preventDefault()
+        onBack()
+      })
+    })
+  }, [onBack, onGenerateAnswerSheet])
 
   return <section className="paper-compose-bridge" aria-label="从试卷生成答题卡">
     <iframe title="飞象星球试卷编辑页" src="./飞象星球.html" sandbox="allow-same-origin" onLoad={(event) => connectGenerateAction(event.currentTarget)} />

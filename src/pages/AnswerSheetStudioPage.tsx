@@ -81,9 +81,10 @@ function totalQuestionScore(blocks: AnswerBlock[]): number {
 interface AnswerSheetStudioPageProps {
   initialDocument?: AnswerSheetDocument
   onBack?: () => void
+  backLabel?: string
 }
 
-export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetStudioPageProps) {
+export function AnswerSheetStudioPage({ initialDocument, onBack, backLabel = '返回首页' }: AnswerSheetStudioPageProps) {
   const [document, setDocument] = useState<AnswerSheetDocument>(() => normalizeHeaderIdentity(initialDocument ? structuredClone(initialDocument) : cloneDefaultDocument()))
   const documentRef = useRef(document)
   documentRef.current = document
@@ -698,7 +699,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
       <div className="studio-body stage-editor">
         <EditorToolbar
               paper={paper}
-              backLabel="返回首页"
+              backLabel={backLabel}
               draftVersion={draftVersion}
               publishedVersion={published?.version}
               saving={saving}

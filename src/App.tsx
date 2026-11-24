@@ -46,14 +46,15 @@ export function App() {
     })
     window.location.hash = '/homework/answer-sheet-list'
   }
+  const generatedFromPaper = Boolean(toolDocument?.settings.linkedPaperId)
 
   return (
     <AppShell reviewMode={reviewMode} onToggleReview={toggleReview}>
       {route.startsWith('#/homework/paper-compose')
-        ? <PaperComposeBridgePage onGenerateAnswerSheet={generateFromPaper} />
+        ? <PaperComposeBridgePage onGenerateAnswerSheet={generateFromPaper} onBack={goHome} />
         : route.startsWith('#/homework/answer-sheet-list') ? <>
         <div hidden={Boolean(toolDocument)}><AnswerSheetListPage onEdit={setToolDocument} onExperienceFromPaper={openPaperCompose} /></div>
-        {toolDocument && <AnswerSheetStudioPage initialDocument={toolDocument} onBack={goHome} />}
+        {toolDocument && <AnswerSheetStudioPage initialDocument={toolDocument} onBack={generatedFromPaper ? openPaperCompose : goHome} backLabel={generatedFromPaper ? '返回试卷' : '返回制卡工具'} />}
       </> : <AnswerSheetStudioPage onBack={goHome} />}
     </AppShell>
   )
