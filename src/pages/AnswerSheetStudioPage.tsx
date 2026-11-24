@@ -82,11 +82,12 @@ function totalQuestionScore(blocks: AnswerBlock[]): number {
 interface AnswerSheetStudioPageProps {
   initialDocument?: AnswerSheetDocument
   uploadedSourceFile?: File
+  onAssociateSource?: (file: File) => void
   onBack?: () => void
   backLabel?: string
 }
 
-export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onBack, backLabel = '返回首页' }: AnswerSheetStudioPageProps) {
+export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onAssociateSource, onBack, backLabel = '返回首页' }: AnswerSheetStudioPageProps) {
   const [document, setDocument] = useState<AnswerSheetDocument>(() => normalizeHeaderIdentity(initialDocument ? structuredClone(initialDocument) : cloneDefaultDocument()))
   const documentRef = useRef(document)
   documentRef.current = document
@@ -107,6 +108,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onB
   const [objectiveAnswerOpen, setObjectiveAnswerOpen] = useState(false)
   const [originalPaperOpen, setOriginalPaperOpen] = useState(false)
   const [uploadedSourceOpen, setUploadedSourceOpen] = useState(false)
+  const associateSourceInputRef = useRef<HTMLInputElement>(null)
   const saveTimer = useRef<number>()
 
   useEffect(() => {
@@ -713,6 +715,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onB
               originalPaperOpen={originalPaperOpen}
               onOriginalPaper={() => setOriginalPaperOpen((open) => !open)}
               onUploadedOriginal={uploadedSourceFile ? () => setUploadedSourceOpen(true) : undefined}
+              onLinkOriginal={!fromPaper && !uploadedSourceFile && onAssociateSource ? () => associateSourceInputRef.current?.click() : undefined}
               onStageSubjectChange={(grade, subject) => commitDocument({ ...document, paper: { ...paper, grade, subject } })}
               onBack={() => onBack ? onBack() : MetisMessage.info('演示：返回组卷页；当前答题卡草稿已自动保存')}
               onUndo={undo}
@@ -808,6 +811,11 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onB
       <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} type={questionGroupType} subject={paper.subject} initialValue={editingQuestionGroupId ? blocks.find((block) => block.id === editingQuestionGroupId)?.questionGroupDraft : undefined} onClose={() => { setQuestionGroupOpen(false); setEditingQuestionGroupId('') }} onSubmit={addQuestionGroup} />
       <ObjectiveAnswerDialog open={objectiveAnswerOpen} blocks={blocks} onClose={() => setObjectiveAnswerOpen(false)} onSave={saveAnswers} />
       <SourcePaperPreviewDialog file={uploadedSourceOpen ? uploadedSourceFile : undefined} onClose={() => setUploadedSourceOpen(false)} />
+      <input ref={associateSourceInputRef} type="file" hidden onChange={(event) => {
+        const file = event.target.files?.[0]
+        if (file) onAssociateSource?.(file)
+        event.currentTarget.value = ''
+      }} />
     </>
   )
 }

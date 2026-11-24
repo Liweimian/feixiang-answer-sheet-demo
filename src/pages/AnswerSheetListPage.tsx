@@ -9,8 +9,10 @@ import { SourcePaperPreviewDialog } from '../components/SourcePaperPreviewDialog
 import { ObjectiveAnswerDialog, type AnswerDialogValue } from '../components/ObjectiveAnswerDialog'
 
 interface AnswerSheetListPageProps {
-  onEdit: (document: AnswerSheetDocument, sourceFile?: File) => void
+  onEdit: (document: AnswerSheetDocument, sourceFile: File | undefined, recordId: string) => void
   onExperienceFromPaper: () => void
+  associatedFiles: Record<string, File>
+  onAssociateFile: (recordId: string, file: File) => void
 }
 
 interface AnswerSheetRecord {
@@ -64,9 +66,11 @@ function createDocument(name: string, subject: string, templateId: string) {
   } satisfies AnswerSheetDocument
 }
 
-export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerSheetListPageProps) {
+export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedFiles, onAssociateFile }: AnswerSheetListPageProps) {
   const [toolOpen, setToolOpen] = useState(false)
   const uploadInputRef = useRef<HTMLInputElement>(null)
+  const associateInputRef = useRef<HTMLInputElement>(null)
+  const associateRecordIdRef = useRef('')
   const [importing, setImporting] = useState(false)
   const [items, setItems] = useState(records)
   const [localDocuments, setLocalDocuments] = useState<Record<string, AnswerSheetDocument>>({})
@@ -95,7 +99,8 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
     return { ...document, paper: { ...document.paper, title: record.name, subject: record.subject, sourceLabel: '答题卡工具' }, settings: { ...document.settings, linkedPaperId: '' } }
   }, [localDocuments])
 
-  const openRecord = (record: AnswerSheetRecord) => onEdit(getRecordDocument(record), record.sourceFile)
+  const fileForRecord = (record: AnswerSheetRecord) => associatedFiles[record.id] ?? record.sourceFile
+  const openRecord = (record: AnswerSheetRecord) => onEdit(getRecordDocument(record), fileForRecord(record), record.id)
   const answerDocument = useMemo(() => answerRecord ? getRecordDocument(answerRecord) : undefined, [answerRecord, getRecordDocument])
   const saveRecordAnswers = (answers: Record<string, AnswerDialogValue>) => {
     if (!answerRecord || !answerDocument) return
@@ -121,7 +126,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
     const nextDocument = createDocument(trimmed, newSubject, templateId)
     setLocalDocuments((current) => ({ ...current, [nextDocument.paper.id]: nextDocument }))
     setItems((current) => [{ id: nextDocument.paper.id, name: trimmed, subject: newSubject, templateId, updatedAt: '刚刚', pages: nextDocument.pageCount, status: 'draft', creator: '李老师' }, ...current])
-    onEdit(nextDocument)
+    onEdit(nextDocument, undefined, nextDocument.paper.id)
   }
 
   const uploadPaper = async (file?: File) => {
@@ -132,7 +137,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       setLocalDocuments((current) => ({ ...current, [document.paper.id]: document }))
       setItems((current) => [{ id: document.paper.id, name: document.paper.title, subject: document.paper.subject, templateId: 'true-blank', updatedAt: '刚刚', pages: document.pageCount, status: 'draft', creator: '李老师', sourceFile: file }, ...current])
       MetisMessage.success(document.paper.sourceLabel.includes('演示') ? '已带入示例题型和分值，可修改并继续插入题组' : '已生成答题卡，请核对题号、题型和分值')
-      onEdit(document, file)
+      onEdit(document, file, document.paper.id)
     } catch (error) {
       MetisMessage.error(error instanceof Error ? error.message : '试卷解析失败，请更换文件后重试')
     } finally {
@@ -172,6 +177,11 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
           <MetisButton type="bordered" icon={<Upload size={16} />} loading={importing} onClick={() => uploadInputRef.current?.click()}>上传试卷生成答题卡</MetisButton>
         </div>
         <input ref={uploadInputRef} type="file" hidden onChange={(event) => { void uploadPaper(event.target.files?.[0]); event.currentTarget.value = '' }} />
+        <input ref={associateInputRef} type="file" hidden onChange={(event) => {
+          const file = event.target.files?.[0]
+          if (file && associateRecordIdRef.current) onAssociateFile(associateRecordIdRef.current, file)
+          event.currentTarget.value = ''
+        }} />
         <div className="library-top-filters">
           <MetisSelect value={created} onChange={(value) => setCreated(String(value))} options={[{ label: '创建日期', value: 'all' }, { label: '今天', value: 'today' }, { label: '昨天', value: 'yesterday' }, { label: '更早', value: 'earlier' }]} />
           <MetisSelect value={status} onChange={(value) => setStatus(String(value))} options={[{ label: '使用状态', value: 'all' }, { label: '草稿', value: 'draft' }, { label: '已下载', value: 'downloaded' }, { label: '已关联作业', value: 'linked' }]} />
@@ -185,7 +195,8 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       {visibleRecords.length ? visibleRecords.map((record) => {
         return <div className="card-list-row" key={record.id}>
           <div className="record-name"><FileText size={18} /><strong>{record.name}</strong></div>
-          <div className="record-source-cell">{record.sourceFile && <button type="button" className="record-source-link" title={record.sourceFile.name} onClick={() => setSourceFile(record.sourceFile)}>{record.sourceFile.name}</button>}</div>
+          <div className="record-source-cell">{fileForRecord(record) ? <button type="button" className="record-source-link" title={fileForRecord(record)?.name} onClick={() => setSourceFile(fileForRecord(record))}>{fileForRecord(record)?.name}</button>
+            : <button type="button" className="record-associate-link" onClick={() => { associateRecordIdRef.current = record.id; associateInputRef.current?.click() }}>关联原卷</button>}</div>
           <span>{record.subject}</span><span>{record.pages} 页</span><span>{record.updatedAt}</span>
           <div className="record-actions">
             <MetisButton type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>

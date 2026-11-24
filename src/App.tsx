@@ -13,6 +13,8 @@ export function App() {
   const [route, setRoute] = useState(window.location.hash)
   const [toolDocument, setToolDocument] = useState<AnswerSheetDocument>()
   const [toolSourceFile, setToolSourceFile] = useState<File>()
+  const [toolRecordId, setToolRecordId] = useState('')
+  const [associatedFiles, setAssociatedFiles] = useState<Record<string, File>>({})
 
   useEffect(() => {
     applyFxZoom()
@@ -31,18 +33,21 @@ export function App() {
   const goHome = () => {
     setToolDocument(undefined)
     setToolSourceFile(undefined)
+    setToolRecordId('')
     if (!window.location.hash.startsWith('#/homework/answer-sheet-list')) window.location.hash = '/homework/answer-sheet-list'
   }
 
   const openPaperCompose = () => {
     setToolDocument(undefined)
     setToolSourceFile(undefined)
+    setToolRecordId('')
     window.location.hash = '/homework/paper-compose'
   }
 
   const generateFromPaper = () => {
     const generated = structuredClone(defaultAnswerSheetDocument)
     setToolSourceFile(undefined)
+    setToolRecordId('')
     setToolDocument({
       ...generated,
       paper: { ...generated.paper, sourceLabel: '组卷 · 当前试卷' },
@@ -57,8 +62,8 @@ export function App() {
       {route.startsWith('#/homework/paper-compose')
         ? <PaperComposeBridgePage onGenerateAnswerSheet={generateFromPaper} onBack={goHome} />
         : route.startsWith('#/homework/answer-sheet-list') ? <>
-        <div hidden={Boolean(toolDocument)}><AnswerSheetListPage onEdit={(document, sourceFile) => { setToolSourceFile(sourceFile); setToolDocument(document) }} onExperienceFromPaper={openPaperCompose} /></div>
-        {toolDocument && <AnswerSheetStudioPage initialDocument={toolDocument} uploadedSourceFile={toolSourceFile} onBack={generatedFromPaper ? openPaperCompose : goHome} backLabel={generatedFromPaper ? '返回试卷' : '返回制卡工具'} />}
+        <div hidden={Boolean(toolDocument)}><AnswerSheetListPage associatedFiles={associatedFiles} onAssociateFile={(recordId, file) => setAssociatedFiles((current) => ({ ...current, [recordId]: file }))} onEdit={(document, sourceFile, recordId) => { setToolRecordId(recordId); setToolSourceFile(sourceFile); setToolDocument(document) }} onExperienceFromPaper={openPaperCompose} /></div>
+        {toolDocument && <AnswerSheetStudioPage initialDocument={toolDocument} uploadedSourceFile={toolSourceFile} onAssociateSource={toolRecordId ? (file) => { setToolSourceFile(file); setAssociatedFiles((current) => ({ ...current, [toolRecordId]: file })) } : undefined} onBack={generatedFromPaper ? openPaperCompose : goHome} backLabel={generatedFromPaper ? '返回试卷' : '返回制卡工具'} />}
       </> : <AnswerSheetStudioPage onBack={goHome} />}
     </AppShell>
   )

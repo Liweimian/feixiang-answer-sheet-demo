@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { MetisButton } from '@yuanfudao/metis-web-component'
-import { ChevronDown, ChevronLeft, ChevronRight, Download, Eye, ListChecks, Save } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Download, Eye, Link2, ListChecks, Save } from 'lucide-react'
 import type { ExamPaper } from '../features/answer-sheet/types'
 
 interface EditorToolbarProps {
@@ -25,6 +25,7 @@ interface EditorToolbarProps {
   originalPaperOpen: boolean
   onOriginalPaper: () => void
   onUploadedOriginal?: () => void
+  onLinkOriginal?: () => void
   onStageSubjectChange: (stage: string, subject: string) => void
 }
 
@@ -59,6 +60,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
         </div>}
         <div className="toolbar-spacer" />
         {props.onUploadedOriginal && <MetisButton type="bordered" icon={<Eye size={16} />} onClick={props.onUploadedOriginal}>查看原卷</MetisButton>}
+        {props.onLinkOriginal && <MetisButton type="bordered" icon={<Link2 size={16} />} onClick={props.onLinkOriginal}>关联原卷</MetisButton>}
         {!props.fromPaper && <MetisButton type="bordered" icon={<ListChecks size={16} />} disabled={!props.hasAnswerBlocks} onClick={props.onAnswers}>设置答案</MetisButton>}
         {!props.fromPaper && <MetisButton type="bordered" icon={<Save size={16} />} loading={props.saving} onClick={props.onSave}>保存</MetisButton>}
         {!props.fromPaper && <MetisButton type="bordered" icon={<Download size={16} />} onClick={props.onPrint}>下载</MetisButton>}
