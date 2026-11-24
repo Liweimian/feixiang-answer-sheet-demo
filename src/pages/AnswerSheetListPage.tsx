@@ -80,6 +80,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
   const [status, setStatus] = useState('all')
   const [created, setCreated] = useState('all')
   const [createOpen, setCreateOpen] = useState(false)
+  const [createMode, setCreateMode] = useState<'ai' | 'template'>('ai')
   const [name, setName] = useState('未命名答题卡')
   const [newSubject, setNewSubject] = useState('英语')
   const [templateId, setTemplateId] = useState('true-blank')
@@ -135,6 +136,21 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
     onEdit(nextDocument, undefined, nextDocument.paper.id)
   }
 
+  const createBlankCard = () => {
+    const blankName = '未命名答题卡'
+    const document = createDocument(blankName, newSubject, 'true-blank')
+    setLocalDocuments((current) => ({ ...current, [document.paper.id]: document }))
+    setItems((current) => [{ id: document.paper.id, name: blankName, subject: newSubject, templateId: 'true-blank', updatedAt: '刚刚', pages: document.pageCount, status: 'draft', creator: '李老师' }, ...current])
+    onEdit(document, undefined, document.paper.id)
+  }
+
+  const openTemplateCreate = () => {
+    setCreateMode('template')
+    setTemplateId('beijing-english-standard')
+    setNewSubject('英语')
+    setCreateOpen(true)
+  }
+
   const uploadPaper = async (file?: File) => {
     if (!file) return
     setImporting(true)
@@ -151,7 +167,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
     }
   }
 
-  const footer = <div className="dialog-footer-actions"><MetisButton type="borderless" onClick={() => setCreateOpen(false)}>取消</MetisButton><MetisButton type="primary" onClick={createCard}>创建并开始制卡</MetisButton></div>
+  const footer = <div className="dialog-footer-actions"><MetisButton type="borderless" onClick={() => setCreateOpen(false)}>取消</MetisButton><MetisButton type="primary" onClick={createCard}>{createMode === 'template' ? '使用模板开始制卡' : '创建并开始制卡'}</MetisButton></div>
 
   const applyCreatePrompt = () => {
     const prompt = createPrompt.trim()
@@ -196,13 +212,14 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
       <section className="tool-ai-hero" aria-label="AI 制卡入口">
         <div className="tool-ai-hero-heading"><h1>今天想制作什么答题卡？</h1></div>
         <div className="tool-ai-hero-body">
-          <form className="tool-ai-composer" onSubmit={(event) => { event.preventDefault(); if (!createPrompt.trim()) { MetisMessage.warning('请先描述答题卡需求'); return } applyCreatePrompt(); setCreateOpen(true) }}>
+          <form className="tool-ai-composer" onSubmit={(event) => { event.preventDefault(); if (!createPrompt.trim()) { MetisMessage.warning('请先描述答题卡需求'); return } setCreateMode('ai'); applyCreatePrompt(); setCreateOpen(true) }}>
             <input aria-label="描述答题卡需求" value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} placeholder="描述你要的答题卡，例如：七年级数学，满分 100 分" />
             <button type="submit">AI 生成答题卡 <ArrowRight size={16} /></button>
           </form>
         </div>
         <div className="tool-quick-entry" aria-label="其他制卡方式">
-          <button type="button" onClick={() => setCreateOpen(true)}><span className="tool-quick-icon"><FilePlus2 size={23} /></span><span className="tool-quick-copy"><strong>空白答题卡</strong><small>直接选择模板</small></span></button>
+          <button type="button" onClick={createBlankCard}><span className="tool-quick-icon"><FilePlus2 size={23} /></span><span className="tool-quick-copy"><strong>空白答题卡</strong><small>从空白画布开始</small></span></button>
+          <button type="button" onClick={openTemplateCreate}><span className="tool-quick-icon"><Files size={23} /></span><span className="tool-quick-copy"><strong>选模板制卡</strong><small>套用预设题型与版面</small></span></button>
           <button type="button" onClick={() => uploadInputRef.current?.click()}><span className="tool-quick-icon"><Upload size={23} /></span><span className="tool-quick-copy"><strong>上传试卷制卡</strong><small>{importing ? '正在识别试卷…' : '识别试卷，生成答题卡'}</small></span></button>
           <button type="button" onClick={onExperienceFromPaper}><span className="tool-quick-icon"><FileCheck2 size={23} /></span><span className="tool-quick-copy"><strong>从题库开始制卡</strong><small>带入题型、题号与分值</small></span></button>
         </div>
@@ -257,12 +274,12 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
       }) : <div className="library-empty"><FileText size={36} /><strong>没有找到答题卡</strong><span>调整筛选条件，或新建一张空白答题卡</span></div>}
     </section></div>}
 
-    <MetisDialog open={createOpen} title="新建答题卡" width={520} footer={footer} onCancel={() => setCreateOpen(false)}>
+    <MetisDialog open={createOpen} title={createMode === 'template' ? '选择模板制卡' : '新建答题卡'} width={520} footer={footer} onCancel={() => setCreateOpen(false)}>
       <div className="create-card-form">
-        <div className="create-ai-prompt"><strong>✦ 告诉 AI 想制作什么答题卡</strong><div><input value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); applyCreatePrompt() } }} placeholder="如：初中英语小测，A4 单栏" /><button type="button" onClick={applyCreatePrompt}>生成建议</button></div>{createSuggestion && <p>{createSuggestion}</p>}</div>
+        {createMode === 'ai' && <div className="create-ai-prompt"><strong>✦ 告诉 AI 想制作什么答题卡</strong><div><input value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); applyCreatePrompt() } }} placeholder="如：初中英语小测，A4 单栏" /><button type="button" onClick={applyCreatePrompt}>生成建议</button></div>{createSuggestion && <p>{createSuggestion}</p>}</div>}
         <label><span>答题卡名称</span><MetisInput value={name} maxLength={40} onChange={(event) => setName(event.target.value)} /></label>
         <label><span>学科</span><MetisSelect value={newSubject} onChange={(value) => setNewSubject(String(value))} options={['语文', '数学', '英语', '物理', '化学', '道德与法治'].map((value) => ({ label: value, value }))} /></label>
-        <label><span>起始模板</span><MetisSelect value={templateId} onChange={(value) => setTemplateId(String(value))} options={answerSheetTemplates.filter((template) => template.id === 'true-blank' || template.id === 'science-lab-school' || template.id === 'beijing-english-standard').map((template) => ({ label: template.id === 'true-blank' ? '纯空白卡' : template.name, value: template.id }))} /></label>
+        <label><span>起始模板</span><MetisSelect value={templateId} onChange={(value) => { const nextId = String(value); setTemplateId(nextId); if (createMode === 'template') setNewSubject(nextId === 'science-lab-school' ? '物理' : '英语') }} options={answerSheetTemplates.filter((template) => template.id === 'science-lab-school' || template.id === 'beijing-english-standard' || createMode === 'ai' && template.id === 'true-blank').map((template) => ({ label: template.id === 'true-blank' ? '纯空白卡' : template.name, value: template.id }))} /></label>
         <label><span>纸张</span><MetisSelect value={paperSize} onChange={(value) => setPaperSize(value as 'A4' | 'A3' | '8K')} options={['A4', 'A3', '8K'].map((value) => ({ label: value, value }))} /></label>
         <label><span>分栏</span><MetisSelect value={columns} onChange={(value) => setColumns(Number(value) as 1 | 2)} options={[{ label: '单栏', value: 1 }, { label: '双栏', value: 2 }]} /></label>
       </div>
