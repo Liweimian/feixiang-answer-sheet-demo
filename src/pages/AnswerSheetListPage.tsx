@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect } from '@yuanfudao/metis-web-component'
-import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, Edit3, Eye, FileCheck2, FilePlus2, FileText, Link2, ListChecks, Search, Upload } from 'lucide-react'
+import { ArrowRight, BookOpen, ChevronDown, ChevronLeft, ChevronRight, Clock3, Copy, Download, Edit3, Eye, FileCheck2, FilePlus2, Files, FileText, Link2, ListChecks, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
 import { isAnswerableBlock } from '../features/answer-sheet/types'
@@ -196,10 +196,9 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
           <div className="record-main">
             <div className="record-name"><FileText size={22} /><strong>{record.name}</strong></div>
             <div className="record-meta">
-              <span>学科：{record.subject}</span>
-              <span>页数：{record.pages} 页</span>
-              <span>更新时间：{record.updatedAt}</span>
-              <span className="record-source-cell">原卷：{fileForRecord(record) ? <span className="record-source-filename" title={fileForRecord(record)?.name}>{fileForRecord(record)?.name}</span> : '未关联'}</span>
+              <span title="学科"><BookOpen size={15} />{record.subject}</span>
+              <span title="页数"><Files size={15} />{record.pages} 页</span>
+              <span title="更新时间"><Clock3 size={15} />{record.updatedAt}</span>
             </div>
           </div>
           <div className="record-actions">
