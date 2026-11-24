@@ -272,15 +272,22 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                 const isQuestion = isQuestionBlockKind(block.kind)
                 const numbers = isQuestion ? questionNumbers(block.range) : []
                 const questionCount = numbers.length
+                const computedGroupScore = isQuestion
+                  ? Object.values(resolvedScores(block)).reduce((total, score) => total + score, 0)
+                  : 0
                 const selected = block.id === props.selectedBlockId
                 return (
                   <div key={block.id} className={`config-outline-group ${selected ? 'selected' : ''}`} aria-current={selected ? 'true' : undefined}>
                     <div className="config-block-row">
                       <button type="button" onClick={() => props.onSelect(block.id)}>
                         <b>{block.title}</b>
-                        <small>{isQuestion ? `（共 ${questionCount} 题，共 ${block.score ?? 0} 分）` : blockKindLabels[block.kind]}</small>
+                        <small>{isQuestion
+                          ? standaloneCard
+                            ? `（共 ${questionCount} 题，共 ${Number(computedGroupScore.toFixed(2))} 分）`
+                            : `共 ${questionCount} 题　共 ${Number(computedGroupScore.toFixed(2))} 分`
+                          : blockKindLabels[block.kind]}</small>
                       </button>
-                      {isQuestion && <label className="config-block-batch-score"><span>总分值</span><div className="config-score-with-unit"><MetisInputNumber value={block.score ?? 0} min={0} max={300} precision={2} controls={false} placeholder="分值" aria-label={`${block.title}总分值`} onChange={(value) => setAllScores(block, Number(value ?? 0) / Math.max(1, questionCount))} /><em>分</em></div></label>}
+                      {isQuestion && standaloneCard && <label className="config-block-batch-score"><span>总分值</span><div className="config-score-with-unit"><MetisInputNumber value={block.score ?? 0} min={0} max={300} precision={2} controls={false} placeholder="分值" aria-label={`${block.title}总分值`} onChange={(value) => setAllScores(block, Number(value ?? 0) / Math.max(1, questionCount))} /><em>分</em></div></label>}
                       {standaloneCard && <div className="config-question-group-actions"><MetisButton type="borderless" icon={<Pencil size={13} />} aria-label={`编辑${block.title}`} title="编辑" onClick={() => props.onEditQuestionGroup(block.id)} /><MetisButton type="borderless" icon={<Trash2 size={13} />} aria-label={`删除${block.title}`} title="删除" onClick={() => props.onDeleteBlock(block.id)} /></div>}
                     </div>
                     {isQuestion && <div className="config-question-tree">
