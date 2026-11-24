@@ -164,6 +164,12 @@
 .library-empty { display: flex; grid-column: 1 / -1; min-height: 280px; align-items: center; justify-content: center; flex-direction: column; gap: 9px; color: var(--fx_text_3); }
 .library-empty strong { color: var(--fx_text_2); }
 .create-card-form { display: flex; flex-direction: column; gap: 18px; padding: 6px 2px; }
+.create-ai-prompt { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--fx_border); border-radius: 10px; background: var(--fx_brand_subtle); }
+.create-ai-prompt strong { color: var(--fx_brand); font-size: 13px; }
+.create-ai-prompt > div { display: flex; gap: 8px; }
+.create-ai-prompt input { min-width: 0; flex: 1; padding: 9px 11px; border: 1px solid var(--fx_border); border-radius: 6px; background: white; }
+.create-ai-prompt button { padding: 0 12px; border: 0; border-radius: 6px; background: var(--fx_brand); color: white; cursor: pointer; }
+.create-ai-prompt p { margin: 0; color: var(--fx_text_2); font-size: 12px; }
 .create-card-form label { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 12px; }
 .create-card-form label > span { color: var(--fx_text_2); font-size: 13px; }
 .create-card-form p { margin: 0 0 0 104px; color: var(--fx_text_3); font-size: 12px; line-height: 1.6; }
@@ -219,6 +225,23 @@
 .original-paper-minimized small { max-width: 178px; overflow: hidden; color: var(--fx_text_3); font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
 .editor-workbench-wrap > [class*='alert'] { margin-bottom: var(--fx_sp_2); }
 .editor-workbench { height: calc(100vh - 104px); min-height: 720px; display: grid; grid-template-columns: 340px minmax(640px, 1fr); gap: var(--fx_sp_3); }
+.ai-editor-layout { position: relative; min-width: 0; }
+.ai-editor-layout-open { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; }
+.ai-editor-layout-open .editor-workbench { grid-template-columns: 340px minmax(0, 1fr); }
+.ai-assistant-panel { min-width: 0; height: calc(100vh - 104px); min-height: 720px; display: flex; flex-direction: column; gap: 14px; padding: 18px; border: 1px solid var(--fx_border); border-radius: 12px; background: white; }
+.ai-assistant-head { display: flex; justify-content: space-between; align-items: center; }
+.ai-assistant-head strong { color: var(--fx_brand); font-size: 15px; }
+.ai-assistant-head button, .ai-assistant-prompts button { border: 0; background: transparent; color: var(--fx_brand); cursor: pointer; }
+.ai-assistant-panel > p { margin: 0; color: var(--fx_text_3); font-size: 12px; }
+.ai-assistant-messages { display: flex; flex: 1; flex-direction: column; gap: 10px; overflow-y: auto; }
+.ai-assistant-messages > div { padding: 10px 12px; border-radius: 9px; background: var(--fx_surface_subtle); font-size: 13px; line-height: 1.6; }
+.ai-assistant-prompts { display: flex; flex-wrap: wrap; gap: 6px; }
+.ai-assistant-prompts button { padding: 6px 8px; border: 1px solid var(--fx_border); border-radius: 6px; font-size: 12px; }
+.ai-assistant-panel form { display: flex; gap: 6px; }
+.ai-assistant-panel form input { min-width: 0; flex: 1; padding: 9px; border: 1px solid var(--fx_border); border-radius: 6px; }
+.ai-assistant-panel form button { padding: 0 12px; border: 0; border-radius: 6px; background: var(--fx_brand); color: white; cursor: pointer; }
+.ai-assistant-reopen { position: absolute; z-index: 10; top: 12px; right: 12px; padding: 8px 12px; border: 1px solid var(--fx_border); border-radius: 8px; background: white; color: var(--fx_brand); cursor: pointer; }
+@media (max-width: 1500px) { .ai-editor-layout-open { grid-template-columns: minmax(0, 1fr); } .ai-assistant-panel { position: fixed; z-index: 50; top: 80px; right: 12px; width: 300px; height: calc(100vh - 92px); min-height: 0; box-shadow: var(--fx_shadow_lg); } }
 .question-outline, .answer-canvas, .inspector-panel { min-width: 0; overflow: hidden; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_5); background: var(--fx_surface); box-shadow: var(--fx_shadow_sm); }
 .answer-sheet-config { min-width: 0; height: 100%; display: grid; grid-template-rows: auto auto minmax(0, 1fr); overflow: hidden; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_5); background: var(--fx_surface); box-shadow: var(--fx_shadow_sm); }
 .config-view-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 8px 14px; border-bottom: 1px solid var(--fx_border); }

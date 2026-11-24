@@ -106,6 +106,9 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
   const [questionGroupType, setQuestionGroupType] = useState<QuestionGroupType>('single')
   const [editingQuestionGroupId, setEditingQuestionGroupId] = useState('')
   const [objectiveAnswerOpen, setObjectiveAnswerOpen] = useState(false)
+  const [aiOpen, setAiOpen] = useState(true)
+  const [aiInput, setAiInput] = useState('')
+  const [aiMessages, setAiMessages] = useState<string[]>(['可以告诉我想怎样调整题目、分值或作答区。选中题组后，我会优先修改它。'])
   const [originalPaperOpen, setOriginalPaperOpen] = useState(false)
   const [uploadedSourceOpen, setUploadedSourceOpen] = useState(false)
   const associateSourceInputRef = useRef<HTMLInputElement>(null)
@@ -699,6 +702,45 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.print()))
   }
 
+  const askAi = () => {
+    const request = aiInput.trim()
+    if (!request) return
+    const selected = blocks.find((block) => block.id === selectedBlockId)
+    const score = request.match(/(?:改成|设为|设置为|每题|分值)[^\d]{0,8}(\d+(?:\.\d+)?)\s*分/)
+    const lines = request.match(/(?:多|增加|加)(\d+)\s*行/)
+    let response = ''
+    if (score && selected?.questionGroupDraft && selected.questionGroupDraft.items.every((item) => item.subquestionCount === 0 && (selected.questionGroupDraft?.type !== 'fill' || item.blankCount === 1))) {
+      const value = Number(score[1])
+      const draft = structuredClone(selected.questionGroupDraft)
+      draft.items = draft.items.map((item) => ({ ...item, score: value, blankScores: item.blankScores?.map(() => value / Math.max(1, item.blankCount)) }))
+      draft.totalScore = value * draft.questionCount
+      updateBlock(selected.id, { score: draft.totalScore, questionScores: Object.fromEntries(draft.items.map((item) => [String(item.number), value])), questionGroupDraft: draft })
+      response = `已将“${selected.title}”设为每题 ${value} 分，题组和整卡总分已更新。可撤销或继续手动调整。`
+    } else if (score && selected?.questionGroupDraft) {
+      setEditingQuestionGroupId(selected.id)
+      setQuestionGroupType(selected.questionGroupDraft.type)
+      setQuestionGroupOpen(true)
+      response = '这组题包含多个空或小题，已打开逐项分值设置，请确认每个空或小题的分值。'
+    } else if (lines && selected && (selected.kind === 'short-answer' || selected.kind === 'essay')) {
+      const count = Number(lines[1])
+      updateBlock(selected.id, { lineCount: (selected.lineCount ?? 1) + count, height: selected.height + count * settings.subjectiveLineHeight })
+      response = `已为“${selected.title}”增加 ${count} 行作答空间，可以在纸面继续调整。`
+    } else if (/添加|新增|增加/.test(request) && /单选|多选|判断|填空|解答|作文|综合/.test(request)) {
+      const type = /多选/.test(request) ? 'multiple' : /判断/.test(request) ? 'judge' : /填空/.test(request) ? 'fill' : /解答/.test(request) ? 'solution' : /作文/.test(request) ? 'essay' : /综合/.test(request) ? 'comprehensive' : 'single'
+      setEditingQuestionGroupId('')
+      setQuestionGroupType(type)
+      setQuestionGroupOpen(true)
+      response = '已打开题组设置，核对题量与分值后即可添加到卡面。'
+    } else if (/总分|核对|检查/.test(request)) {
+      setPreflightOpen(true)
+      response = `当前答题卡共 ${blocks.filter((block) => isQuestionBlockKind(block.kind)).length} 个题块，合计 ${totalQuestionScore(blocks)} 分。已打开完整检查。`
+    } else {
+      response = '请选中题组后告诉我具体调整，例如“每题改成 3 分”“多加 2 行”或“添加填空题”。'
+    }
+    setAiMessages((messages) => [...messages, `你：${request}`, `助手：${response}`])
+    setAiInput('')
+  }
+
   return (
     <>
       <div className="studio-body stage-editor">
@@ -732,6 +774,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
               hasAnswerBlocks={blocks.some(isAnswerableBlock)}
               onAnswers={() => setObjectiveAnswerOpen(true)}
         />
+        <div className={`ai-editor-layout${aiOpen ? ' ai-editor-layout-open' : ''}`}>
         <EditorWorkbench
               document={document}
               rulePacks={rulePacks}
@@ -783,6 +826,15 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
               onSplitMerged={splitCanvasBlock}
               printDocument={printDocument}
         />
+        <aside className="ai-assistant-panel" aria-label="AI 制卡助手">
+          <div className="ai-assistant-head"><strong>✦ AI 制卡助手</strong><button type="button" onClick={() => setAiOpen(false)}>收起</button></div>
+          <p>当前选中：{blocks.find((block) => block.id === selectedBlockId)?.title ?? '整张答题卡'}</p>
+          <div className="ai-assistant-messages">{aiMessages.map((message, index) => <div key={index}>{message}</div>)}</div>
+          <div className="ai-assistant-prompts">{['检查总分', '添加填空题', '多加 2 行'].map((prompt) => <button type="button" key={prompt} onClick={() => setAiInput(prompt)}>{prompt}</button>)}</div>
+          <form onSubmit={(event) => { event.preventDefault(); askAi() }}><input aria-label="向 AI 制卡助手描述调整" placeholder="告诉我想怎样调整…" value={aiInput} onChange={(event) => setAiInput(event.target.value)} /><button type="submit">发送</button></form>
+        </aside>
+        {!aiOpen && <button type="button" className="ai-assistant-reopen" onClick={() => setAiOpen(true)}>✦ AI 制卡助手</button>}
+        </div>
         {fromPaper && <OriginalPaperReference
           open={originalPaperOpen}
           paper={paper}

@@ -82,6 +82,10 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
   const [name, setName] = useState('未命名答题卡')
   const [newSubject, setNewSubject] = useState('英语')
   const [templateId, setTemplateId] = useState('true-blank')
+  const [createPrompt, setCreatePrompt] = useState('')
+  const [createSuggestion, setCreateSuggestion] = useState('')
+  const [paperSize, setPaperSize] = useState<'A4' | 'A3' | '8K'>('A4')
+  const [columns, setColumns] = useState<1 | 2>(1)
   const [sourceFile, setSourceFile] = useState<File>()
   const [answerRecord, setAnswerRecord] = useState<AnswerSheetRecord>()
 
@@ -123,7 +127,8 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
       return
     }
     setCreateOpen(false)
-    const nextDocument = createDocument(trimmed, newSubject, templateId)
+    const baseDocument = createDocument(trimmed, newSubject, templateId)
+    const nextDocument = { ...baseDocument, settings: { ...baseDocument.settings, paperSize, frontColumns: columns, backColumns: columns } }
     setLocalDocuments((current) => ({ ...current, [nextDocument.paper.id]: nextDocument }))
     setItems((current) => [{ id: nextDocument.paper.id, name: trimmed, subject: newSubject, templateId, updatedAt: '刚刚', pages: nextDocument.pageCount, status: 'draft', creator: '李老师' }, ...current])
     onEdit(nextDocument, undefined, nextDocument.paper.id)
@@ -146,6 +151,22 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
   }
 
   const footer = <div className="dialog-footer-actions"><MetisButton type="borderless" onClick={() => setCreateOpen(false)}>取消</MetisButton><MetisButton type="primary" onClick={createCard}>创建并开始制卡</MetisButton></div>
+
+  const applyCreatePrompt = () => {
+    const prompt = createPrompt.trim()
+    if (!prompt) return
+    const chosenSubject = ['语文', '数学', '英语', '物理', '化学'].find((item) => prompt.includes(item))
+    if (chosenSubject) setNewSubject(chosenSubject)
+    if (/空白|从零/.test(prompt)) setTemplateId('true-blank')
+    else if (/物理|实验/.test(prompt)) setTemplateId('science-lab-school')
+    else if (/英语|考试/.test(prompt)) setTemplateId('beijing-english-standard')
+    if (/A3/i.test(prompt)) setPaperSize('A3')
+    else if (/8K/i.test(prompt)) setPaperSize('8K')
+    else if (/A4/i.test(prompt)) setPaperSize('A4')
+    if (/双栏/.test(prompt)) setColumns(2)
+    else if (/单栏/.test(prompt)) setColumns(1)
+    setCreateSuggestion('已根据描述预选学科、模板和版面。请核对后创建，题目结构可在编辑页继续告诉助手。')
+  }
 
   return <div className={`answer-sheet-library${toolOpen ? ' tool-library-open' : ''}`}>
     {toolOpen ? <header className="tool-library-breadcrumb">
@@ -220,9 +241,12 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
 
     <MetisDialog open={createOpen} title="新建答题卡" width={520} footer={footer} onCancel={() => setCreateOpen(false)}>
       <div className="create-card-form">
+        <div className="create-ai-prompt"><strong>✦ 告诉 AI 想制作什么答题卡</strong><div><input value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); applyCreatePrompt() } }} placeholder="如：初中英语小测，A4 单栏" /><button type="button" onClick={applyCreatePrompt}>生成建议</button></div>{createSuggestion && <p>{createSuggestion}</p>}</div>
         <label><span>答题卡名称</span><MetisInput value={name} maxLength={40} onChange={(event) => setName(event.target.value)} /></label>
         <label><span>学科</span><MetisSelect value={newSubject} onChange={(value) => setNewSubject(String(value))} options={['语文', '数学', '英语', '物理', '化学', '道德与法治'].map((value) => ({ label: value, value }))} /></label>
         <label><span>起始模板</span><MetisSelect value={templateId} onChange={(value) => setTemplateId(String(value))} options={answerSheetTemplates.filter((template) => template.id === 'true-blank' || template.id === 'science-lab-school' || template.id === 'beijing-english-standard').map((template) => ({ label: template.id === 'true-blank' ? '纯空白卡' : template.name, value: template.id }))} /></label>
+        <label><span>纸张</span><MetisSelect value={paperSize} onChange={(value) => setPaperSize(value as 'A4' | 'A3' | '8K')} options={['A4', 'A3', '8K'].map((value) => ({ label: value, value }))} /></label>
+        <label><span>分栏</span><MetisSelect value={columns} onChange={(value) => setColumns(Number(value) as 1 | 2)} options={[{ label: '单栏', value: 1 }, { label: '双栏', value: 2 }]} /></label>
       </div>
     </MetisDialog>
     <SourcePaperPreviewDialog file={sourceFile} onClose={() => setSourceFile(undefined)} />
