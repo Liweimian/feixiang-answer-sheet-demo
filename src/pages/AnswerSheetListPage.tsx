@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect } from '@yuanfudao/metis-web-component'
-import { ArrowRight, BookOpen, ChevronDown, ChevronLeft, ChevronRight, Clock3, Copy, Download, Edit3, Eye, FileCheck2, FilePlus2, Files, FileText, Link2, ListChecks, Search, Upload } from 'lucide-react'
+import { ArrowRight, BookOpen, ChevronLeft, ChevronRight, Clock3, Copy, Download, Edit3, Eye, FileCheck2, FilePlus2, Files, FileText, Link2, ListChecks, MoreHorizontal, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
 import { isAnswerableBlock } from '../features/answer-sheet/types'
@@ -205,7 +205,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
             <MetisButton className="card-action-button" type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
             <MetisButton className="card-action-button" type="borderless" size="s" icon={<Download size={14} />} onClick={() => MetisMessage.info('演示：下载最新版 PDF')}>下载</MetisButton>
             <details className="record-more" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.open = false }}>
-              <summary>更多<ChevronDown size={15} /></summary>
+              <summary><MoreHorizontal size={14} />更多</summary>
               <div className="record-more-menu">
                 {fileForRecord(record) ? <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); setSourceFile(fileForRecord(record)) }}><Eye size={15} />查看原卷</button>
                   : <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); associateRecordIdRef.current = record.id; associateInputRef.current?.click() }}><Link2 size={15} />关联原卷</button>}
