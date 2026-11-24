@@ -251,7 +251,7 @@ function ShortAnswerContent({
     window.addEventListener('pointerup', finish, { once: true })
     window.addEventListener('pointercancel', finish, { once: true })
   }
-  if (fillModule && !block.answerSlotCounts?.length) {
+  if (fillModule && block.answerVariant === 'fill' && !block.answerSlotCounts?.length) {
     const fullLineCount = Math.max(1, Math.round(count))
     return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b key={number}>{number}.<QuestionScore block={block} scoreKey={String(number)} /></b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
   }

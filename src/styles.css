@@ -772,7 +772,19 @@
 .full-module-answer .ruled-lines { height: 100%; align-content: stretch; grid-auto-rows: 1fr; gap: 0; margin-top: 0; }
 .short-answer-slots { display: grid; gap: 0; padding: 12px; }
 .short-answer-slot-row { position: relative; min-height: var(--answer-line-height, 16px); display: flex; flex-flow: row wrap; align-items: flex-start; gap: 10px; padding-left: 32px; box-sizing: border-box; overflow: visible; font-size: 9px; }
-.short-answer-slot-row > b { position: absolute; top: 3px; left: 0; width: 22px; text-align: right; }
+.short-answer-slot-row > b {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 22px;
+  min-height: var(--answer-line-height, 16px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  padding-bottom: 1px;
+  text-align: right;
+}
 .short-answer-slot-row > .fill-slot-item { position: relative; min-width: 28px; flex: 0 0 auto; overflow: visible; }
 .short-answer-slot-row > .fill-slot-item:not(.slot-style-lines) { min-width: 0; flex: 1 1 0; }
 .short-answer-slot-row .fill-slot-item > .fill-slot-clickable { position: relative; width: 100%; min-width: 0; display: flex; align-items: flex-start; gap: 4px; margin: -3px; padding: 3px 22px 3px 3px; box-sizing: border-box; border-radius: var(--fx_radius_2); cursor: pointer; transition: background 120ms ease, box-shadow 120ms ease; }
