@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect, MetisTag } from '@yuanfudao/metis-web-component'
-import { ArrowRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, Search, Upload } from 'lucide-react'
+import { ArrowRight, ChevronLeft, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
 import { importPaperAsAnswerSheet } from '../features/answer-sheet/importPaper'
@@ -67,7 +67,7 @@ function createDocument(name: string, subject: string, templateId: string) {
 }
 
 export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerSheetListPageProps) {
-  const [entryMode, setEntryMode] = useState<'paper' | 'upload' | 'blank'>('paper')
+  const [toolOpen, setToolOpen] = useState(false)
   const uploadInputRef = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
   const [items, setItems] = useState(records)
@@ -124,32 +124,32 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
 
   return <div className="answer-sheet-library">
     <header className="library-header">
-      <div><span>题库卷库 / 答题卡工具</span><h1>答题卡工具</h1><p>可从已组好的试卷生成、上传本地试卷生成，或从空白卡开始；进入编辑器后都能调整题目与卡面。</p></div>
+      <div><span>题库卷库 / 答题卡工具</span><h1>{toolOpen ? '制卡工具' : '答题卡工具'}</h1><p>{toolOpen ? '新建空白答题卡，或上传试卷带入可修改的题目与分值。' : '已有题库试卷可从组卷流程生成；没有题库试卷可进入制卡工具。'}</p></div>
+      {toolOpen && <MetisButton type="borderless" icon={<ChevronLeft size={16} />} onClick={() => setToolOpen(false)}>返回入口</MetisButton>}
     </header>
 
-    <section className="answer-sheet-entry-grid" data-sec="1">
-      <article className={`answer-sheet-entry-card entry-from-paper ${entryMode === 'paper' ? 'active' : ''}`} onClick={() => setEntryMode('paper')}>
+    {!toolOpen && <section className="answer-sheet-entry-grid" data-sec="1">
+      <article className="answer-sheet-entry-card entry-from-paper active">
         <div className="entry-icon"><FileCheck2 size={24} /></div>
         <div className="entry-copy"><span>试卷在题库中</span><h2>组卷后生成</h2><p>先在题库完成组卷，再自动带入题型、题号和分值生成答题卡。</p></div>
         <div className="entry-steps"><span><b>1</b> 完成组卷</span><i /><span><b>2</b> 生成答题卡</span><i /><span><b>3</b> 调整并发布</span></div>
         <MetisButton className="entry-action-button" type="primary" minWidth={168} icon={<ArrowRight size={17} />} onClick={(event) => { event.stopPropagation(); onExperienceFromPaper() }}>体验从试卷生成</MetisButton>
       </article>
-      <article className={`answer-sheet-entry-card entry-upload-paper ${entryMode === 'upload' ? 'active' : ''}`} onClick={() => setEntryMode('upload')}>
-        <div className="entry-icon"><Upload size={24} /></div>
-        <div className="entry-copy"><span>试卷在本地</span><h2>上传试卷生成答题卡</h2><p>任意文件都可上传。文字版试卷尝试提取题目；图片等文件先带入示例题型与分值，生成后可修改、插入题组。</p></div>
-        <div className="entry-capabilities"><span>识别试卷</span><span>核对题目与分值</span><span>继续配置</span></div>
-        <MetisButton className="entry-action-button" type={entryMode === 'upload' ? 'primary' : 'bordered'} minWidth={168} icon={<Upload size={17} />} loading={importing} onClick={(event) => { event.stopPropagation(); setEntryMode('upload'); uploadInputRef.current?.click() }}>上传试卷</MetisButton>
-        <input ref={uploadInputRef} type="file" hidden onChange={(event) => { void uploadPaper(event.target.files?.[0]); event.currentTarget.value = '' }} />
-      </article>
-      <article className={`answer-sheet-entry-card entry-blank-card ${entryMode === 'blank' ? 'active' : ''}`} onClick={() => setEntryMode('blank')}>
+      <article className="answer-sheet-entry-card entry-blank-card" onClick={() => setToolOpen(true)}>
         <div className="entry-icon"><FilePlus2 size={24} /></div>
-        <div className="entry-copy"><span>暂时没有试卷</span><h2>空白新建答题卡</h2><p>从空白卡或模板开始，手动添加题组，设置题号、分值、答案和作答区域。</p></div>
-        <div className="entry-capabilities"><span>添加题组</span><span>设置答案</span><span>自由排版</span></div>
-        <MetisButton className="entry-action-button" type={entryMode === 'blank' ? 'primary' : 'bordered'} minWidth={168} icon={<FilePlus2 size={17} />} onClick={(event) => { event.stopPropagation(); setEntryMode('blank'); setCreateOpen(true) }}>新建答题卡</MetisButton>
+        <div className="entry-copy"><span>独立制卡</span><h2>制卡工具</h2><p>在同一页面新建空白答题卡，或上传本地试卷生成可编辑的答题卡。</p></div>
+        <div className="entry-capabilities"><span>空白新建</span><span>上传试卷</span><span>继续编辑</span></div>
+        <MetisButton className="entry-action-button" type="bordered" minWidth={168} icon={<ArrowRight size={17} />} onClick={(event) => { event.stopPropagation(); setToolOpen(true) }}>进入制卡工具</MetisButton>
       </article>
-    </section>
+    </section>}
 
-    {entryMode === 'blank' && <div className="blank-card-library"><div className="library-section-title"><div><h2>我的答题卡</h2><p>继续编辑、复制或下载已创建的答题卡。</p></div></div>
+    {toolOpen && <div className="blank-card-library">
+      <div className="library-tool-actions">
+        <MetisButton type="primary" icon={<FilePlus2 size={16} />} onClick={() => setCreateOpen(true)}>新建空白答题卡</MetisButton>
+        <MetisButton type="bordered" icon={<Upload size={16} />} loading={importing} onClick={() => uploadInputRef.current?.click()}>上传试卷生成答题卡</MetisButton>
+        <input ref={uploadInputRef} type="file" hidden onChange={(event) => { void uploadPaper(event.target.files?.[0]); event.currentTarget.value = '' }} />
+      </div>
+      <div className="library-section-title"><div><h2>我的答题卡</h2><p>继续编辑、复制或下载已创建的答题卡。</p></div></div>
 
     <section className="library-toolbar">
       <MetisInput prefix={<Search size={15} />} placeholder="搜索答题卡名称" value={keyword} onChange={(event) => setKeyword(event.target.value)} allowClear />
