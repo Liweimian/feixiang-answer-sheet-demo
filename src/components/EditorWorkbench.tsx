@@ -29,6 +29,7 @@ interface EditorWorkbenchProps {
   onDelete: () => void
   onAdd: (kind: AnswerBlockKind) => void
   onAddQuestionGroup: (type: QuestionGroupType) => void
+  onEditQuestionGroup: (id: string) => void
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
   onSettingsChange: (patch: Partial<AnswerSheetSettings>) => void
@@ -78,6 +79,11 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           onBlockScoresChange={props.onBlockScoresChange}
           onAdd={props.onAdd}
           onAddQuestionGroup={props.onAddQuestionGroup}
+          onEditQuestionGroup={props.onEditQuestionGroup}
+          onDeleteBlock={(id) => {
+            props.onSelect(id)
+            props.onDeleteInsertedBlock(id)
+          }}
         />
         <AnswerSheetCanvas
           paper={paper}

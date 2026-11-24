@@ -24,7 +24,7 @@ function createSettings(overrides: Partial<AnswerSheetSettings> = {}): AnswerShe
     identityFields: ['学校', '姓名', '班级', '准考证号'],
     showNotice: true,
     noticeStyle: 'daily',
-    questionNumberOrder: 'major',
+    questionNumberOrder: 'within-major-continuous',
     objectiveSortMode: 'number-horizontal-option-horizontal',
     objectiveMerge: false,
     subjectiveMerge: false,

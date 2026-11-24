@@ -38,7 +38,7 @@ import { EditorToolbar } from '../components/EditorToolbar'
 import { EditorWorkbench } from '../components/EditorWorkbench'
 import { PreflightDialog } from '../components/PreflightDialog'
 import { QuestionGroupDialog } from '../components/QuestionGroupDialog'
-import { ObjectiveAnswerDialog } from '../components/ObjectiveAnswerDialog'
+import { ObjectiveAnswerDialog, type AnswerDialogValue } from '../components/ObjectiveAnswerDialog'
 import { OriginalPaperReference } from '../components/OriginalPaperReference'
 import { questionNumbers } from '../features/answer-sheet/range'
 
@@ -50,7 +50,7 @@ function cloneDefaultDocument(): AnswerSheetDocument {
       ...defaultAnswerSheetDocument.paper,
       sections: defaultAnswerSheetDocument.paper.sections.map((section) => ({ ...section })),
     },
-    blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block, locked: false, answerSlotCounts: block.answerSlotCounts ? [...block.answerSlotCounts] : undefined, answerSlotNumbers: block.answerSlotNumbers?.map((numbers) => [...numbers]), answerSlotNumberStyles: block.answerSlotNumberStyles ? [...block.answerSlotNumberStyles] : undefined, answerSlotSettings: block.answerSlotSettings ? structuredClone(block.answerSlotSettings) : undefined, questionScores: block.questionScores ? { ...block.questionScores } : undefined, contentElements: block.contentElements ? [...block.contentElements] : undefined })),
+    blocks: defaultAnswerSheetDocument.blocks.map((block) => ({ ...block, locked: false, answerSlotCounts: block.answerSlotCounts ? [...block.answerSlotCounts] : undefined, answerSlotNumbers: block.answerSlotNumbers?.map((numbers) => [...numbers]), answerSlotLabels: block.answerSlotLabels?.map((labels) => [...labels]), answerSlotNumberStyles: block.answerSlotNumberStyles ? [...block.answerSlotNumberStyles] : undefined, answerSlotSettings: block.answerSlotSettings ? structuredClone(block.answerSlotSettings) : undefined, questionScores: block.questionScores ? { ...block.questionScores } : undefined, contentElements: block.contentElements ? [...block.contentElements] : undefined, floatingObjects: block.floatingObjects ? structuredClone(block.floatingObjects) : undefined })),
     settings: {
       ...defaultAnswerSheetDocument.settings,
       identityFields: ['学号', '姓名', '班级'],
@@ -58,6 +58,19 @@ function cloneDefaultDocument(): AnswerSheetDocument {
       candidateNumberLayouts: [],
     },
     header: instantiateHeaderTemplate('daily-quiz'),
+  }
+}
+
+function normalizeHeaderIdentity(document: AnswerSheetDocument): AnswerSheetDocument {
+  if (document.header.preset !== 'quiz') return document
+  return {
+    ...document,
+    settings: {
+      ...document.settings,
+      identityFields: ['学号', '姓名', '班级'],
+      candidateNumberType: '学号',
+      candidateNumberLayouts: [],
+    },
   }
 }
 
@@ -71,7 +84,7 @@ interface AnswerSheetStudioPageProps {
 }
 
 export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetStudioPageProps) {
-  const [document, setDocument] = useState<AnswerSheetDocument>(() => initialDocument ? structuredClone(initialDocument) : cloneDefaultDocument())
+  const [document, setDocument] = useState<AnswerSheetDocument>(() => normalizeHeaderIdentity(initialDocument ? structuredClone(initialDocument) : cloneDefaultDocument()))
   const documentRef = useRef(document)
   documentRef.current = document
   const [history, setHistory] = useState<AnswerSheetDocument[]>([])
@@ -87,6 +100,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
   const [printDocument, setPrintDocument] = useState<AnswerSheetDocument>()
   const [questionGroupOpen, setQuestionGroupOpen] = useState(false)
   const [questionGroupType, setQuestionGroupType] = useState<QuestionGroupType>('single')
+  const [editingQuestionGroupId, setEditingQuestionGroupId] = useState('')
   const [objectiveAnswerOpen, setObjectiveAnswerOpen] = useState(false)
   const [originalPaperOpen, setOriginalPaperOpen] = useState(false)
   const saveTimer = useRef<number>()
@@ -260,51 +274,77 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
   }
 
   const addQuestionGroup = (draft: QuestionGroupDraft) => {
+    const editingBlock = editingQuestionGroupId ? blocks.find((block) => block.id === editingQuestionGroupId) : undefined
     const endNumber = draft.startNumber + draft.questionCount - 1
-    const kind: AnswerBlockKind = ['single', 'multiple', 'judge'].includes(draft.type) ? 'objective' : draft.type === 'comprehensive' ? 'mixed' : 'short-answer'
+    const kind: AnswerBlockKind = ['single', 'multiple', 'judge'].includes(draft.type) ? 'objective' : draft.type === 'essay' ? 'essay' : 'short-answer'
+    const blockHeight = kind === 'objective' ? Math.max(112, Math.ceil(draft.questionCount / 4) * 26 + 54) : draft.type === 'essay' ? 280 : draft.type === 'solution' ? 220 : draft.type === 'comprehensive' ? 200 : 150
+    const inheritedSubjectiveStyle = draft.type === 'solution' || draft.type === 'comprehensive' ? settings.subjectiveAnswerStyle : undefined
+    const inheritedLinesPerQuestion = Math.max(1, Math.floor((blockHeight - 30 - Math.max(0, draft.questionCount - 1) * 6) / Math.max(1, draft.questionCount) / settings.subjectiveLineHeight))
     const pageBlocks = blocks.filter((block) => block.page === activePage)
     const nextY = pageBlocks.reduce((bottom, block) => Math.max(bottom, (block.canvasY ?? 0) + block.height), 0)
+    const fillSlotCounts = draft.type === 'fill' ? draft.items.map((item) => item.subquestionCount > 0 ? (item.subquestionBlankCounts ?? []).reduce((sum, count) => sum + count, 0) : item.blankCount) : undefined
+    const fillSlotLabels = draft.type === 'fill' ? draft.items.map((item) => item.subquestionCount > 0 ? (item.subquestionBlankCounts ?? []).flatMap((count, subIndex) => Array.from({ length: count }, (_, blankIndex) => blankIndex === 0 ? `（${subIndex + 1}）` : '')) : Array.from({ length: item.blankCount }, () => '')) : undefined
+    const fillSlotEntries = draft.type === 'fill' ? draft.items.flatMap((item) => {
+      if (item.subquestionCount > 0) {
+        let slotIndex = 0
+        return (item.subquestionBlankCounts ?? []).flatMap((count, subIndex) => Array.from({ length: count }, (_, blankIndex) => {
+          slotIndex += 1
+          return { key: `${item.number}.${slotIndex}`, score: item.subquestionBlankScores?.[subIndex]?.[blankIndex] ?? 0, style: item.subquestionFillStyles?.[subIndex] ?? item.fillStyle }
+        }))
+      }
+      return Array.from({ length: item.blankCount }, (_, blankIndex) => ({ key: `${item.number}.${blankIndex + 1}`, score: item.blankScores?.[blankIndex] ?? Number((item.score / item.blankCount).toFixed(2)), style: item.fillStyle }))
+    }) : []
     const nextBlock: AnswerBlock = {
-      id: `group-${Date.now()}`,
-      page: activePage,
+      id: editingBlock?.id ?? `group-${Date.now()}`,
+      page: editingBlock?.page ?? activePage,
       title: draft.title,
       range: draft.questionCount === 1 ? `${draft.startNumber}` : `${draft.startNumber}–${endNumber}`,
       score: draft.totalScore,
       kind,
-      height: kind === 'objective' ? Math.max(112, Math.ceil(draft.questionCount / 4) * 26 + 54) : draft.type === 'solution' ? 220 : draft.type === 'comprehensive' ? 200 : 150,
-      canvasX: 0,
-      canvasY: nextY,
-      canvasWidth: 100,
-      lineCount: kind === 'objective' ? undefined : draft.type === 'solution' ? 8 : draft.type === 'comprehensive' ? 6 : 3,
-      questionLineCounts: draft.type === 'solution' ? Object.fromEntries(draft.items.map((item) => [String(item.number), item.lineCount])) : undefined,
-      answerSlotCounts: draft.type === 'fill' ? draft.items.map((item) => item.blankCount) : draft.type === 'solution' ? draft.items.map((item) => item.subquestionCount) : undefined,
-      answerSlotSettings: draft.type === 'fill' ? Object.fromEntries(draft.items.flatMap((item) => Array.from({ length: item.blankCount }, (_, slotIndex) => [`${item.number}.${slotIndex + 1}`, { style: item.fillStyle, count: item.fillStyle === 'tian' || item.fillStyle === 'mi' ? 4 : undefined }]))) : undefined,
-      answerVariant: draft.type === 'fill' ? 'fill' : draft.type === 'solution' ? 'solution' : undefined,
-      optionCount: kind === 'objective' ? Math.max(...draft.items.map((item) => item.optionCount), draft.optionCount) as 4 | 5 : undefined,
+      height: blockHeight,
+      canvasX: editingBlock?.canvasX ?? 0,
+      canvasY: editingBlock?.canvasY ?? nextY,
+      canvasWidth: editingBlock?.canvasWidth ?? 100,
+      lineCount: kind === 'objective' ? undefined : draft.type === 'solution' || draft.type === 'comprehensive' ? (inheritedSubjectiveStyle === 'lines' ? inheritedLinesPerQuestion : 1) : draft.type === 'essay' ? 8 : 3,
+      questionLineCounts: draft.type === 'solution' ? Object.fromEntries(draft.items.map((item) => [String(item.number), inheritedSubjectiveStyle === 'lines' ? inheritedLinesPerQuestion : item.lineCount])) : undefined,
+      answerSlotCounts: draft.type === 'fill' ? fillSlotCounts : draft.type === 'solution' || draft.type === 'essay' || draft.type === 'comprehensive' || kind === 'objective' && draft.items.some((item) => item.subquestionCount > 0) ? draft.items.map((item) => item.subquestionCount) : undefined,
+      answerSlotLabels: draft.type === 'fill' ? fillSlotLabels : undefined,
+      answerSlotSettings: draft.type === 'fill' ? Object.fromEntries(fillSlotEntries.map((slot) => [slot.key, { style: slot.style, count: slot.style === 'composition' ? 40 : ['tian', 'mi', 'squares'].includes(slot.style) ? 4 : undefined }])) : undefined,
+      answerVariant: draft.type === 'fill' ? 'fill' : draft.type === 'solution' || draft.type === 'essay' ? 'solution' : undefined,
+      optionCount: kind === 'objective' ? (draft.type === 'judge' ? 2 : Math.max(...draft.items.map((item) => item.optionCount), draft.optionCount) as 4 | 5) : undefined,
       objectiveMode: draft.type === 'single' || draft.type === 'multiple' || draft.type === 'judge' ? draft.type : undefined,
       itemsPerColumn: kind === 'objective' ? Math.min(10, draft.questionCount) : undefined,
       objectiveLayout: kind === 'objective' ? 'horizontal' : undefined,
-      responseStyle: kind === 'short-answer' || kind === 'mixed' ? 'lines' : undefined,
+      responseStyle: draft.type === 'essay' ? 'grid' : draft.type === 'solution' || draft.type === 'comprehensive' ? inheritedSubjectiveStyle : kind === 'short-answer' ? 'lines' : undefined,
+      answerAreaOverride: draft.type === 'solution' || draft.type === 'comprehensive' ? false : undefined,
+      preserveAnswerAreaHeight: draft.type === 'solution' || draft.type === 'comprehensive' ? true : undefined,
+      wordCount: draft.type === 'essay' ? 400 : undefined,
       showScore: true,
       showQuestionCount: true,
       showUnitScore: true,
       showScoreBox: false,
-      objectiveAnswers: kind === 'objective' ? Object.fromEntries(draft.items.filter((item) => item.answer).map((item) => [String(item.number), [...new Set(item.answer.split(''))]])) : undefined,
-      questionScores: Object.fromEntries(draft.items.flatMap((item) => item.subquestionCount > 0 ? Array.from({ length: item.subquestionCount }, (_, index) => [`${item.number}.${index + 1}`, Number((item.score / item.subquestionCount).toFixed(2))]) : [[String(item.number), item.score]])),
+      objectiveAnswers: kind === 'objective' ? (editingBlock?.objectiveAnswers ?? Object.fromEntries(draft.items.filter((item) => item.answer).map((item) => [String(item.number), [...new Set(item.answer.split(''))]]))) : undefined,
+      referenceAnswers: editingBlock?.referenceAnswers,
+      questionScores: Object.fromEntries(draft.type === 'fill' ? fillSlotEntries.map((slot) => [slot.key, slot.score]) : draft.items.flatMap((item) => item.subquestionCount > 0 ? Array.from({ length: item.subquestionCount }, (_, index) => [`${item.number}.${index + 1}`, item.subquestionScores?.[index] ?? Number((item.score / item.subquestionCount).toFixed(2))]) : [[String(item.number), item.score]])),
+      partialCreditScores: draft.type === 'multiple' ? Object.fromEntries(draft.items.flatMap((item) => item.subquestionCount > 0 ? Array.from({ length: item.subquestionCount }, (_, index) => [`${item.number}.${index + 1}`, item.subquestionPartialScores?.[index] ?? item.partialScore ?? 0]) : [[String(item.number), item.partialScore ?? 0]])) : undefined,
+      questionGroupType: draft.groupType,
+      questionGroupDraft: structuredClone(draft),
       contentElements: [],
       locked: false,
+      userInserted: true,
     }
-    const nextBlocks = [...blocks, nextBlock]
+    const nextBlocks = editingBlock ? blocks.map((block) => block.id === editingBlock.id ? nextBlock : block) : [...blocks, nextBlock]
     commitDocument({ ...document, blocks: nextBlocks, paper: { ...paper, score: totalQuestionScore(nextBlocks) } })
     setSelectedBlockId(nextBlock.id)
     setQuestionGroupOpen(false)
-    MetisMessage.success(`已添加“${draft.title}”`)
+    setEditingQuestionGroupId('')
+    MetisMessage.success(editingBlock ? `已更新“${draft.title}”` : `已添加“${draft.title}”`)
   }
 
-  const saveObjectiveAnswers = (answers: Record<string, Record<string, string[]>>) => {
-    commitBlocks(blocks.map((block) => block.kind === 'objective' ? { ...block, objectiveAnswers: answers[block.id] ?? {} } : block))
+  const saveAnswers = (answers: Record<string, AnswerDialogValue>) => {
+    commitBlocks(blocks.map((block) => block.questionGroupDraft ? { ...block, objectiveAnswers: answers[block.id]?.objectiveAnswers ?? block.objectiveAnswers, referenceAnswers: answers[block.id]?.referenceAnswers ?? block.referenceAnswers } : block))
     setObjectiveAnswerOpen(false)
-    MetisMessage.success('客观题答案已保存')
+    MetisMessage.success('答案已保存')
   }
 
   const suggestedQuestionStart = Math.max(0, ...blocks.flatMap((block) => questionNumbers(block.range))) + 1
@@ -389,6 +429,13 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
   const toggleBlockContent = (blockId: string, element: ContentElement) => {
     const block = blocks.find((item) => item.id === blockId)
     if (!block || block.kind === 'objective') return
+    if (element === 'image' || element === 'table') {
+      const nextObject = element === 'table'
+        ? { id: `${element}-${Date.now()}`, kind: element, x: 28, y: 42, width: 44, height: 92, rows: 3, columns: 4, squareCells: false, cells: Array(12).fill('') }
+        : { id: `${element}-${Date.now()}`, kind: element, x: 32, y: 42, width: 36, height: 88 }
+      updateBlock(blockId, { floatingObjects: [...(block.floatingObjects ?? []), nextObject] })
+      return
+    }
     const current = block.contentElements ?? []
     updateBlock(blockId, { contentElements: current.includes(element) ? current.filter((item) => item !== element) : [...current, element] })
   }
@@ -419,7 +466,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
     const anchorIndex = blocks.findIndex((block) => block.id === afterId)
     const anchor = blocks[anchorIndex]
     if (!anchor) return
-    const title = kind === 'section-title' ? '标题' : kind === 'forbidden' ? '禁答区' : responseStyle === 'blank' ? '空白区' : responseStyle === 'tian' ? '田字格作答区' : responseStyle === 'mi' ? '米字格作答区' : responseStyle === 'four-line' ? '四线三格作答区' : '作答横线'
+    const title = kind === 'section-title' ? '标题' : kind === 'forbidden' ? '禁答区' : responseStyle === 'blank' ? '空白区' : responseStyle === 'tian' ? '田字格作答区' : responseStyle === 'mi' ? '米字格作答区' : responseStyle === 'four-line' ? '四线三格作答区' : '作答线'
     const height = kind === 'section-title' ? 34 : kind === 'forbidden' ? 72 : 100
     const anchorY = anchor.canvasY ?? 0
     const inserted: AnswerBlock = {
@@ -457,7 +504,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
 
   const deleteInsertedBlock = (id: string) => {
     const target = blocks.find((block) => block.id === id)
-    if (!target?.userInserted) return
+    if (!target) return
     const targetY = target.canvasY ?? 0
     const targetBottom = targetY + target.height
     const compacted = blocks
@@ -471,7 +518,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
       ))
     commitBlocks(compacted)
     setSelectedBlockId('')
-    MetisMessage.success('已删除插入内容，可撤销恢复')
+    MetisMessage.success(target.userInserted ? '已删除插入内容' : '已删除题块')
   }
 
   const updateTitle = (title: string) => {
@@ -482,6 +529,25 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
 
   const updateSettings = (patch: Partial<AnswerSheetSettings>) => {
     const nextSettings = { ...settings, ...patch }
+    const nextBlocks = patch.subjectiveAnswerStyle
+      ? blocks.map((block) => {
+          if (block.kind !== 'short-answer' || block.answerVariant === 'fill') return block
+          if (patch.subjectiveAnswerStyle !== 'lines') return { ...block, answerAreaOverride: false, preserveAnswerAreaHeight: true, responseStyle: patch.subjectiveAnswerStyle }
+          const numbers = questionNumbers(block.range)
+          const lineHeight = patch.subjectiveLineHeight ?? nextSettings.subjectiveLineHeight
+          const linesPerQuestion = Math.max(1, Math.floor((block.height - 30 - Math.max(0, numbers.length - 1) * 6) / Math.max(1, numbers.length) / lineHeight))
+          return {
+            ...block,
+            answerAreaOverride: false,
+            preserveAnswerAreaHeight: true,
+            responseStyle: patch.subjectiveAnswerStyle,
+            lineCount: linesPerQuestion,
+            ...(block.answerVariant === 'solution' && numbers.length
+              ? { questionLineCounts: Object.fromEntries(numbers.map((number) => [String(number), linesPerQuestion])) }
+              : {}),
+          }
+        })
+      : blocks
     if (patch.identityFields) {
       const identityFields = [...patch.identityFields]
       if (!identityFields.includes('姓名')) {
@@ -491,7 +557,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
       nextSettings.identityFields = identityFields
     }
     if (patch.candidateNumberLayouts) nextSettings.candidateNumberLayouts = [...patch.candidateNumberLayouts]
-    commitDocument({ ...document, settings: nextSettings })
+    commitDocument({ ...document, settings: nextSettings, blocks: nextBlocks })
   }
 
   const updateModuleMerge = (kind: 'objective' | 'subjective', checked: boolean) => {
@@ -648,24 +714,14 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               onSave={() => void saveNow()}
               onPreflight={() => setPreflightOpen(true)}
               onPrint={() => {
-                if (fromPaper) {
-                  printSnapshot(document)
-                  return
-                }
-                if (!published) {
-                  setPreflightOpen(true)
-                  MetisMessage.info('请先完成印前校验并生成印刷版')
-                  return
-                }
-                printSnapshot(published.snapshot)
-                if (published.version !== draftVersion) MetisMessage.info(`当前为 V${draftVersion} 草稿，已打开不可变的 V${published.version} 印刷版`)
+                printSnapshot(document)
               }}
               onDownloadAnnotated={() => {
                 downloadAnnotatedAnswerSheet(document, draftVersion)
                 MetisMessage.success('已下载带批改痕迹版，可在浏览器中继续打印为 PDF')
               }}
-              hasObjectiveBlocks={blocks.some((block) => block.kind === 'objective')}
-              onObjectiveAnswers={() => setObjectiveAnswerOpen(true)}
+              hasAnswerBlocks={blocks.some((block) => block.questionGroupDraft && block.questionGroupDraft.type !== 'essay')}
+              onAnswers={() => setObjectiveAnswerOpen(true)}
         />
         <EditorWorkbench
               document={document}
@@ -680,7 +736,14 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
               onMove={moveBlock}
               onDelete={deleteSelected}
               onAdd={addBlock}
-              onAddQuestionGroup={(type) => { setQuestionGroupType(type); setQuestionGroupOpen(true) }}
+              onAddQuestionGroup={(type) => { setEditingQuestionGroupId(''); setQuestionGroupType(type); setQuestionGroupOpen(true) }}
+              onEditQuestionGroup={(id) => {
+                const block = blocks.find((item) => item.id === id)
+                if (!block?.questionGroupDraft) return
+                setEditingQuestionGroupId(id)
+                setQuestionGroupType(block.questionGroupDraft.type)
+                setQuestionGroupOpen(true)
+              }}
               onTitleCommit={updateTitle}
               onBlockTitleCommit={(id, title) => updateBlock(id, { title })}
               onSettingsChange={updateSettings}
@@ -736,8 +799,8 @@ export function AnswerSheetStudioPage({ initialDocument, onBack }: AnswerSheetSt
         onDownload={() => printSnapshot(published?.snapshot ?? document)}
         onDownloadPublished={() => printSnapshot(published?.snapshot ?? document)}
       />
-      <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} type={questionGroupType} onClose={() => setQuestionGroupOpen(false)} onSubmit={addQuestionGroup} />
-      <ObjectiveAnswerDialog open={objectiveAnswerOpen} blocks={blocks} onClose={() => setObjectiveAnswerOpen(false)} onSave={saveObjectiveAnswers} />
+      <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} type={questionGroupType} initialValue={editingQuestionGroupId ? blocks.find((block) => block.id === editingQuestionGroupId)?.questionGroupDraft : undefined} onClose={() => { setQuestionGroupOpen(false); setEditingQuestionGroupId('') }} onSubmit={addQuestionGroup} />
+      <ObjectiveAnswerDialog open={objectiveAnswerOpen} blocks={blocks} onClose={() => setObjectiveAnswerOpen(false)} onSave={saveAnswers} />
     </>
   )
 }

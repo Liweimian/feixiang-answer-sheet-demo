@@ -9,7 +9,7 @@ import {
   MetisSelect,
   MetisTag,
 } from '@yuanfudao/metis-web-component'
-import { Plus } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { blockKindLabels } from '../data/mockPaper'
 import { examHeaderTemplates } from '../data/headerTemplates'
 import { questionNumbers } from '../features/answer-sheet/range'
@@ -40,6 +40,8 @@ interface AnswerSheetConfigPanelProps {
   onBlockScoresChange: (id: string, scores: Record<string, number>) => void
   onAdd: (kind: AnswerBlockKind) => void
   onAddQuestionGroup: (type: QuestionGroupType) => void
+  onDeleteBlock: (id: string) => void
+  onEditQuestionGroup: (id: string) => void
 }
 
 const layoutOptions = (['A3', '8K', 'A4', '16K'] as const).map((paperSize) => ({
@@ -92,6 +94,9 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
   const { document } = props
   const { blocks, pageCount, settings } = document
   const outlineBlocks = blocks.filter((block) => block.kind !== 'forbidden')
+  const answerSheetTotalScore = blocks
+    .filter((block) => isQuestionBlockKind(block.kind))
+    .reduce((total, block) => total + Number(block.score ?? 0), 0)
   const selected = blocks.find((block) => block.id === props.selectedBlockId)
   const questionBlock = selected && isQuestionBlockKind(selected.kind)
   const blankCard = document.paper.sections.length === 0
@@ -156,7 +161,6 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             />
             {document.header.customized && <MetisButton size="s" onClick={props.onRestoreHeaderTemplate}>恢复</MetisButton>}
           </div>
-          {candidatePreset === 'exam' && <p className="header-template-source">{document.header.sourceNote}</p>}
         </section>
 
         <section className="config-flat-section">
@@ -177,8 +181,13 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
             <span>题号编排</span>
             <MetisRadio.Group
               className="config-inline-options"
-              value={settings.questionNumberOrder}
-              options={[{ value: 'major', label: '按大题' }, { value: 'minor', label: '按小题' }]}
+              value={(settings.questionNumberOrder as string) === 'minor' || settings.questionNumberOrder === 'whole-paper-continuous'
+                ? 'whole-paper-continuous'
+                : 'within-major-continuous'}
+              options={[
+                { value: 'within-major-continuous', label: '大题内部连续' },
+                { value: 'whole-paper-continuous', label: '全卷连续' },
+              ]}
               onChange={(event) => props.onSettingsChange({ questionNumberOrder: event.target.value as AnswerSheetSettings['questionNumberOrder'] })}
             />
           </div>}
@@ -228,7 +237,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               <MetisRadio.Group
                 className="config-inline-options"
                 value={settings.subjectiveAnswerStyle}
-                options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '下划线' }]}
+                options={[{ value: 'blank', label: '空白' }, { value: 'lines', label: '作答线' }]}
                 onChange={(event) => props.onSettingsChange({ subjectiveAnswerStyle: event.target.value as AnswerSheetSettings['subjectiveAnswerStyle'] })}
               />
             </div>
@@ -251,8 +260,13 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           <div className="config-flat-title"><span>题目结构</span><small>{pageCount} 面 · {outlineBlocks.length} 个题块</small></div>
           <div className="config-flat-body">
             {standaloneCard && <div className="question-type-actions">
-              {([['single', '单选题'], ['multiple', '多选题'], ['judge', '判断题'], ['fill', '填空题'], ['solution', '解答题'], ['comprehensive', '综合题']] as const).map(([type, label]) => <MetisButton key={type} type="bordered" icon={<Plus size={13} />} onClick={() => props.onAddQuestionGroup(type)}>{label}</MetisButton>)}
+              {([['single', '单选题'], ['multiple', '多选题'], ['judge', '判断题'], ['fill', '填空题'], ['solution', '解答题'], ['essay', '作文题'], ['comprehensive', '综合题']] as const).map(([type, label]) => <MetisButton key={type} type="bordered" icon={<Plus size={13} />} onClick={() => props.onAddQuestionGroup(type)}>{label}</MetisButton>)}
             </div>}
+            <div className="answer-sheet-total-score" aria-live="polite">
+              <span>答题卡总分</span>
+              <strong>{Number(answerSheetTotalScore.toFixed(2))}</strong>
+              <em>分</em>
+            </div>
             <div className="config-block-list">
               {outlineBlocks.map((block) => {
                 const isQuestion = isQuestionBlockKind(block.kind)
@@ -266,7 +280,8 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                         <b>{block.title}</b>
                         <small>{isQuestion ? `（共 ${questionCount} 题，共 ${block.score ?? 0} 分）` : blockKindLabels[block.kind]}</small>
                       </button>
-                      {isQuestion && <label className="config-block-batch-score"><span>单题分值</span><MetisInputNumber value={uniformValue(Object.values(resolvedScores(block)))} min={0} max={100} precision={2} controls={false} placeholder="分值" addonAfter="分" aria-label={`${block.title}单题分值`} onChange={(value) => setAllScores(block, Number(value ?? 0))} /></label>}
+                      {isQuestion && <label className="config-block-batch-score"><span>总分值</span><div className="config-score-with-unit"><MetisInputNumber value={block.score ?? 0} min={0} max={300} precision={2} controls={false} placeholder="分值" aria-label={`${block.title}总分值`} onChange={(value) => setAllScores(block, Number(value ?? 0) / Math.max(1, questionCount))} /><em>分</em></div></label>}
+                      {standaloneCard && <div className="config-question-group-actions"><MetisButton type="borderless" icon={<Pencil size={13} />} aria-label={`编辑${block.title}`} title="编辑" onClick={() => props.onEditQuestionGroup(block.id)} /><MetisButton type="borderless" icon={<Trash2 size={13} />} aria-label={`删除${block.title}`} title="删除" onClick={() => props.onDeleteBlock(block.id)} /></div>}
                     </div>
                     {isQuestion && <div className="config-question-tree">
                       {numbers.map((number, questionIndex) => {
@@ -276,11 +291,14 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                         const questionScore = slotCount > 0
                           ? slotNumbers.reduce((total, slot) => total + (scores[`${number}.${slot}`] ?? 0), 0)
                           : scores[String(number)] ?? 0
+                        const compactQuestionGroup = standaloneCard && Boolean(block.questionGroupDraft)
                         return <div key={number} className={`config-question-node ${slotCount > 0 ? 'nested' : 'direct'}`}>
-                          {slotCount > 0 && <div className="config-question-head"><button type="button" onClick={() => props.onSelect(block.id)}><b>题 {number}</b><small>（共 {slotCount} 小题，共 {questionScore} 分）</small></button><label><span>每小题</span><MetisInputNumber value={uniformValue(slotNumbers.map((slot) => scores[`${number}.${slot}`] ?? 0))} min={0} max={100} precision={2} controls={false} placeholder="分值" addonAfter="分" aria-label={`第${number}题每小题分值`} onChange={(value) => updateScores(block, Object.fromEntries(slotNumbers.map((slot) => [`${number}.${slot}`, Number(value ?? 0)])))} /></label></div>}
-                          {slotCount > 0
-                            ? <div className="config-subquestion-list">{slotNumbers.map((slotNumber) => <label key={slotNumber}><span>题({slotNumber})</span><MetisInputNumber value={scores[`${number}.${slotNumber}`] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={`第${number}题第${slotNumber}小题分值`} onChange={(value) => updateScores(block, { [`${number}.${slotNumber}`]: Number(value ?? 0) })} /></label>)}</div>
-                            : <label className="config-direct-score"><span>{number}.</span><MetisInputNumber value={scores[String(number)] ?? 0} min={0} max={100} precision={2} controls={false} addonAfter="分" aria-label={`第${number}题分值`} onChange={(value) => updateScores(block, { [String(number)]: Number(value ?? 0) })} /></label>}
+                          {!compactQuestionGroup && slotCount > 0 && <div className="config-question-head"><button type="button" onClick={() => props.onSelect(block.id)}><b>{number}.</b><small>（共 {slotCount} 小题，共 {questionScore} 分）</small></button></div>}
+                          {compactQuestionGroup
+                            ? <label className="config-direct-score"><span>{number}.</span><div className="config-score-with-unit"><MetisInputNumber value={questionScore} min={0} max={100} precision={2} controls={false} aria-label={`第${number}题分值`} onChange={(value) => { const total = Number(value ?? 0); if (slotCount > 0) { const unitScore = Number((total / slotCount).toFixed(2)); updateScores(block, Object.fromEntries(slotNumbers.map((slot) => [`${number}.${slot}`, unitScore]))) } else updateScores(block, { [String(number)]: total }) }} /><em>分</em></div></label>
+                            : slotCount > 0
+                            ? <div className="config-subquestion-list">{slotNumbers.map((slotNumber, slotIndex) => <label key={slotNumber}><span>{block.answerSlotLabels?.[questionIndex]?.[slotIndex] ?? `(${slotNumber})`}</span><div className="config-score-with-unit"><MetisInputNumber value={scores[`${number}.${slotNumber}`] ?? 0} min={0} max={100} precision={2} controls={false} aria-label={`第${number}题第${slotNumber}小题分值`} onChange={(value) => updateScores(block, { [`${number}.${slotNumber}`]: Number(value ?? 0) })} /><em>分</em></div></label>)}</div>
+                            : <label className="config-direct-score"><span>{number}.</span><div className="config-score-with-unit"><MetisInputNumber value={scores[String(number)] ?? 0} min={0} max={100} precision={2} controls={false} aria-label={`第${number}题分值`} onChange={(value) => updateScores(block, { [String(number)]: Number(value ?? 0) })} /><em>分</em></div></label>}
                         </div>
                       })}
                     </div>}
@@ -296,7 +314,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           </div>
         </section>
 
-        {blankCard && selected && (
+        {blankCard && selected && !standaloneCard && (
           <section className="config-flat-section config-selected-section">
             <div className="config-flat-title"><span>所选题块</span><small title={selected.title}>{selected.title}</small></div>
             <div className="config-flat-body">

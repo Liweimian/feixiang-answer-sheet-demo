@@ -20,12 +20,13 @@ function buildGroups(block?: AnswerBlock): ScoreGroup[] {
     const configuredSlotCount = block.answerSlotCounts?.[questionIndex]
     const slotCount = Math.max(1, configuredSlotCount ?? 1)
     const slotNumbers = explicitSlots?.length ? explicitSlots : Array.from({ length: slotCount }, (_, index) => index + 1)
+    const slotLabels = block.answerSlotLabels?.[questionIndex]
     const nested = Boolean(explicitSlots?.length || (configuredSlotCount != null && configuredSlotCount > 0))
     return {
       number,
       nested,
       items: nested
-        ? slotNumbers.map((slotNumber) => ({ key: `${number}.${slotNumber}`, label: `题(${slotNumber})`, ariaLabel: `第${number}题第${slotNumber}小题分值` }))
+        ? slotNumbers.map((slotNumber, slotIndex) => ({ key: `${number}.${slotNumber}`, label: `题${slotLabels?.[slotIndex] ?? `(${slotNumber})`}`, ariaLabel: `第${number}题${slotLabels?.[slotIndex] ?? `第${slotNumber}小题`}分值` }))
         : [{ key: String(number), label: `题${number}`, ariaLabel: `第${number}题分值` }],
     }
   })

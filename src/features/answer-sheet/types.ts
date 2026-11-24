@@ -14,21 +14,34 @@ export type IdentityField = '学校' | '姓名' | '班级' | '学号' | '准考�
 export type ObjectiveLayout = 'horizontal' | 'vertical' | 'merged'
 export type LineStyle = 'solid' | 'dashed'
 export type NoticeStyle = 'daily' | 'exam'
-export type QuestionNumberOrder = 'major' | 'minor'
+export type QuestionNumberOrder = 'within-major-continuous' | 'whole-paper-continuous'
 export type ObjectiveSortMode = 'number-vertical-option-horizontal' | 'number-horizontal-option-vertical' | 'number-horizontal-option-horizontal'
 export type SubjectiveAnswerStyle = 'blank' | 'lines'
 export type HeaderPreset = 'quiz' | 'exam'
-export type HeaderTemplateId = 'daily-quiz' | 'exam-general' | 'beijing-exam-reference' | 'shenzhen-exam-reference-a' | 'shenzhen-exam-reference-b'
+export type HeaderTemplateId = 'daily-quiz' | 'exam-general' | 'beijing-exam-reference' | 'shenzhen-exam-reference-a' | 'shenzhen-exam-reference-b' | 'guangzhou-exam-reference'
 export type HeaderEvidence = 'product-default' | 'official-sample' | 'official-rules' | 'reference-layout'
 export type HeaderModuleKind = 'title' | 'identity' | 'candidate-number' | 'barcode' | 'notice' | 'fill-sample' | 'absence-mark'
-export type ResponseStyle = 'lines' | 'grid' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
-export type FillSlotStyle = 'lines' | 'tian' | 'mi' | 'four-line'
+export type ResponseStyle = 'lines' | 'grid' | 'squares' | 'composition' | 'tian' | 'mi' | 'four-line' | 'bracket' | 'square' | 'blank'
+export type FillSlotStyle = 'lines' | 'squares' | 'composition' | 'tian' | 'mi' | 'four-line'
 export type SubquestionNumberStyle = 'paren' | 'circle' | 'plain' | 'chinese'
 export interface FillSlotSetting {
   style: FillSlotStyle
   count?: number
+  widthPercent?: number
 }
 export type ContentElement = 'table' | 'formula' | 'image'
+export interface FloatingContentObject {
+  id: string
+  kind: 'image' | 'table'
+  x: number
+  y: number
+  width: number
+  height: number
+  rows?: number
+  columns?: number
+  squareCells?: boolean
+  cells?: string[]
+}
 export type AnswerBlockKind =
   | 'objective'
   | 'short-answer'
@@ -87,6 +100,9 @@ export interface AnswerBlock {
   range?: string
   score?: number
   questionScores?: Record<string, number>
+  partialCreditScores?: Record<string, number>
+  questionGroupType?: 'normal' | 'bonus'
+  questionGroupDraft?: QuestionGroupDraft
   kind: AnswerBlockKind
   height: number
   canvasX?: number
@@ -95,6 +111,7 @@ export interface AnswerBlock {
   lineCount?: number
   answerSlotCounts?: number[]
   answerSlotNumbers?: number[][]
+  answerSlotLabels?: string[][]
   answerSlotNumberStyles?: SubquestionNumberStyle[]
   answerSlotSettings?: Record<string, FillSlotSetting>
   questionLineCounts?: Record<string, number>
@@ -103,15 +120,19 @@ export interface AnswerBlock {
   optionCount?: 2 | 4 | 5
   objectiveMode?: 'single' | 'multiple' | 'judge'
   objectiveAnswers?: Record<string, string[]>
+  referenceAnswers?: Record<string, string>
   itemsPerColumn?: number
   objectiveLayout?: ObjectiveLayout
   writingLayout?: 'choose-one' | 'separate'
   lineStyle?: LineStyle
   responseStyle?: ResponseStyle
   answerAreaOverride?: boolean
+  preserveAnswerAreaHeight?: boolean
   leadingBlankLines?: number
   contentText?: string
+  answerRichText?: string
   contentElements?: ContentElement[]
+  floatingObjects?: FloatingContentObject[]
   textBold?: boolean
   textItalic?: boolean
   textUnderline?: boolean
@@ -119,6 +140,8 @@ export interface AnswerBlock {
   textAlign?: 'left' | 'center' | 'right'
   fontSize?: 'small' | 'medium' | 'large'
   lineSpacing?: 'compact' | 'normal' | 'loose'
+  contentBoxWidth?: number
+  contentBoxHeight?: number
   showScore: boolean
   showQuestionCount?: boolean
   showUnitScore?: boolean
@@ -128,16 +151,20 @@ export interface AnswerBlock {
   scoreStep?: number
   userInserted?: boolean
   borderStyle?: 'bordered' | 'borderless'
+  borderTopVisible?: boolean
+  borderBottomVisible?: boolean
+  headerDividerVisible?: boolean
   locked?: boolean
   hint?: string
   mergedParts?: AnswerBlock[]
 }
 
-export type QuestionGroupType = 'single' | 'multiple' | 'judge' | 'fill' | 'solution' | 'comprehensive'
+export type QuestionGroupType = 'single' | 'multiple' | 'judge' | 'fill' | 'solution' | 'essay' | 'comprehensive'
 
 export interface QuestionGroupDraft {
   title: string
   type: QuestionGroupType
+  groupType: 'normal' | 'bonus'
   startNumber: number
   questionCount: number
   totalScore: number
@@ -149,9 +176,20 @@ export interface QuestionGroupItemDraft {
   number: number
   score: number
   blankCount: number
-  fillStyle: 'lines' | 'tian' | 'mi' | 'four-line'
+  blankScores?: number[]
+  blankStyles?: FillSlotStyle[]
+  fillStyle: FillSlotStyle
   lineCount: number
   subquestionCount: number
+  subquestionScores?: number[]
+  subquestionDefaultScore?: number
+  subquestionTypes?: Array<Exclude<QuestionGroupType, 'comprehensive'> | undefined>
+  subquestionBlankCounts?: number[]
+  subquestionBlankScores?: number[][]
+  subquestionFillStyles?: FillSlotStyle[]
+  subquestionOptionCounts?: Array<4 | 5>
+  subquestionPartialScores?: number[]
+  partialScore?: number
   optionCount: 4 | 5
   answer: string
 }
@@ -195,7 +233,8 @@ export interface HeaderModule {
   minWidth: number
   minHeight: number
   fields?: string[]
-  variant?: 'lines' | 'boxes' | 'compact' | 'detailed' | 'beijing-footer'
+  digitCount?: number
+  variant?: 'lines' | 'boxes' | 'compact' | 'detailed' | 'general-identity' | 'general-omr' | 'general-compact' | 'beijing-footer' | 'shenzhen-a' | 'shenzhen-a-boxes' | 'shenzhen-b' | 'guangzhou' | 'guangzhou-identity' | 'guangzhou-room' | 'guangzhou-seat'
   protected?: boolean
 }
 

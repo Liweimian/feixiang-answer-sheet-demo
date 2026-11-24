@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect, MetisTag } from '@yuanfudao/metis-web-component'
 import { ArrowRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, Search, Upload } from 'lucide-react'
-import { answerSheetTemplates, defaultAnswerSheetDocument, instantiateTemplate } from '../data/answerSheetTemplates'
+import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
 
 interface AnswerSheetListPageProps {
   onEdit: (document: AnswerSheetDocument) => void
+  onExperienceFromPaper: () => void
 }
 
 interface AnswerSheetRecord {
@@ -50,12 +51,21 @@ function createDocument(name: string, subject: string, templateId: string) {
       sections: [],
       score: templateScore,
     },
-    settings: { ...document.settings, linkedPaperId: '' },
+    settings: {
+      ...document.settings,
+      linkedPaperId: '',
+      subjectiveAnswerStyle: 'blank',
+      ...(document.header.preset === 'quiz' ? {
+        identityFields: ['学号', '姓名', '班级'] as const,
+        candidateNumberType: '学号' as const,
+        candidateNumberLayouts: [],
+      } : {}),
+    },
     blocks: document.blocks.map((block) => ({ ...block, sectionId: undefined, locked: false })),
   } satisfies AnswerSheetDocument
 }
 
-export function AnswerSheetListPage({ onEdit }: AnswerSheetListPageProps) {
+export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerSheetListPageProps) {
   const [entryMode, setEntryMode] = useState<'paper' | 'blank'>('paper')
   const [items, setItems] = useState(records)
   const [keyword, setKeyword] = useState('')
@@ -88,15 +98,6 @@ export function AnswerSheetListPage({ onEdit }: AnswerSheetListPageProps) {
     onEdit(nextDocument)
   }
 
-  const generateFromPaper = () => {
-    const generated = structuredClone(defaultAnswerSheetDocument)
-    onEdit({
-      ...generated,
-      paper: { ...generated.paper, sourceLabel: '组卷 · 当前试卷' },
-      settings: { ...generated.settings, linkedPaperId: generated.paper.id },
-    })
-  }
-
   const footer = <div className="dialog-footer-actions"><MetisButton type="borderless" onClick={() => setCreateOpen(false)}>取消</MetisButton><MetisButton type="primary" onClick={createCard}>创建并开始制卡</MetisButton></div>
 
   return <div className="answer-sheet-library">
@@ -109,7 +110,7 @@ export function AnswerSheetListPage({ onEdit }: AnswerSheetListPageProps) {
         <div className="entry-icon"><FileCheck2 size={24} /></div>
         <div className="entry-copy"><span>已有试卷</span><h2>从试卷生成答题卡</h2><p>完成组卷后点击“生成答题卡”，系统自动带入题型、题号和分值，进入编辑区调整。</p></div>
         <div className="entry-steps"><span><b>1</b> 完成组卷</span><i /><span><b>2</b> 生成答题卡</span><i /><span><b>3</b> 调整并发布</span></div>
-        <MetisButton className="entry-action-button" type="primary" minWidth={168} icon={<ArrowRight size={17} />} onClick={(event) => { event.stopPropagation(); generateFromPaper() }}>体验从试卷生成</MetisButton>
+        <MetisButton className="entry-action-button" type="primary" minWidth={168} icon={<ArrowRight size={17} />} onClick={(event) => { event.stopPropagation(); onExperienceFromPaper() }}>体验从试卷生成</MetisButton>
       </article>
       <article className={`answer-sheet-entry-card entry-blank-card ${entryMode === 'blank' ? 'active' : ''}`} onClick={() => setEntryMode('blank')}>
         <div className="entry-icon"><FilePlus2 size={24} /></div>

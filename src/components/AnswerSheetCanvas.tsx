@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { MetisButton, MetisDropdown, MetisInput } from '@yuanfudao/metis-web-component'
+import { MetisButton, MetisInput } from '@yuanfudao/metis-web-component'
 import { Combine, Eye, EyeOff, LockKeyhole, Pencil, QrCode } from 'lucide-react'
 import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, HeaderLayout, RulePack } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
@@ -163,6 +163,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
         { id: 'daily-fill-sample', label: '填涂样例' },
       ].filter((item) => hiddenItemIds.includes(item.id))
   const [editingTitle, setEditingTitle] = useState(false)
+  const [showHiddenHeaderItems, setShowHiddenHeaderItems] = useState(false)
   const [titleDraft, setTitleDraft] = useState(paper.title)
   const cancellingTitle = useRef(false)
 
@@ -187,15 +188,10 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
   return (
     <article className={`answer-paper paper-size-${paperSize} ${standard ? 'standard-paper' : 'smart-paper'} review-${settings.reviewMode}`} data-paper-page={page}>
       {scanEnabled && <><i className="corner-mark top-left" /><i className="corner-mark top-right" /><i className="corner-mark bottom-left" /><i className="corner-mark bottom-right" /></>}
-      {page === 1 && onHeaderChange && hiddenHeaderItems.length > 0 && <MetisDropdown
-        trigger={['click']}
-        menu={{
-          items: hiddenHeaderItems.map((item) => ({ key: item.id, label: `恢复${item.label}` })),
-          onClick: ({ key }) => restoreHeaderItem(String(key)),
-        }}
-      >
-        <button type="button" className="hidden-header-items-trigger"><Eye size={11} /> 已隐藏内容 {hiddenHeaderItems.length}</button>
-      </MetisDropdown>}
+      {page === 1 && onHeaderChange && hiddenHeaderItems.length > 0 && <div className="hidden-header-items-control">
+        <button type="button" className="hidden-header-items-trigger" aria-expanded={showHiddenHeaderItems} onClick={(event) => { event.stopPropagation(); setShowHiddenHeaderItems((visible) => !visible) }}><Eye size={11} /> 已隐藏内容 {hiddenHeaderItems.length}</button>
+        {showHiddenHeaderItems && <div className="hidden-header-items-popover" role="menu">{hiddenHeaderItems.map((item) => <button type="button" role="menuitem" key={item.id} onClick={(event) => { event.stopPropagation(); restoreHeaderItem(item.id); setShowHiddenHeaderItems(false) }}><Eye size={11} /> 恢复{item.label}</button>)}</div>}
+      </div>}
       {header.preset === 'exam' ? (
         <AnswerSheetHeader
           header={header}
@@ -207,7 +203,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
           onChange={onHeaderChange}
           onTitleCommit={onTitleCommit}
         />
-      ) : <header className={`paper-header ${dailyQuizIdentity ? 'daily-quiz-header' : ''}`}>
+      ) : page > 1 ? null : <header className={`paper-header ${dailyQuizIdentity ? 'daily-quiz-header' : ''}`}>
         <div className="paper-title">
           {editingTitle && onTitleCommit ? (
             <MetisInput
@@ -318,7 +314,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
             onUpdateBlock={onUpdateBlock ? (patch) => onUpdateBlock(block.id, patch) : undefined}
             onInsertAfter={onInsertAfter ? (kind, responseStyle, position) => onInsertAfter(block.id, kind, responseStyle, position) : undefined}
             onSplitMerged={block.mergedParts?.length && onSplitMerged ? () => onSplitMerged(block.id) : undefined}
-            onDeleteBlock={onDeleteInsertedBlock && block.userInserted ? () => onDeleteInsertedBlock(block.id) : undefined}
+            onDeleteBlock={onDeleteInsertedBlock ? () => onDeleteInsertedBlock(block.id) : undefined}
             onUndo={onUndo}
             onRedo={onRedo}
             questionAnswer={settings.cardStyle === 'question-answer'}
@@ -337,7 +333,6 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
           )
         })}
       </div>
-      {standard && <div className="right-warning-strip">请在黑色框内作答，超出区域的答案无效</div>}
       {settings.showFooter && (
         <footer className="paper-footer">{settings.footerText} · 第 {page} 面（共 {pageCount} 面）</footer>
       )}
