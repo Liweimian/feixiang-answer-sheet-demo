@@ -4,6 +4,7 @@ import { ArrowRight, BookOpen, ChevronLeft, ChevronRight, Clock3, Copy, Download
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
 import { isAnswerableBlock } from '../features/answer-sheet/types'
+import { questionNumbers } from '../features/answer-sheet/range'
 import { importPaperAsAnswerSheet } from '../features/answer-sheet/importPaper'
 import { SourcePaperPreviewDialog } from '../components/SourcePaperPreviewDialog'
 import { ObjectiveAnswerDialog, type AnswerDialogValue } from '../components/ObjectiveAnswerDialog'
@@ -222,9 +223,15 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
 
     <section className="card-list-panel" aria-label="答题卡列表">
       {visibleRecords.length ? visibleRecords.map((record) => {
+        const document = getRecordDocument(record)
+        const questionCount = new Set(document.blocks.flatMap((block) => questionNumbers(block.range))).size
+        const totalScore = document.blocks.reduce((sum, block) => sum + (block.score ?? 0), 0)
+        const scoreLabel = Number(totalScore.toFixed(2)).toString()
+        const paperLabel = `${document.settings.paperSize} ${document.settings.printSide === 'double' ? '双面' : '单面'}`
         return <article className="card-list-row" key={record.id} role="link" tabIndex={0} aria-label={`编辑${record.name}`} onClick={() => openRecord(record)} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openRecord(record) } }}>
           <div className="record-main">
             <div className="record-name"><FileText size={22} /><strong>{record.name}</strong></div>
+            <div className="record-summary"><span>共 {questionCount} 题</span><span>共 {scoreLabel} 分</span><span>{paperLabel}</span></div>
             <div className="record-meta">
               <span title="学科"><BookOpen size={15} />{record.subject}</span>
               <span title="页数"><Files size={15} />{record.pages} 页</span>

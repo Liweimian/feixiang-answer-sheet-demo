@@ -138,10 +138,11 @@
 .tool-library-open .library-tool-actions { justify-content: flex-start; margin-bottom: 16px; }
 .tool-library-open .library-top-filters { justify-content: flex-start; flex-wrap: wrap; }
 .tool-library-open .card-list-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.tool-library-open .card-list-row { min-height: 152px; grid-template-columns: 1fr; grid-template-rows: auto auto auto; align-content: start; gap: 12px; padding: 18px; }
+.tool-library-open .card-list-row { aspect-ratio: 1.35; min-height: 220px; grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto; align-content: start; gap: 12px; padding: 20px; }
 .tool-library-open .record-name { grid-column: 1; }
-.tool-library-open .record-meta { grid-column: 1; grid-row: 2; }
-.tool-library-open .record-actions { grid-column: 1; grid-row: 3; justify-content: start; }
+.tool-library-open .record-summary { grid-column: 1; grid-row: 2; }
+.tool-library-open .record-meta { grid-column: 1; grid-row: 3; }
+.tool-library-open .record-actions { grid-column: 1; grid-row: 5; justify-content: start; }
 @media (max-width: 1160px) { .tool-library-open .card-list-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .tool-library-open .card-list-panel { grid-template-columns: 1fr; } .tool-ai-hero-body form { flex-direction: column; } .tool-ai-hero-body form button { min-height: 38px; } .tool-manual-entry { align-items: flex-start; flex-direction: column; } }
 .library-tool-actions { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
@@ -163,6 +164,8 @@
 .record-name > svg { flex: 0 0 auto; color: var(--fx_brand); }
 .record-name > div { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
 .record-name strong { overflow: hidden; color: var(--fx_text_1); font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
+.record-summary { display: flex; grid-column: 1 / -1; flex-wrap: wrap; gap: 8px 14px; color: var(--fx_text_1); font-size: 14px; font-weight: 600; }
+.record-summary span + span::before { margin-right: 14px; color: var(--fx_text_3); content: '·'; font-weight: 400; }
 .record-meta { display: flex; grid-column: 1; grid-row: 2; align-items: center; flex-wrap: wrap; gap: 6px 16px; color: var(--fx_text_3); font-size: 12px; }
 .record-meta > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .record-meta svg { flex: 0 0 auto; color: var(--fx_text_3); }
