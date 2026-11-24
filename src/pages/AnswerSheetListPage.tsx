@@ -192,7 +192,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
 
     <section className="card-list-panel" aria-label="答题卡列表">
       {visibleRecords.length ? visibleRecords.map((record) => {
-        return <article className="card-list-row" key={record.id}>
+        return <article className="card-list-row" key={record.id} role="link" tabIndex={0} aria-label={`编辑${record.name}`} onClick={() => openRecord(record)} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openRecord(record) } }}>
           <div className="record-main">
             <div className="record-name"><FileText size={22} /><strong>{record.name}</strong></div>
             <div className="record-meta">
@@ -201,7 +201,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
               <span title="更新时间"><Clock3 size={15} />{record.updatedAt}</span>
             </div>
           </div>
-          <div className="record-actions">
+          <div className="record-actions" onClick={(event) => event.stopPropagation()}>
             <MetisButton className="card-action-button" type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
             <MetisButton className="card-action-button" type="borderless" size="s" icon={<Download size={14} />} onClick={() => MetisMessage.info('演示：下载最新版 PDF')}>下载</MetisButton>
             <details className="record-more" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.open = false }}>
