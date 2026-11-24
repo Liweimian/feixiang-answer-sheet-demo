@@ -45,12 +45,11 @@ async function readPaperText(file: File): Promise<string> {
     }
     return pages.join('\n')
   }
-  throw new Error('请上传 PDF、DOCX 或 TXT 格式的试卷')
+  return ''
 }
 
 export async function importPaperAsAnswerSheet(file: File): Promise<AnswerSheetDocument> {
-  if (file.size > 20 * 1024 * 1024) throw new Error('试卷文件不能超过 20 MB')
-  const text = await readPaperText(file)
+  const text = await readPaperText(file).catch(() => '')
   const groups: Array<{ title: string; type: QuestionGroupType; totalScore?: number; questions: Array<{ number: number; score: number }> }> = []
   let current: typeof groups[number] | undefined
   for (const line of text.split(/\r?\n/)) {
@@ -70,7 +69,6 @@ export async function importPaperAsAnswerSheet(file: File): Promise<AnswerSheetD
     if (!current.questions.some((item) => item.number === number)) current.questions.push({ number, score: Number(question[2] ?? 0) })
   }
   const recognized = groups.filter((group) => group.questions.length > 0)
-  if (!recognized.length) throw new Error('未识别到题号。请上传文字版试卷，扫描件暂不支持自动识别')
   for (const group of recognized) {
     if (!group.totalScore || group.questions.some((item) => item.score > 0)) continue
     const unitScore = Number((group.totalScore / group.questions.length).toFixed(2))

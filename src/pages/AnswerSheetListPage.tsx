@@ -111,7 +111,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       const document = await importPaperAsAnswerSheet(file)
       setLocalDocuments((current) => ({ ...current, [document.paper.id]: document }))
       setItems((current) => [{ id: document.paper.id, name: document.paper.title, subject: document.paper.subject, templateId: 'true-blank', updatedAt: '刚刚', pages: document.pageCount, status: 'draft', creator: '李老师' }, ...current])
-      MetisMessage.success('已识别题号和题型，请核对分值并继续配置答题卡')
+      MetisMessage.success(document.blocks.length ? '已生成答题卡，请核对题号、题型和分值' : '已创建可配置的答题卡，请手动添加题组')
       onEdit(document)
     } catch (error) {
       MetisMessage.error(error instanceof Error ? error.message : '试卷解析失败，请更换文件后重试')
@@ -136,10 +136,10 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       </article>
       <article className={`answer-sheet-entry-card entry-upload-paper ${entryMode === 'upload' ? 'active' : ''}`} onClick={() => setEntryMode('upload')}>
         <div className="entry-icon"><Upload size={24} /></div>
-        <div className="entry-copy"><span>试卷在本地</span><h2>上传试卷生成答题卡</h2><p>上传 PDF、DOCX 或 TXT 文字版试卷，识别题号、题型与已标注分值；生成后可继续修改题组和卡面。</p></div>
+        <div className="entry-copy"><span>试卷在本地</span><h2>上传试卷生成答题卡</h2><p>任意文件都可上传。文字版试卷会尝试识别题目；未识别到内容时，仍可进入编辑器手动配置。</p></div>
         <div className="entry-capabilities"><span>识别试卷</span><span>核对题目与分值</span><span>继续配置</span></div>
         <MetisButton className="entry-action-button" type={entryMode === 'upload' ? 'primary' : 'bordered'} minWidth={168} icon={<Upload size={17} />} loading={importing} onClick={(event) => { event.stopPropagation(); setEntryMode('upload'); uploadInputRef.current?.click() }}>上传试卷</MetisButton>
-        <input ref={uploadInputRef} type="file" hidden accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" onChange={(event) => { void uploadPaper(event.target.files?.[0]); event.currentTarget.value = '' }} />
+        <input ref={uploadInputRef} type="file" hidden onChange={(event) => { void uploadPaper(event.target.files?.[0]); event.currentTarget.value = '' }} />
       </article>
       <article className={`answer-sheet-entry-card entry-blank-card ${entryMode === 'blank' ? 'active' : ''}`} onClick={() => setEntryMode('blank')}>
         <div className="entry-icon"><FilePlus2 size={24} /></div>
