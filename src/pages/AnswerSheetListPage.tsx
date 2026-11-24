@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect } from '@yuanfudao/metis-web-component'
 import { ArrowRight, ChevronLeft, ChevronRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
@@ -75,6 +75,27 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
   const [name, setName] = useState('未命名答题卡')
   const [newSubject, setNewSubject] = useState('英语')
   const [templateId, setTemplateId] = useState('true-blank')
+  const [sourceFile, setSourceFile] = useState<File>()
+  const [sourceUrl, setSourceUrl] = useState('')
+  const [sourceText, setSourceText] = useState('')
+
+  useEffect(() => {
+    if (!sourceFile) return
+    const url = URL.createObjectURL(sourceFile)
+    setSourceUrl(url)
+    setSourceText('')
+    let active = true
+    const lowerName = sourceFile.name.toLowerCase()
+    if (lowerName.endsWith('.docx')) {
+      void sourceFile.arrayBuffer().then(async (arrayBuffer) => {
+        const mammoth = await import('mammoth')
+        return mammoth.extractRawText({ arrayBuffer })
+      }).then((result) => { if (active) setSourceText(result.value) }).catch(() => { if (active) setSourceText('原卷文字读取失败，请下载文件查看。') })
+    } else if (sourceFile.type.startsWith('text/') || /\.(txt|md|csv)$/i.test(lowerName)) {
+      void sourceFile.text().then((value) => { if (active) setSourceText(value) })
+    }
+    return () => { active = false; URL.revokeObjectURL(url); setSourceUrl('') }
+  }, [sourceFile])
 
   const visibleRecords = useMemo(() => items.filter((record) => {
     const matchesKeyword = !keyword.trim() || record.name.includes(keyword.trim())
@@ -163,15 +184,11 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       <div className="card-list-head"><span>答题卡名称</span><span>学科</span><span>页数</span><span>更新时间</span><span>操作</span></div>
       {visibleRecords.length ? visibleRecords.map((record) => {
         return <div className="card-list-row" key={record.id}>
-          <div className="record-name"><FileText size={18} /><strong>{record.name}</strong>{record.sourceFile && <button type="button" className="record-source-link" title={record.sourceFile.name} onClick={() => {
-            const sourceUrl = URL.createObjectURL(record.sourceFile!)
-            window.open(sourceUrl, '_blank', 'noopener,noreferrer')
-            window.setTimeout(() => URL.revokeObjectURL(sourceUrl), 60_000)
-          }}>原卷</button>}</div>
+          <div className="record-name"><FileText size={18} /><strong>{record.name}</strong>{record.sourceFile && <button type="button" className="record-source-link" title={record.sourceFile.name} onClick={() => setSourceFile(record.sourceFile)}>原卷</button>}</div>
           <span>{record.subject}</span><span>{record.pages} 页</span><span>{record.updatedAt}</span>
           <div className="record-actions">
             <MetisButton type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
-            <MetisButton type="borderless" size="s" icon={<Copy size={14} />} onClick={() => { setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft' }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}>复制</MetisButton>
+            <MetisButton type="borderless" size="s" icon={<Copy size={14} />} onClick={() => { setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft', sourceFile: undefined }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}>复制</MetisButton>
             <MetisButton type="borderless" size="s" icon={<Download size={14} />} onClick={() => MetisMessage.info('演示：下载最新版 PDF')}>下载</MetisButton>
           </div>
         </div>
@@ -183,6 +200,20 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
         <label><span>答题卡名称</span><MetisInput value={name} maxLength={40} onChange={(event) => setName(event.target.value)} /></label>
         <label><span>学科</span><MetisSelect value={newSubject} onChange={(value) => setNewSubject(String(value))} options={['语文', '数学', '英语', '物理', '化学', '道德与法治'].map((value) => ({ label: value, value }))} /></label>
         <label><span>起始模板</span><MetisSelect value={templateId} onChange={(value) => setTemplateId(String(value))} options={answerSheetTemplates.filter((template) => template.id === 'true-blank' || template.id === 'science-lab-school' || template.id === 'beijing-english-standard').map((template) => ({ label: template.id === 'true-blank' ? '纯空白卡' : template.name, value: template.id }))} /></label>
+      </div>
+    </MetisDialog>
+    <MetisDialog open={Boolean(sourceFile)} title={sourceFile?.name ?? '原卷'} width={900} footer={<MetisButton type="bordered" icon={<Download size={15} />} onClick={() => {
+      if (!sourceUrl || !sourceFile) return
+      const link = document.createElement('a')
+      link.href = sourceUrl
+      link.download = sourceFile.name
+      link.click()
+    }}>下载原卷</MetisButton>} onCancel={() => setSourceFile(undefined)}>
+      <div className="record-source-preview">
+        {sourceUrl && sourceFile?.type.startsWith('image/') ? <img src={sourceUrl} alt={sourceFile.name} />
+          : sourceUrl && (sourceFile?.type === 'application/pdf' || sourceFile?.name.toLowerCase().endsWith('.pdf')) ? <iframe src={sourceUrl} title={sourceFile.name} />
+            : sourceText ? <pre>{sourceText}</pre>
+              : <div className="record-source-fallback">{sourceFile?.name.toLowerCase().endsWith('.docx') ? '正在读取原卷内容…' : '此格式暂不支持在线预览，请下载原卷查看。'}</div>}
       </div>
     </MetisDialog>
   </div>
