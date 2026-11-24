@@ -334,7 +334,7 @@
 .page-switcher, .canvas-view-actions { display: flex; align-items: center; gap: var(--fx_sp_1); }
 .zoom-select { width: 78px; }
 .paper-viewport { height: calc(100vh - 220px); min-height: 660px; overflow: auto; padding: var(--fx_sp_6) 74px 80px var(--fx_sp_6); text-align: center; }
-.paper-stack { --canvas-zoom: .85; display: grid; justify-items: center; gap: 28px; }
+.paper-stack { --canvas-zoom: 1.05; display: grid; justify-items: center; gap: 28px; }
 .paper-blocks.drop-target { outline: 2px dashed var(--fx_brand); outline-offset: -2px; background: var(--fx_brand_subtle); }
 .paper-frame { position: relative; width: max-content; display: block; zoom: var(--canvas-zoom); scroll-margin-top: 24px; }
 .paper-page-badge { position: absolute; top: 50%; right: -54px; min-width: 42px; height: 34px; padding: 0 8px; border: 0; border-radius: var(--fx_radius_3); background: var(--fx_text_2); color: var(--fx_text_inverse); cursor: pointer; font-family: var(--fx_font_accent); font-size: 13px; font-weight: 700; transform: translateY(-50%); }

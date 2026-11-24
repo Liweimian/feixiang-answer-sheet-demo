@@ -288,7 +288,10 @@ function ShortAnswerContent({
                 const slotNumber = slotNumbers[slotIndex] ?? slotIndex + 1
                 const slotKey = `${no}.${slotNumber}`
                 const setting = block.answerSlotSettings?.[slotKey]
-                const style = setting?.style ?? block.responseStyle ?? 'lines'
+                const rawStyle = setting?.style ?? block.responseStyle ?? 'lines'
+                const style: FillSlotStyle = ['lines', 'squares', 'composition', 'tian', 'mi', 'four-line'].includes(rawStyle)
+                  ? rawStyle as FillSlotStyle
+                  : 'lines'
                 const cellCount = ['tian', 'mi', 'squares', 'composition'].includes(style)
                   ? Math.max(1, Math.min(style === 'composition' ? 200 : 20, setting?.count ?? (style === 'composition' ? 40 : 4)))
                   : 1
@@ -862,9 +865,12 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
   }
 
   const inheritedSubjectiveStyle = subjectiveAnswerStyle ?? 'lines'
-  const effectiveSubjectiveStyle = block.answerAreaOverride
-    ? (block.responseStyle ?? 'lines')
-    : inheritedSubjectiveStyle
+  const isFillAnswerBlock = block.answerVariant === 'fill'
+  const effectiveSubjectiveStyle = isFillAnswerBlock
+    ? (['lines', 'squares', 'composition', 'tian', 'mi', 'four-line'].includes(block.responseStyle ?? '') ? block.responseStyle! : 'lines')
+    : block.answerAreaOverride
+      ? (block.responseStyle ?? 'lines')
+      : inheritedSubjectiveStyle
   useLayoutEffect(() => {
     if (block.answerVariant !== 'solution' || block.preserveAnswerAreaHeight || effectiveSubjectiveStyle !== 'lines' || !onUpdateBlock) return
     const root = blockRef.current
@@ -879,7 +885,6 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
     : undefined
   const isSubjectiveAnswerBlock = block.kind === 'short-answer' || block.kind === 'response-area'
   const hasAnswerSettings = isSubjectiveAnswerBlock || block.kind === 'essay'
-  const isFillAnswerBlock = block.answerVariant === 'fill'
   const canEditSlotNumbers = isSubjectiveAnswerBlock && (
     isFillAnswerBlock
     || questionNumbers(block.range).length > 1
