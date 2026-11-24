@@ -24,6 +24,7 @@ interface EditorToolbarProps {
   fromPaper: boolean
   originalPaperOpen: boolean
   onOriginalPaper: () => void
+  onUploadedOriginal?: () => void
   onStageSubjectChange: (stage: string, subject: string) => void
 }
 
@@ -57,6 +58,7 @@ export function EditorToolbar(props: EditorToolbarProps) {
           </div>}
         </div>}
         <div className="toolbar-spacer" />
+        {props.onUploadedOriginal && <MetisButton type="bordered" icon={<Eye size={16} />} onClick={props.onUploadedOriginal}>查看原卷</MetisButton>}
         {!props.fromPaper && <MetisButton type="bordered" icon={<ListChecks size={16} />} disabled={!props.hasAnswerBlocks} onClick={props.onAnswers}>设置答案</MetisButton>}
         {!props.fromPaper && <MetisButton type="bordered" icon={<Save size={16} />} loading={props.saving} onClick={props.onSave}>保存</MetisButton>}
         {!props.fromPaper && <MetisButton type="bordered" icon={<Download size={16} />} onClick={props.onPrint}>下载</MetisButton>}

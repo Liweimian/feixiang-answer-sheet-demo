@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MetisMessage } from '@yuanfudao/metis-web-component'
+import { SourcePaperPreviewDialog } from '../components/SourcePaperPreviewDialog'
 import { defaultAnswerSheetDocument } from '../data/answerSheetTemplates'
 import { cloneHeaderLayout, instantiateHeaderTemplate } from '../data/headerTemplates'
 import { rulePacks } from '../data/mockPaper'
@@ -80,11 +81,12 @@ function totalQuestionScore(blocks: AnswerBlock[]): number {
 
 interface AnswerSheetStudioPageProps {
   initialDocument?: AnswerSheetDocument
+  uploadedSourceFile?: File
   onBack?: () => void
   backLabel?: string
 }
 
-export function AnswerSheetStudioPage({ initialDocument, onBack, backLabel = '返回首页' }: AnswerSheetStudioPageProps) {
+export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onBack, backLabel = '返回首页' }: AnswerSheetStudioPageProps) {
   const [document, setDocument] = useState<AnswerSheetDocument>(() => normalizeHeaderIdentity(initialDocument ? structuredClone(initialDocument) : cloneDefaultDocument()))
   const documentRef = useRef(document)
   documentRef.current = document
@@ -104,6 +106,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack, backLabel = '�
   const [editingQuestionGroupId, setEditingQuestionGroupId] = useState('')
   const [objectiveAnswerOpen, setObjectiveAnswerOpen] = useState(false)
   const [originalPaperOpen, setOriginalPaperOpen] = useState(false)
+  const [uploadedSourceOpen, setUploadedSourceOpen] = useState(false)
   const saveTimer = useRef<number>()
 
   useEffect(() => {
@@ -709,6 +712,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack, backLabel = '�
               fromPaper={fromPaper}
               originalPaperOpen={originalPaperOpen}
               onOriginalPaper={() => setOriginalPaperOpen((open) => !open)}
+              onUploadedOriginal={uploadedSourceFile ? () => setUploadedSourceOpen(true) : undefined}
               onStageSubjectChange={(grade, subject) => commitDocument({ ...document, paper: { ...paper, grade, subject } })}
               onBack={() => onBack ? onBack() : MetisMessage.info('演示：返回组卷页；当前答题卡草稿已自动保存')}
               onUndo={undo}
@@ -803,6 +807,7 @@ export function AnswerSheetStudioPage({ initialDocument, onBack, backLabel = '�
       />
       <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} type={questionGroupType} subject={paper.subject} initialValue={editingQuestionGroupId ? blocks.find((block) => block.id === editingQuestionGroupId)?.questionGroupDraft : undefined} onClose={() => { setQuestionGroupOpen(false); setEditingQuestionGroupId('') }} onSubmit={addQuestionGroup} />
       <ObjectiveAnswerDialog open={objectiveAnswerOpen} blocks={blocks} onClose={() => setObjectiveAnswerOpen(false)} onSave={saveAnswers} />
+      <SourcePaperPreviewDialog file={uploadedSourceOpen ? uploadedSourceFile : undefined} onClose={() => setUploadedSourceOpen(false)} />
     </>
   )
 }

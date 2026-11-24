@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect } from '@yuanfudao/metis-web-component'
 import { ArrowRight, ChevronLeft, ChevronRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
 import { importPaperAsAnswerSheet } from '../features/answer-sheet/importPaper'
+import { SourcePaperPreviewDialog } from '../components/SourcePaperPreviewDialog'
 
 interface AnswerSheetListPageProps {
-  onEdit: (document: AnswerSheetDocument) => void
+  onEdit: (document: AnswerSheetDocument, sourceFile?: File) => void
   onExperienceFromPaper: () => void
 }
 
@@ -76,26 +77,6 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
   const [newSubject, setNewSubject] = useState('英语')
   const [templateId, setTemplateId] = useState('true-blank')
   const [sourceFile, setSourceFile] = useState<File>()
-  const [sourceUrl, setSourceUrl] = useState('')
-  const [sourceText, setSourceText] = useState('')
-
-  useEffect(() => {
-    if (!sourceFile) return
-    const url = URL.createObjectURL(sourceFile)
-    setSourceUrl(url)
-    setSourceText('')
-    let active = true
-    const lowerName = sourceFile.name.toLowerCase()
-    if (lowerName.endsWith('.docx')) {
-      void sourceFile.arrayBuffer().then(async (arrayBuffer) => {
-        const mammoth = await import('mammoth')
-        return mammoth.extractRawText({ arrayBuffer })
-      }).then((result) => { if (active) setSourceText(result.value) }).catch(() => { if (active) setSourceText('原卷文字读取失败，请下载文件查看。') })
-    } else if (sourceFile.type.startsWith('text/') || /\.(txt|md|csv)$/i.test(lowerName)) {
-      void sourceFile.text().then((value) => { if (active) setSourceText(value) })
-    }
-    return () => { active = false; URL.revokeObjectURL(url); setSourceUrl('') }
-  }, [sourceFile])
 
   const visibleRecords = useMemo(() => items.filter((record) => {
     const matchesKeyword = !keyword.trim() || record.name.includes(keyword.trim())
@@ -105,7 +86,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
   }), [items, keyword, subject, status, created])
 
   const openRecord = (record: AnswerSheetRecord) => {
-    if (localDocuments[record.id]) { onEdit(structuredClone(localDocuments[record.id])); return }
+    if (localDocuments[record.id]) { onEdit(structuredClone(localDocuments[record.id]), record.sourceFile); return }
     const template = answerSheetTemplates.find((item) => item.id === record.templateId) ?? answerSheetTemplates[0]
     const document = instantiateTemplate(template)
     onEdit({ ...document, paper: { ...document.paper, title: record.name, subject: record.subject, sourceLabel: '答题卡工具' }, settings: { ...document.settings, linkedPaperId: '' } })
@@ -132,7 +113,7 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
       setLocalDocuments((current) => ({ ...current, [document.paper.id]: document }))
       setItems((current) => [{ id: document.paper.id, name: document.paper.title, subject: document.paper.subject, templateId: 'true-blank', updatedAt: '刚刚', pages: document.pageCount, status: 'draft', creator: '李老师', sourceFile: file }, ...current])
       MetisMessage.success(document.paper.sourceLabel.includes('演示') ? '已带入示例题型和分值，可修改并继续插入题组' : '已生成答题卡，请核对题号、题型和分值')
-      onEdit(document)
+      onEdit(document, file)
     } catch (error) {
       MetisMessage.error(error instanceof Error ? error.message : '试卷解析失败，请更换文件后重试')
     } finally {
@@ -203,19 +184,6 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper }: AnswerShe
         <label><span>起始模板</span><MetisSelect value={templateId} onChange={(value) => setTemplateId(String(value))} options={answerSheetTemplates.filter((template) => template.id === 'true-blank' || template.id === 'science-lab-school' || template.id === 'beijing-english-standard').map((template) => ({ label: template.id === 'true-blank' ? '纯空白卡' : template.name, value: template.id }))} /></label>
       </div>
     </MetisDialog>
-    <MetisDialog open={Boolean(sourceFile)} title={sourceFile?.name ?? '原卷'} width={900} footer={<MetisButton type="bordered" icon={<Download size={15} />} onClick={() => {
-      if (!sourceUrl || !sourceFile) return
-      const link = document.createElement('a')
-      link.href = sourceUrl
-      link.download = sourceFile.name
-      link.click()
-    }}>下载原卷</MetisButton>} onCancel={() => setSourceFile(undefined)}>
-      <div className="record-source-preview">
-        {sourceUrl && sourceFile?.type.startsWith('image/') ? <img src={sourceUrl} alt={sourceFile.name} />
-          : sourceUrl && (sourceFile?.type === 'application/pdf' || sourceFile?.name.toLowerCase().endsWith('.pdf')) ? <iframe src={sourceUrl} title={sourceFile.name} />
-            : sourceText ? <pre>{sourceText}</pre>
-              : <div className="record-source-fallback">{sourceFile?.name.toLowerCase().endsWith('.docx') ? '正在读取原卷内容…' : '此格式暂不支持在线预览，请下载原卷查看。'}</div>}
-      </div>
-    </MetisDialog>
+    <SourcePaperPreviewDialog file={sourceFile} onClose={() => setSourceFile(undefined)} />
   </div>
 }
