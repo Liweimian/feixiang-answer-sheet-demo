@@ -288,22 +288,18 @@
 .config-outline-group { overflow: hidden; border: 1px solid transparent; border-radius: var(--fx_radius_3); transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease; }
 .config-outline-group:hover { border-color: var(--fx_border_strong); }
 .config-outline-group.selected { border-color: var(--fx_brand); background: var(--fx_brand_subtle); box-shadow: inset 3px 0 0 var(--fx_brand); }
-.config-block-row { display: grid; grid-template-columns: minmax(0, 1fr) 82px 52px; align-items: center; gap: 3px; min-height: 42px; padding: var(--fx_sp_1) var(--fx_sp_2); color: var(--fx_text_3); }
+.config-block-row { display: grid; grid-template-columns: minmax(0, 1fr) 52px; align-items: center; gap: 3px; min-height: 42px; padding: var(--fx_sp_1) var(--fx_sp_2); color: var(--fx_text_3); }
 .config-question-group-actions { display: flex; align-items: center; justify-content: flex-end; gap: 1px; }
 .config-question-group-actions button { width: 24px; min-width: 24px; padding: 0; }
 .config-block-row > button { min-width: 0; display: flex; align-items: baseline; gap: 4px; padding: 0; border: 0; background: transparent; color: var(--fx_text_1); cursor: pointer; text-align: left; }
-.config-block-row > .config-block-title-button { align-items: flex-start; flex-direction: column; gap: 3px; }
+.config-block-row > .config-block-title-button { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 6px; }
 .config-block-row > .config-block-title-button small { max-width: 100%; overflow: visible; text-overflow: clip; white-space: normal; line-height: 1.35; }
 .config-block-row-linked { grid-template-columns: minmax(0, 1fr); }
-.config-block-row-linked > .config-block-title-button { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 6px; }
-.config-block-row-linked > .config-block-title-button small { text-align: right; white-space: nowrap; }
+.config-block-row > .config-block-title-button small { text-align: right; white-space: nowrap; }
 .config-block-row b, .config-block-row small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .config-block-row b { flex: 0 1 auto; font-size: 10px; }
 .config-block-row small { color: var(--fx_text_3); font-size: 8px; }
 .config-block-row small.computed-group-summary { color: var(--fx_text_1); font-size: 10px; font-weight: 600; }
-.config-block-batch-score { position: relative; display: block; color: var(--fx_text_3); font-size: 8px; }
-.config-block-batch-score > span { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.config-block-batch-score > div { width: 100%; }
 .config-score-with-unit { display: flex; align-items: center; gap: 4px; }
 .config-score-with-unit > div { min-width: 0; flex: 1; }
 .config-score-with-unit em { color: var(--fx_text_2); font-size: 9px; font-style: normal; white-space: nowrap; }

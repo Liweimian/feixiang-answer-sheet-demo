@@ -110,10 +110,6 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
     props.onBlockScoresChange(block.id, { ...resolvedScores(block), ...patch })
   }
 
-  const setAllScores = (block: AnswerBlock, value: number) => {
-    updateScores(block, Object.fromEntries(scoreKeys(block).map((key) => [key, value])))
-  }
-
   const applyCandidatePreset = (preset: 'quiz' | 'exam') => {
     props.onPresetChange(preset)
   }
@@ -286,13 +282,10 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
                     <div className={`config-block-row ${standaloneCard ? '' : 'config-block-row-linked'}`}>
                       <button type="button" className="config-block-title-button" onClick={() => props.onSelect(block.id)}>
                         <b>{block.title}</b>
-                        <small className={isQuestion && !standaloneCard ? 'computed-group-summary' : undefined}>{isQuestion
-                          ? standaloneCard
-                            ? `（共 ${questionCount} 题，共 ${Number(computedGroupScore.toFixed(2))} 分）`
-                            : `共 ${questionCount} 题　共 ${Number(computedGroupScore.toFixed(2))} 分`
+                        <small className={isQuestion ? 'computed-group-summary' : undefined}>{isQuestion
+                          ? `共 ${questionCount} 题　共 ${Number(computedGroupScore.toFixed(2))} 分`
                           : blockKindLabels[block.kind]}</small>
                       </button>
-                      {isQuestion && standaloneCard && <label className="config-block-batch-score"><span>总分值</span><div className="config-score-with-unit"><MetisInputNumber value={block.score ?? 0} min={0} max={300} precision={2} controls={false} placeholder="分值" aria-label={`${block.title}总分值`} onChange={(value) => setAllScores(block, Number(value ?? 0) / Math.max(1, questionCount))} /><em>分</em></div></label>}
                       {standaloneCard && <div className="config-question-group-actions"><MetisButton type="borderless" icon={<Pencil size={13} />} aria-label={`编辑${block.title}`} title="编辑" onClick={() => props.onEditQuestionGroup(block.id)} /><MetisButton type="borderless" icon={<Trash2 size={13} />} aria-label={`删除${block.title}`} title="删除" onClick={() => props.onDeleteBlock(block.id)} /></div>}
                     </div>
                     {isQuestion && <div className="config-question-tree">
