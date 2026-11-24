@@ -226,11 +226,20 @@
 .editor-workbench-wrap > [class*='alert'] { margin-bottom: var(--fx_sp_2); }
 .editor-workbench { height: calc(100vh - 104px); min-height: 720px; display: grid; grid-template-columns: 340px minmax(640px, 1fr); gap: var(--fx_sp_3); }
 .ai-editor-layout { position: relative; min-width: 0; }
-.ai-editor-layout-open { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; }
+.ai-editor-layout-open { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 12px; }
 .ai-editor-layout-open .editor-workbench { grid-template-columns: 340px minmax(0, 1fr); }
-.ai-assistant-panel { min-width: 0; height: calc(100vh - 104px); min-height: 720px; display: flex; flex-direction: column; gap: 14px; padding: 18px; border: 1px solid var(--fx_border); border-radius: 12px; background: white; }
+.ai-assistant-panel { min-width: 0; height: calc(100vh - 104px); min-height: 720px; display: flex; flex-direction: column; gap: 14px; padding: 18px; border: 1px solid var(--fx_border); border-radius: 12px; background: white; overflow-y: auto; }
 .ai-assistant-head { display: flex; justify-content: space-between; align-items: center; }
 .ai-assistant-head strong { color: var(--fx_brand); font-size: 15px; }
+.ai-assistant-head span { padding: 5px 7px; border-radius: 5px; background: #fff3e1; color: #9a5b0b; font-size: 10px; white-space: nowrap; }
+.ai-assistant-summary strong { font-size: 13px; }
+.ai-assistant-summary p { margin: 7px 0 0; color: var(--fx_text_3); font-size: 11px; line-height: 1.6; }
+.ai-review-list { display: grid; gap: 10px; }
+.ai-review-card { padding: 12px; border-radius: 10px; background: var(--fx_surface_subtle); }
+.ai-review-card:first-child { background: #fff8eb; }
+.ai-review-card strong { color: var(--fx_text_1); font-size: 12px; }
+.ai-review-card p { margin: 7px 0; color: var(--fx_text_2); font-size: 11px; line-height: 1.5; }
+.ai-review-card button { margin: 4px 6px 0 0; padding: 6px 8px; border: 0; border-radius: 5px; background: white; color: var(--fx_brand); cursor: pointer; font-size: 11px; }
 .ai-assistant-head button, .ai-assistant-prompts button { border: 0; background: transparent; color: var(--fx_brand); cursor: pointer; }
 .ai-assistant-panel > p { margin: 0; color: var(--fx_text_3); font-size: 12px; }
 .ai-assistant-messages { display: flex; flex: 1; flex-direction: column; gap: 10px; overflow-y: auto; }
@@ -241,7 +250,7 @@
 .ai-assistant-panel form input { min-width: 0; flex: 1; padding: 9px; border: 1px solid var(--fx_border); border-radius: 6px; }
 .ai-assistant-panel form button { padding: 0 12px; border: 0; border-radius: 6px; background: var(--fx_brand); color: white; cursor: pointer; }
 .ai-assistant-reopen { position: absolute; z-index: 10; top: 12px; right: 12px; padding: 8px 12px; border: 1px solid var(--fx_border); border-radius: 8px; background: white; color: var(--fx_brand); cursor: pointer; }
-@media (max-width: 1500px) { .ai-editor-layout-open { grid-template-columns: minmax(0, 1fr); } .ai-assistant-panel { position: fixed; z-index: 50; top: 80px; right: 12px; width: 300px; height: calc(100vh - 92px); min-height: 0; box-shadow: var(--fx_shadow_lg); } }
+@media (max-width: 1300px) { .ai-editor-layout-open { grid-template-columns: minmax(0, 1fr); } .ai-assistant-panel { position: fixed; z-index: 50; top: 80px; right: 12px; width: 300px; height: calc(100vh - 92px); min-height: 0; box-shadow: var(--fx_shadow_lg); } }
 .question-outline, .answer-canvas, .inspector-panel { min-width: 0; overflow: hidden; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_5); background: var(--fx_surface); box-shadow: var(--fx_shadow_sm); }
 .answer-sheet-config { min-width: 0; height: 100%; display: grid; grid-template-rows: auto auto minmax(0, 1fr); overflow: hidden; border: 1px solid var(--fx_border); border-radius: var(--fx_radius_5); background: var(--fx_surface); box-shadow: var(--fx_shadow_sm); }
 .config-view-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 8px 14px; border-bottom: 1px solid var(--fx_border); }

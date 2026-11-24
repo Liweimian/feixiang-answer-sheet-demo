@@ -109,6 +109,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
   const [aiOpen, setAiOpen] = useState(true)
   const [aiInput, setAiInput] = useState('')
   const [aiMessages, setAiMessages] = useState<string[]>(['可以告诉我想怎样调整题目、分值或作答区。选中题组后，我会优先修改它。'])
+  const [reviewedBlockIds, setReviewedBlockIds] = useState<string[]>([])
   const [originalPaperOpen, setOriginalPaperOpen] = useState(false)
   const [uploadedSourceOpen, setUploadedSourceOpen] = useState(false)
   const associateSourceInputRef = useRef<HTMLInputElement>(null)
@@ -740,6 +741,11 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
     setAiMessages((messages) => [...messages, `你：${request}`, `助手：${response}`])
     setAiInput('')
   }
+  const reviewBlocks = blocks.filter((block) => isQuestionBlockKind(block.kind) && block.questionGroupDraft && !reviewedBlockIds.includes(block.id))
+  const scoreReviewBlock = reviewBlocks.find((block) => block.questionGroupDraft?.items.some((item) => !Number.isFinite(item.score) || item.score <= 0))
+  const spaceReviewBlock = reviewBlocks.find((block) => block.kind === 'short-answer' && block.answerVariant !== 'fill')
+  const pendingReviewCount = Number(Boolean(scoreReviewBlock)) + Number(Boolean(spaceReviewBlock && spaceReviewBlock.id !== scoreReviewBlock?.id))
+  const markReviewed = (blockId: string) => setReviewedBlockIds((ids) => ids.includes(blockId) ? ids : [...ids, blockId])
 
   return (
     <>
@@ -826,9 +832,14 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
               onSplitMerged={splitCanvasBlock}
               printDocument={printDocument}
         />
-        <aside className="ai-assistant-panel" aria-label="AI 制卡助手">
-          <div className="ai-assistant-head"><strong>✦ AI 制卡助手</strong><button type="button" onClick={() => setAiOpen(false)}>收起</button></div>
-          <p>当前选中：{blocks.find((block) => block.id === selectedBlockId)?.title ?? '整张答题卡'}</p>
+        <aside className="ai-assistant-panel" aria-label="AI 核对助手">
+          <div className="ai-assistant-head"><strong>✦ AI 核对助手</strong><span>{pendingReviewCount ? `${pendingReviewCount} 项待核对` : '已核对'}</span><button type="button" onClick={() => setAiOpen(false)}>收起</button></div>
+          <div className="ai-assistant-summary"><strong>让题组跟上你的教学节奏</strong><p>当前共 {blocks.filter((block) => isQuestionBlockKind(block.kind)).length} 个题组，合计 {totalQuestionScore(blocks)} 分。点选题组后可让助手调整。</p></div>
+          <div className="ai-review-list">
+            {scoreReviewBlock && <div className="ai-review-card"><strong>分值待确认 · {scoreReviewBlock.title}</strong><p>这组题有未填写的分值，请核对后继续。</p><button type="button" onClick={() => { selectBlock(scoreReviewBlock.id); setEditingQuestionGroupId(scoreReviewBlock.id); setQuestionGroupType(scoreReviewBlock.questionGroupDraft!.type); setQuestionGroupOpen(true) }}>定位并设置</button></div>}
+            {spaceReviewBlock && spaceReviewBlock.id !== scoreReviewBlock?.id && <div className="ai-review-card"><strong>作答空间 · {spaceReviewBlock.title}</strong><p>可以对照试卷检查作答区高度，再决定是否调整。</p><button type="button" onClick={() => selectBlock(spaceReviewBlock.id)}>定位到卡面</button><button type="button" onClick={() => markReviewed(spaceReviewBlock.id)}>已检查</button></div>}
+            {!pendingReviewCount && <div className="ai-review-card"><strong>题目结构已核对</strong><p>可以继续调整卡面、设置答案，或执行下载前检查。</p></div>}
+          </div>
           <div className="ai-assistant-messages">{aiMessages.map((message, index) => <div key={index}>{message}</div>)}</div>
           <div className="ai-assistant-prompts">{['检查总分', '添加填空题', '多加 2 行'].map((prompt) => <button type="button" key={prompt} onClick={() => setAiInput(prompt)}>{prompt}</button>)}</div>
           <form onSubmit={(event) => { event.preventDefault(); askAi() }}><input aria-label="向 AI 制卡助手描述调整" placeholder="告诉我想怎样调整…" value={aiInput} onChange={(event) => setAiInput(event.target.value)} /><button type="submit">发送</button></form>
