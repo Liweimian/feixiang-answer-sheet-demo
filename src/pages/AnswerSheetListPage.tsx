@@ -194,19 +194,18 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
 
     {toolOpen && <div className="blank-card-library">
       <section className="tool-ai-hero" aria-label="AI 制卡入口">
-        <div className="tool-ai-hero-heading"><h1>制卡工具</h1><span>✦ AI 制卡助手</span></div>
+        <div className="tool-ai-hero-heading"><span>✦ AI 制卡助手</span><h1>今天想制作什么答题卡？</h1></div>
         <div className="tool-ai-hero-body">
-          <div className="tool-ai-intro"><strong>告诉 AI 你想要的答题卡</strong><span>描述题型和分值，或上传一份试卷</span></div>
-          <form className="tool-ai-composer" onSubmit={(event) => { event.preventDefault(); if (!createPrompt.trim()) { MetisMessage.warning('请先描述答题卡需求，或上传试卷'); return } applyCreatePrompt(); setCreateOpen(true) }}>
+          <form className="tool-ai-composer" onSubmit={(event) => { event.preventDefault(); if (!createPrompt.trim()) { MetisMessage.warning('请先描述答题卡需求'); return } applyCreatePrompt(); setCreateOpen(true) }}>
             <textarea aria-label="描述答题卡需求" value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} placeholder="例如：七年级数学，10 道选择题、6 道填空题，满分 100 分" rows={2} />
-            <div className="tool-ai-composer-footer"><MetisButton type="borderless" icon={<Upload size={16} />} loading={importing} onClick={(event) => { event.preventDefault(); uploadInputRef.current?.click() }}>上传试卷生成答题卡</MetisButton><button type="submit">创建并开始制卡 <ArrowRight size={16} /></button></div>
+            <div className="tool-ai-composer-footer"><span>描述需求，生成可继续编辑的答题卡</span><button type="submit">创建并开始制卡 <ArrowRight size={16} /></button></div>
           </form>
         </div>
-      </section>
-      <section className="tool-quick-entry" aria-label="其他制卡方式">
-        <span>也可以直接开始</span>
-        <MetisButton type="bordered" icon={<FileCheck2 size={16} />} onClick={onExperienceFromPaper}>体验从试卷生成</MetisButton>
-        <MetisButton type="bordered" icon={<FilePlus2 size={16} />} onClick={() => setCreateOpen(true)}>新建空白答题卡</MetisButton>
+        <div className="tool-quick-entry" aria-label="其他制卡方式">
+          <button type="button" onClick={() => setCreateOpen(true)}><span className="tool-quick-icon"><FilePlus2 size={25} /></span><strong>空白答题卡</strong><small>可选择起始模板</small></button>
+          <button type="button" onClick={() => uploadInputRef.current?.click()}><span className="tool-quick-icon"><Upload size={25} /></span><strong>上传试卷制卡</strong><small>{importing ? '正在识别试卷…' : '识别题型与分值'}</small></button>
+          <button type="button" onClick={onExperienceFromPaper}><span className="tool-quick-icon"><FileCheck2 size={25} /></span><strong>从题库开始制卡</strong><small>选择已有题库试卷</small></button>
+        </div>
       </section>
       <div className="tool-library-section-heading"><h2>我的答题卡 <small>{items.length}</small></h2></div>
       <div className="library-tool-actions">
