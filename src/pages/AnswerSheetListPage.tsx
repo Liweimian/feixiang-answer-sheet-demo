@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect } from '@yuanfudao/metis-web-component'
-import { ArrowRight, ChevronLeft, ChevronRight, Copy, Download, Edit3, FileCheck2, FilePlus2, FileText, ListChecks, Search, Upload } from 'lucide-react'
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, Edit3, Eye, FileCheck2, FilePlus2, FileText, Link2, ListChecks, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
 import type { AnswerSheetDocument } from '../features/answer-sheet/types'
 import { isAnswerableBlock } from '../features/answer-sheet/types'
@@ -199,15 +199,21 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
               <span>学科：{record.subject}</span>
               <span>页数：{record.pages} 页</span>
               <span>更新时间：{record.updatedAt}</span>
-              <span className="record-source-cell">原卷：{fileForRecord(record) ? <><span className="record-source-filename" title={fileForRecord(record)?.name}>{fileForRecord(record)?.name}</span><button type="button" className="record-source-link" onClick={() => setSourceFile(fileForRecord(record))}>查看原卷</button></>
-                : <button type="button" className="record-associate-link" onClick={() => { associateRecordIdRef.current = record.id; associateInputRef.current?.click() }}>关联原卷</button>}</span>
+              <span className="record-source-cell">原卷：{fileForRecord(record) ? <span className="record-source-filename" title={fileForRecord(record)?.name}>{fileForRecord(record)?.name}</span> : '未关联'}</span>
             </div>
           </div>
           <div className="record-actions">
             <MetisButton className="card-action-button" type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
-            <MetisButton className="card-action-button" type="borderless" size="s" icon={<ListChecks size={14} />} onClick={() => setAnswerRecord(record)}>设置答案</MetisButton>
-            <MetisButton className="card-action-button" type="borderless" size="s" icon={<Copy size={14} />} onClick={() => { setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft', sourceFile: undefined }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}>复制</MetisButton>
             <MetisButton className="card-action-button" type="borderless" size="s" icon={<Download size={14} />} onClick={() => MetisMessage.info('演示：下载最新版 PDF')}>下载</MetisButton>
+            <details className="record-more" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.open = false }}>
+              <summary>更多<ChevronDown size={15} /></summary>
+              <div className="record-more-menu">
+                {fileForRecord(record) ? <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); setSourceFile(fileForRecord(record)) }}><Eye size={15} />查看原卷</button>
+                  : <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); associateRecordIdRef.current = record.id; associateInputRef.current?.click() }}><Link2 size={15} />关联原卷</button>}
+                <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); setAnswerRecord(record) }}><ListChecks size={15} />设置答案</button>
+                <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft', sourceFile: undefined }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}><Copy size={15} />复制</button>
+              </div>
+            </details>
           </div>
         </article>
       }) : <div className="library-empty"><FileText size={36} /><strong>没有找到答题卡</strong><span>调整筛选条件，或新建一张空白答题卡</span></div>}
