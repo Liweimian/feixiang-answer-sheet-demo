@@ -190,21 +190,26 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
         </div>
       </div>
 
-    <section className="card-list-panel">
-      <div className="card-list-head"><span>答题卡名称</span><span>原卷</span><span>学科</span><span>页数</span><span>更新时间</span><span>操作</span></div>
+    <section className="card-list-panel" aria-label="答题卡列表">
       {visibleRecords.length ? visibleRecords.map((record) => {
-        return <div className="card-list-row" key={record.id}>
-          <div className="record-name"><FileText size={18} /><strong>{record.name}</strong></div>
-          <div className="record-source-cell">{fileForRecord(record) ? <button type="button" className="record-source-link" title={fileForRecord(record)?.name} onClick={() => setSourceFile(fileForRecord(record))}>{fileForRecord(record)?.name}</button>
-            : <button type="button" className="record-associate-link" onClick={() => { associateRecordIdRef.current = record.id; associateInputRef.current?.click() }}>关联原卷</button>}</div>
-          <span>{record.subject}</span><span>{record.pages} 页</span><span>{record.updatedAt}</span>
-          <div className="record-actions">
-            <MetisButton type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
-            <MetisButton type="borderless" size="s" icon={<ListChecks size={14} />} onClick={() => setAnswerRecord(record)}>设置答案</MetisButton>
-            <MetisButton type="borderless" size="s" icon={<Copy size={14} />} onClick={() => { setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft', sourceFile: undefined }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}>复制</MetisButton>
-            <MetisButton type="borderless" size="s" icon={<Download size={14} />} onClick={() => MetisMessage.info('演示：下载最新版 PDF')}>下载</MetisButton>
+        return <article className="card-list-row" key={record.id}>
+          <div className="record-main">
+            <div className="record-name"><FileText size={22} /><strong>{record.name}</strong></div>
+            <div className="record-meta">
+              <span>学科：{record.subject}</span>
+              <span>页数：{record.pages} 页</span>
+              <span>更新时间：{record.updatedAt}</span>
+              <span className="record-source-cell">原卷：{fileForRecord(record) ? <><span className="record-source-filename" title={fileForRecord(record)?.name}>{fileForRecord(record)?.name}</span><button type="button" className="record-source-link" onClick={() => setSourceFile(fileForRecord(record))}>查看原卷</button></>
+                : <button type="button" className="record-associate-link" onClick={() => { associateRecordIdRef.current = record.id; associateInputRef.current?.click() }}>关联原卷</button>}</span>
+            </div>
           </div>
-        </div>
+          <div className="record-actions">
+            <MetisButton className="card-action-button" type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
+            <MetisButton className="card-action-button" type="borderless" size="s" icon={<ListChecks size={14} />} onClick={() => setAnswerRecord(record)}>设置答案</MetisButton>
+            <MetisButton className="card-action-button" type="borderless" size="s" icon={<Copy size={14} />} onClick={() => { setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft', sourceFile: undefined }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}>复制</MetisButton>
+            <MetisButton className="card-action-button" type="borderless" size="s" icon={<Download size={14} />} onClick={() => MetisMessage.info('演示：下载最新版 PDF')}>下载</MetisButton>
+          </div>
+        </article>
       }) : <div className="library-empty"><FileText size={36} /><strong>没有找到答题卡</strong><span>调整筛选条件，或新建一张空白答题卡</span></div>}
     </section></div>}
 
