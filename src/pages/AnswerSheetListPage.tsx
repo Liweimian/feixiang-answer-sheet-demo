@@ -113,6 +113,7 @@ function createDocument(name: string, subject: string, templateId: string) {
 
 export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedFiles, onAssociateFile }: AnswerSheetListPageProps) {
   const [toolOpen, setToolOpen] = useState(false)
+  const [homeLayout, setHomeLayout] = useState<1 | 2>(2)
   const uploadInputRef = useRef<HTMLInputElement>(null)
   const associateInputRef = useRef<HTMLInputElement>(null)
   const associateRecordIdRef = useRef('')
@@ -290,10 +291,19 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
     </div>
   }
 
-  return <div className={`answer-sheet-library${toolOpen ? ' tool-library-open' : ''}`}>
+  const promptExamples = (
+    <div className="tool-prompt-examples" aria-label="快捷输入示例">{[
+            { subject: '数学', scene: '单元测试', count: 15, score: 60, prompt: '制作数学单元测试答题卡，共15道题，满分60分。单选题6道，每题3分，4个选项；填空题6道，每题1个空，每空3分；解答题3道，每题8分。A4单栏，题号全卷连续，使用日常测验表头。' },
+            { subject: '英语', scene: '期中考试', count: 76, score: 120, prompt: '制作英语期中考试答题卡，共76道题，满分120分。听力20道，每题1分；单项选择10道，每题1分；完形填空10道，每题1分；阅读理解20道，每题2分；词汇填空10道，每题1个空，每空1分；任务型阅读5道，每题2分；书面表达1道，20分，提供作答线。A4双栏，题号全卷连续。' },
+            { subject: '物理', scene: '月考', count: 30, score: 100, prompt: '制作物理月考答题卡，共30道题，满分100分。单选题10道，每题2分，4个选项；多选题5道，每题3分，4个选项，少选得1分；填空题6道，每题2个空，每空1分；作图题2道，每题4分；实验探究题4道，分别5分、5分、5分、6分；计算题3道，每题8分，保留计算作答空间。A4双栏，题号全卷连续。' },
+          ].slice(0, homeLayout === 2 ? 2 : 3).map((example) => <button type="button" key={example.scene} onClick={(event) => { setCreatePrompt(example.prompt); event.currentTarget.closest('.tool-ai-hero-body')?.querySelector('textarea')?.focus() }}><span className="prompt-example-heading"><strong>{example.subject}</strong><span>{example.scene}</span></span><span className="prompt-example-summary">共 {example.count} 道题 · 共 {example.score} 分<ArrowRight size={14} /></span></button>)}</div>
+  )
+
+  return <div className={`answer-sheet-library${toolOpen ? ' tool-library-open' : ''}${toolOpen && homeLayout === 2 ? ' tool-library-alternative' : ''}`}>
     {toolOpen ? <header className="tool-library-breadcrumb">
       <button type="button" className="tool-library-back" aria-label="返回答题卡工具入口" onClick={() => setToolOpen(false)}><ChevronLeft size={22} /></button>
       <span>首页</span><ChevronRight size={16} /><span>考试管理</span><ChevronRight size={16} /><strong>制卡工具</strong>
+      <div className="tool-layout-switch" role="group" aria-label="首页布局方案">{([1, 2] as const).map((layout) => <button type="button" key={layout} aria-pressed={homeLayout === layout} onClick={() => setHomeLayout(layout)}>方案{layout === 1 ? '一' : '二'}</button>)}</div>
     </header> : <header className="library-header">
       <div><span>题库卷库 / 答题卡工具</span><h1>答题卡工具</h1><p>已有题库试卷可从组卷流程生成；没有题库试卷可进入制卡工具。</p></div>
     </header>}
@@ -314,18 +324,15 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
     </section>}
 
     {toolOpen && <div className="blank-card-library">
-      <section className="tool-ai-hero" aria-label="AI 制卡入口">
+      <section className={`tool-ai-hero${homeLayout === 2 ? ' tool-ai-hero-alternative' : ''}`} aria-label="AI 制卡入口">
         <div className="tool-ai-hero-heading"><h1>今天想制作什么答题卡？</h1></div>
         <div className="tool-ai-hero-body">
           <form className="tool-ai-composer" onSubmit={(event) => { event.preventDefault(); if (!createPrompt.trim()) { MetisMessage.warning('请先描述答题卡需求'); return } setCreateMode('ai'); applyCreatePrompt(); setCreateOpen(true) }}>
             <textarea rows={3} aria-label="描述答题卡需求" value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} placeholder="描述学科、使用场景、题量和分值，例如：数学中考模拟，25道题，满分120分" />
             <button type="submit">AI 生成答题卡 <ArrowRight size={16} /></button>
-          <div className="tool-prompt-examples" aria-label="快捷输入示例">{[
-            { subject: '数学', scene: '单元测试', count: 15, score: 60, prompt: '制作数学单元测试答题卡，共15道题，满分60分。单选题6道，每题3分，4个选项；填空题6道，每题1个空，每空3分；解答题3道，每题8分。A4单栏，题号全卷连续，使用日常测验表头。' },
-            { subject: '英语', scene: '期中考试', count: 76, score: 120, prompt: '制作英语期中考试答题卡，共76道题，满分120分。听力20道，每题1分；单项选择10道，每题1分；完形填空10道，每题1分；阅读理解20道，每题2分；词汇填空10道，每题1个空，每空1分；任务型阅读5道，每题2分；书面表达1道，20分，提供作答线。A4双栏，题号全卷连续。' },
-            { subject: '物理', scene: '月考', count: 30, score: 100, prompt: '制作物理月考答题卡，共30道题，满分100分。单选题10道，每题2分，4个选项；多选题5道，每题3分，4个选项，少选得1分；填空题6道，每题2个空，每空1分；作图题2道，每题4分；实验探究题4道，分别5分、5分、5分、6分；计算题3道，每题8分，保留计算作答空间。A4双栏，题号全卷连续。' },
-          ].map((example) => <button type="button" key={example.scene} onClick={(event) => { setCreatePrompt(example.prompt); event.currentTarget.closest('.tool-ai-hero-body')?.querySelector('textarea')?.focus() }}><span className="prompt-example-heading"><strong>{example.subject}</strong><span>{example.scene}</span></span><span className="prompt-example-summary">共 {example.count} 道题 · 共 {example.score} 分<ArrowRight size={14} /></span></button>)}</div>
+          {homeLayout === 1 && promptExamples}
           </form>
+          {homeLayout === 2 && promptExamples}
         </div>
         <div className="tool-quick-entry" aria-label="其他制卡方式">
           <button type="button" onClick={createBlankCard}><span className="tool-quick-icon"><FilePlus2 size={23} /></span><span className="tool-quick-copy"><strong>空白答题卡</strong><small>从空白画布开始</small></span></button>

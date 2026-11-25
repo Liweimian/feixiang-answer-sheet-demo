@@ -435,3 +435,84 @@
 .tool-library-open .tool-library-breadcrumb strong { color: #393252; }
 .tool-library-open .tool-library-breadcrumb { margin-bottom: 12px; }
 .tool-library-open .tool-ai-hero { padding-top: 20px; }
+
+/* Two home arrangements share the same composer and creation actions. */
+.tool-layout-switch { display: flex; align-items: center; gap: 4px; margin-left: auto; padding: 4px; border: 1px solid #dedbed; border-radius: 9px; background: #ffffff80; }
+.tool-layout-switch button { border: 0; border-radius: 6px; padding: 7px 16px; background: transparent; color: #79738f; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.tool-layout-switch button[aria-pressed='true'] { color: #5748bd; background: #fff; box-shadow: 0 1px 5px #49416e12; }
+.tool-layout-switch button:focus-visible { outline: 2px solid #9384df; outline-offset: 2px; }
+.tool-library-open .tool-ai-hero.tool-ai-hero-alternative { display: grid; grid-template-columns: minmax(0, 1fr) 280px; grid-template-rows: auto auto; gap: 18px 28px; padding: 28px; border: 1px solid #e5e0f2; background: linear-gradient(125deg, #efedfc, #f8f8fc 70%); border-radius: 16px; }
+.tool-ai-hero-alternative .tool-ai-hero-heading { grid-column: 1; grid-row: 1; text-align: left; margin: 0; padding: 2px 0 0; }
+.tool-ai-hero-alternative .tool-ai-hero-heading h1 { font-size: 26px; line-height: 1.4; color: #37304f; }
+.tool-ai-hero-alternative .tool-ai-hero-body { grid-column: 1; grid-row: 2; width: 100%; max-width: none; min-width: 0; margin: 0; }
+.tool-ai-hero-alternative .tool-ai-composer { min-height: 240px; box-shadow: 0 6px 24px #5546a008; border-color: #d6cfee; border-radius: 12px; }
+.tool-ai-hero-alternative .tool-ai-composer > textarea { min-height: 115px; }
+.tool-ai-hero-alternative .tool-ai-composer > .tool-prompt-examples { grid-column: 1 / -1; grid-row: 2; padding-bottom: 0; }
+.tool-ai-hero-alternative .tool-ai-composer > button[type='submit'] { grid-column: 2; grid-row: 3; }
+.tool-ai-hero-alternative .tool-quick-entry { grid-column: 2; grid-row: 1 / span 2; display: grid; grid-template-columns: 1fr; grid-template-rows: repeat(3, 1fr); width: 100%; max-width: none; margin: 0; padding-left: 24px; border-left: 1px solid #ddd8ec; gap: 12px; }
+.tool-ai-hero-alternative .tool-quick-entry > button { position: relative; min-height: 88px; padding: 16px; border: 1px solid #e3dff0; border-radius: 10px; gap: 12px; background: #ffffffd9; transition: border-color .15s, background .15s; }
+.tool-ai-hero-alternative .tool-quick-entry > button:hover { border-color: #a79bda; background: #fff; }
+.tool-ai-hero-alternative .tool-quick-copy { gap: 7px; }
+.tool-ai-hero-alternative .tool-quick-copy strong { font-size: 15px; color: #39354b; }
+.tool-ai-hero-alternative .tool-quick-copy small { font-size: 12px; line-height: 1.5; color: #818399; }
+@media (max-width: 1000px) {
+  .tool-library-open .tool-ai-hero.tool-ai-hero-alternative { grid-template-columns: minmax(0, 1fr) 240px; gap: 16px; padding: 20px; }
+  .tool-ai-hero-alternative .tool-quick-entry { padding-left: 16px; }
+}
+@media (max-width: 760px) {
+  .tool-library-open .tool-ai-hero.tool-ai-hero-alternative { grid-template-columns: minmax(0, 1fr); }
+  .tool-ai-hero-alternative .tool-quick-entry { grid-column: 1; grid-row: 3; padding-left: 0; border-left: 0; grid-template-rows: none; }
+  .tool-library-open .tool-library-breadcrumb { flex-wrap: wrap; gap: 10px; }
+  .tool-layout-switch button { padding: 7px 10px; }
+}
+
+.tool-library-alternative .blank-card-library { width: min(100%, 1160px); margin-inline: auto; }
+.tool-library-alternative .tool-ai-hero-alternative .tool-ai-composer { height: 244px; min-height: 244px; }
+.tool-library-alternative .tool-ai-hero-alternative .tool-ai-composer > textarea { min-height: 0; height: 100%; resize: none; }
+.tool-library-alternative .tool-ai-hero-alternative .tool-ai-composer { grid-template-rows: minmax(80px, 1fr) auto auto; }
+.tool-library-alternative .tool-ai-hero-alternative .tool-prompt-examples { gap: 5px; }
+.tool-library-alternative .tool-ai-hero-alternative .tool-prompt-examples > button { padding: 6px 8px; }
+@media (min-width: 1200px) { .tool-library-alternative .blank-card-library { width: calc(100% - 120px); max-width: 1160px; } }
+.tool-library-open:not(.tool-library-alternative) .blank-card-library > .tool-library-section-heading,
+.tool-library-open:not(.tool-library-alternative) .blank-card-library > .library-tool-actions,
+.tool-library-open:not(.tool-library-alternative) .blank-card-library > .card-list-panel { width: min(100%, 1160px); margin-inline: auto; }
+@media (min-width: 1200px) {
+  .tool-library-open:not(.tool-library-alternative) .blank-card-library > .tool-library-section-heading,
+  .tool-library-open:not(.tool-library-alternative) .blank-card-library > .library-tool-actions,
+  .tool-library-open:not(.tool-library-alternative) .blank-card-library > .card-list-panel { width: calc(100% - 120px); max-width: 1160px; }
+}
+
+.tool-ai-hero-alternative .tool-ai-composer > .tool-prompt-examples { grid-column: 1; grid-row: 3; align-self: end; display: flex; flex-wrap: nowrap; min-width: 0; }
+.tool-ai-hero-alternative .tool-ai-composer > textarea { grid-row: 1 / span 2; }
+.tool-ai-hero-alternative .tool-prompt-examples > button { min-width: 0; gap: 3px 5px; padding: 6px 7px; }
+.tool-ai-hero-alternative .tool-prompt-examples .prompt-example-heading,
+.tool-ai-hero-alternative .tool-prompt-examples .prompt-example-summary { font-size: 11px; gap: 4px; }
+.tool-ai-hero-alternative .tool-prompt-examples .prompt-example-heading strong,
+.tool-ai-hero-alternative .tool-prompt-examples .prompt-example-heading > span { font-size: 11px; }
+.tool-library-open .tool-ai-hero.tool-ai-hero-alternative { grid-template-columns: 280px minmax(0, 1fr); }
+.tool-ai-hero-alternative .tool-ai-hero-heading,
+.tool-ai-hero-alternative .tool-ai-hero-body { grid-column: 2; }
+.tool-ai-hero-alternative .tool-quick-entry { grid-column: 1; padding-left: 0; padding-right: 24px; border-left: 0; border-right: 1px solid #ddd8ec; }
+@media (max-width: 1000px) {
+  .tool-library-open .tool-ai-hero.tool-ai-hero-alternative { grid-template-columns: 240px minmax(0, 1fr); }
+  .tool-ai-hero-alternative .tool-quick-entry { padding-left: 0; padding-right: 16px; }
+}
+@media (max-width: 760px) {
+  .tool-library-open .tool-ai-hero.tool-ai-hero-alternative { grid-template-columns: minmax(0, 1fr); }
+  .tool-ai-hero-alternative .tool-ai-hero-heading, .tool-ai-hero-alternative .tool-ai-hero-body { grid-column: 1; }
+  .tool-ai-hero-alternative .tool-quick-entry { grid-column: 1; grid-row: 3; padding-right: 0; border-right: 0; }
+}
+
+/* Alternative composer: heading, input with bottom action, then examples. */
+.tool-library-open .tool-ai-hero.tool-ai-hero-alternative { gap: 16px 28px; }
+.tool-ai-hero-alternative .tool-ai-hero-heading { padding: 0; }
+.tool-ai-hero-alternative .tool-ai-hero-body { display: flex; flex-direction: column; gap: 12px; }
+.tool-library-alternative .tool-ai-hero-alternative .tool-ai-composer { height: 200px; min-height: 200px; grid-template-rows: minmax(0, 1fr) 42px; padding: 16px; border-radius: 16px; }
+.tool-ai-hero-alternative .tool-ai-composer > textarea { grid-column: 1 / -1; grid-row: 1; padding: 4px 6px; }
+.tool-ai-hero-alternative .tool-ai-composer > button[type='submit'] { grid-column: 2; grid-row: 2; border-radius: 10px; }
+.tool-ai-hero-alternative .tool-ai-hero-body > .tool-prompt-examples { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.tool-ai-hero-alternative .tool-ai-hero-body > .tool-prompt-examples > button { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 4px 8px; padding: 9px 12px; border-radius: 20px; background: #f5f3fc; border: 1px solid #dfdcef; min-width: 0; }
+.tool-ai-hero-alternative .tool-ai-hero-body > .tool-prompt-examples .prompt-example-heading strong,
+.tool-ai-hero-alternative .tool-ai-hero-body > .tool-prompt-examples .prompt-example-heading > span,
+.tool-ai-hero-alternative .tool-ai-hero-body > .tool-prompt-examples .prompt-example-summary { font-size: 12px; }
+.tool-ai-hero-alternative .tool-quick-entry { align-self: stretch; }
