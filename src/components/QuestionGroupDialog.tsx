@@ -26,10 +26,14 @@ const initialDraft = (startNumber: number, type: QuestionGroupType): QuestionGro
 }
 
 export function QuestionGroupDialog(props: QuestionGroupDialogProps) {
+  const [selectedItemIndex, setSelectedItemIndex] = useState(0)
   const [draft, setDraft] = useState<QuestionGroupDraft>(() => initialDraft(props.suggestedStart, props.type))
 
   useEffect(() => {
-    if (props.open) setDraft(props.initialValue ? structuredClone(props.initialValue) : initialDraft(props.suggestedStart, props.type))
+    if (props.open) {
+      setSelectedItemIndex(0)
+      setDraft(props.initialValue ? structuredClone(props.initialValue) : initialDraft(props.suggestedStart, props.type))
+    }
   }, [props.initialValue, props.open, props.suggestedStart, props.type])
 
   const updateBatch = (patch: Partial<QuestionGroupDraft>) => {
@@ -202,7 +206,13 @@ export function QuestionGroupDialog(props: QuestionGroupDialogProps) {
   const objective = draft.type === 'single' || draft.type === 'multiple' || draft.type === 'judge'
   const specialized = objective || draft.type === 'fill' || draft.type === 'solution' || draft.type === 'essay' || draft.type === 'comprehensive'
   return <MetisDialog open={props.open} title={`${props.initialValue ? '编辑' : '添加'}${typeLabels[draft.type]}`} width={specialized ? 920 : 560} footer={footer} onCancel={props.onClose}>
-    <div className={`question-group-builder ${specialized ? 'specialized' : ''}`}>
+    <div className={`question-group-builder question-group-preview-builder question-group-focus-builder ${specialized ? 'specialized' : ''}`}>
+      <nav className="question-focus-directory" aria-label="题目目录">
+        <header><strong>题目目录</strong><span>{draft.questionCount} 道 · {draft.totalScore} 分</span></header>
+        {draft.items.map((item, index) => <button type="button" key={item.number} className={index === Math.min(selectedItemIndex, draft.items.length - 1) ? 'selected' : ''} aria-current={index === Math.min(selectedItemIndex, draft.items.length - 1) ? 'true' : undefined} onClick={() => setSelectedItemIndex(index)}><b>第 {item.number} 题</b><span>{item.score} 分</span>{item.subquestionCount > 0 && <small>{item.subquestionCount} 小题</small>}</button>)}
+      </nav>
+      <div className="question-focus-main">
+      <details className="question-focus-settings"><summary>题组设置<span>{draft.title} · 共 {draft.questionCount} 道题，共 {draft.totalScore} 分</span></summary>
       <aside className="question-group-form">
         <label className="question-group-wide question-group-type-field"><span><i>*</i>题组类型</span><MetisRadio.Group value={draft.groupType} options={[{ value: 'normal', label: '普通题' }, { value: 'bonus', label: '附加题' }]} onChange={(event) => setDraft({ ...draft, groupType: event.target.value as 'normal' | 'bonus' })} /></label>
         <label className="question-group-wide"><span>题组名称</span><MetisInput value={draft.title} maxLength={24} onChange={(event) => setDraft({ ...draft, title: event.target.value })} /></label>
@@ -231,12 +241,13 @@ export function QuestionGroupDialog(props: QuestionGroupDialogProps) {
           <label><span>每题分值</span><MetisInputNumber value={draft.questionCount ? draft.totalScore / draft.questionCount : 0} min={0} max={300} addonAfter="分" onChange={(value) => updateBatch({ totalScore: Number(value ?? 0) * draft.questionCount })} /></label>
         </>}
         {!specialized && <div className="question-group-summary">将生成 <strong>{draft.startNumber}–{draft.startNumber + draft.questionCount - 1}</strong> 题，共 <strong>{draft.totalScore} 分</strong>。</div>}
-      </aside>
+      </aside></details>
+      <div className="question-group-item-navigation"><strong>第 {draft.items[Math.min(selectedItemIndex, draft.items.length - 1)]?.number} 题设置</strong></div>
       {objective && <section className="question-item-editor">
         <header><strong>{typeLabels[draft.type]}：{draft.questionCount}题，共{draft.totalScore}分</strong><span>可逐题增删</span></header>
         <div className={`question-item-table objective-items editable-rows ${draft.type === 'multiple' ? 'is-multiple' : ''} ${draft.type === 'judge' ? 'is-judge' : ''}`}>
           <div className="question-item-head"><span>题号</span>{draft.type !== 'judge' && <span>选项数</span>}<span>分值</span>{draft.type === 'multiple' && <span>少选得分</span>}<span>操作</span></div>
-          {draft.items.map((item, index) => <div className={`objective-question-group ${item.subquestionCount ? 'has-subquestions' : ''}`} key={`${item.number}-${index}`}>
+          {draft.items.map((item, index) => index === Math.min(selectedItemIndex, draft.items.length - 1) && <div className={`objective-question-group ${item.subquestionCount ? 'has-subquestions' : ''}`} key={`${item.number}-${index}`}>
             <div className="question-item-row">
               <b>{item.number}</b>
               {item.subquestionCount
@@ -258,7 +269,7 @@ export function QuestionGroupDialog(props: QuestionGroupDialogProps) {
         <header><strong>填空题：{draft.questionCount}题，共{draft.totalScore}分</strong><span>可逐空设置</span></header>
         <div className="question-item-table fill-items editable-rows">
           <div className="question-item-head"><span>题号</span><span>空数</span><span>分值</span><span>操作</span></div>
-          {draft.items.map((item, index) => <div className={`fill-question-group ${item.subquestionCount ? 'has-subquestions' : item.blankCount > 1 ? 'has-blanks' : ''}`} key={item.number}>
+          {draft.items.map((item, index) => index === Math.min(selectedItemIndex, draft.items.length - 1) && <div className={`fill-question-group ${item.subquestionCount ? 'has-subquestions' : item.blankCount > 1 ? 'has-blanks' : ''}`} key={item.number}>
             <div className="question-item-row">
               <b>{item.number}</b>
               {item.subquestionCount > 0
@@ -282,7 +293,7 @@ export function QuestionGroupDialog(props: QuestionGroupDialogProps) {
         <header><strong>{typeLabels[draft.type]}：{draft.questionCount}题，共{draft.totalScore}分</strong><span>可逐题增删</span></header>
         <div className="question-item-table solution-items editable-rows">
           <div className="question-item-head"><span>题号</span><span>分值</span><span>操作</span></div>
-          {draft.items.map((item, index) => <div className={`solution-question-group ${item.subquestionCount ? 'has-subquestions' : ''}`} key={item.number}>
+          {draft.items.map((item, index) => index === Math.min(selectedItemIndex, draft.items.length - 1) && <div className={`solution-question-group ${item.subquestionCount ? 'has-subquestions' : ''}`} key={item.number}>
             <div className="question-item-row"><b>{item.number}</b>{item.subquestionCount > 0 ? <span>{item.score > 0 ? item.score : '—'}</span> : <MetisInput key={`solution-item-score-${item.number}-${item.score}`} defaultValue={String(item.score)} inputMode="decimal" onBlur={(event) => updateItem(index, { score: Math.max(0, Number(event.target.value) || 0) })} />}<div className="question-item-actions"><MetisButton type="borderless" icon={<Plus size={13} />} onClick={() => addSubquestion(index)}>添加小题</MetisButton><MetisButton type="borderless" icon={<Trash2 size={13} />} disabled={draft.items.length <= 1} onClick={() => removeItem(index)}>删除</MetisButton></div></div>
             {item.subquestionCount > 0 && <div className="solution-subquestion-list">{Array.from({ length: item.subquestionCount }, (_, subIndex) => <div className="solution-subquestion-row" key={subIndex}><b>（{subIndex + 1}）</b><MetisInput key={`solution-sub-score-${item.number}-${subIndex}-${item.subquestionScores?.[subIndex] ?? 0}`} defaultValue={String(item.subquestionScores?.[subIndex] ?? 0)} inputMode="decimal" onBlur={(event) => updateSubquestion(index, subIndex, { score: Math.max(0, Number(event.target.value) || 0) })} /><MetisButton type="borderless" icon={<Trash2 size={13} />} onClick={() => removeSubquestion(index, subIndex)}>删除</MetisButton></div>)}</div>}
           </div>)}
@@ -292,12 +303,19 @@ export function QuestionGroupDialog(props: QuestionGroupDialogProps) {
         <header><strong>综合题：{draft.questionCount}题，共{draft.totalScore}分</strong><span>每题至少 2 个小题</span></header>
         <div className="question-item-table comprehensive-items editable-rows">
           <div className="question-item-head"><span>题号</span><span>小题数</span><span /><span>分值</span><span>操作</span></div>
-          {draft.items.map((item, index) => <div className="comprehensive-question-group" key={item.number}>
+          {draft.items.map((item, index) => index === Math.min(selectedItemIndex, draft.items.length - 1) && <div className="comprehensive-question-group" key={item.number}>
             <div className="question-item-row"><b>{item.number}</b><MetisInput key={`comprehensive-item-count-${item.number}-${item.subquestionCount}`} defaultValue={String(item.subquestionCount)} inputMode="numeric" onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur() }} onBlur={(event) => updateComprehensiveSubquestionCount(index, event.target.value)} /><span /><span>{item.score > 0 ? item.score : '—'}</span><MetisButton type="borderless" icon={<Trash2 size={13} />} disabled={draft.items.length <= 1} onClick={() => removeItem(index)}>删除</MetisButton></div>
             <div className="comprehensive-subquestion-list">{Array.from({ length: item.subquestionCount }, (_, subIndex) => <div className="comprehensive-subquestion-row" key={subIndex}><b>（{subIndex + 1}）</b><MetisSelect value={item.subquestionTypes?.[subIndex]} placeholder="题型" options={[{ value: 'single', label: '单选题' }, { value: 'multiple', label: '多选题' }, { value: 'judge', label: '判断题' }, { value: 'fill', label: '填空题' }, { value: 'solution', label: '解答题' }, ...(props.subject === '语文' || item.subquestionTypes?.[subIndex] === 'essay' ? [{ value: 'essay', label: '作文题' }] : [])]} onChange={(value) => updateComprehensiveSubquestionType(index, subIndex, value as Exclude<QuestionGroupType, 'comprehensive'>)} /><MetisInput key={`comprehensive-sub-score-${item.number}-${subIndex}-${item.subquestionScores?.[subIndex] ?? 0}`} defaultValue={String(item.subquestionScores?.[subIndex] ?? 0)} inputMode="decimal" onBlur={(event) => updateSubquestion(index, subIndex, { score: Math.max(0, Number(event.target.value) || 0) })} /><MetisButton type="borderless" icon={<Trash2 size={13} />} disabled={item.subquestionCount <= 2} onClick={() => removeComprehensiveSubquestion(index, subIndex)}>删除</MetisButton></div>)}</div>
           </div>)}
         </div>
       </section>}
+      <section className="question-focus-preview" aria-label="当前题预览">
+          {draft.items.filter((_, index) => index === Math.min(selectedItemIndex, draft.items.length - 1)).map((item) => <button type="button" key={item.number} className={`question-preview-item selected`}>
+            <span className="question-preview-item-head"><b>{item.number}.</b><span>{item.score} 分</span></span>
+            {item.subquestionCount > 0 ? Array.from({ length: item.subquestionCount }, (_, subIndex) => <span className="question-preview-sub" key={subIndex}>（{subIndex + 1}）{objective ? Array.from({ length: draft.type === 'judge' ? 2 : item.subquestionOptionCounts?.[subIndex] ?? item.optionCount }, (_, option) => `[${draft.type === 'judge' ? ['T', 'F'][option] : String.fromCharCode(65 + option)}]`).join('　') : draft.type === 'fill' ? Array.from({ length: item.subquestionBlankCounts?.[subIndex] ?? 1 }, () => '________').join('　') : '________________'}<small>{item.subquestionScores?.[subIndex] ?? 0} 分</small></span>) : objective ? <span className="question-preview-options">{Array.from({ length: draft.type === 'judge' ? 2 : item.optionCount }, (_, option) => <span key={option}>[{draft.type === 'judge' ? ['T', 'F'][option] : String.fromCharCode(65 + option)}]</span>)}</span> : <span className="question-preview-lines">{draft.type === 'fill' ? Array.from({ length: item.blankCount }, () => '________').join('　') : '________________________________________________'}</span>}
+          </button>)}
+      </section>
+      </div>
     </div>
   </MetisDialog>
 }

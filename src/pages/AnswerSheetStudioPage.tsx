@@ -36,12 +36,15 @@ import type {
 import { isAnswerableBlock, isQuestionBlockKind } from '../features/answer-sheet/types'
 import { answerSheetService } from '../services/answerSheetService'
 import { EditorToolbar } from '../components/EditorToolbar'
+import { AiCardAssistant } from '../components/AiCardAssistant'
 import { EditorWorkbench } from '../components/EditorWorkbench'
 import { PreflightDialog } from '../components/PreflightDialog'
+import { BatchQuestionGroupDialog } from '../components/BatchQuestionGroupDialog'
 import { QuestionGroupDialog } from '../components/QuestionGroupDialog'
 import { ObjectiveAnswerDialog, type AnswerDialogValue } from '../components/ObjectiveAnswerDialog'
 import { OriginalPaperReference } from '../components/OriginalPaperReference'
 import { questionNumbers } from '../features/answer-sheet/range'
+import { createEntityId } from '../features/answer-sheet/ids'
 
 function cloneDefaultDocument(): AnswerSheetDocument {
   return {
@@ -93,7 +96,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
   documentRef.current = document
   const [history, setHistory] = useState<AnswerSheetDocument[]>([])
   const [future, setFuture] = useState<AnswerSheetDocument[]>([])
-  const [selectedBlockId, setSelectedBlockId] = useState(document.blocks[0]?.id ?? '')
+  const [selectedBlockId, setSelectedBlockId] = useState('')
   const [activePage, setActivePage] = useState(1)
   const [draftVersion, setDraftVersion] = useState(1)
   const [published, setPublished] = useState<PublishedVersion>()
@@ -103,12 +106,13 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
   const [publishing, setPublishing] = useState(false)
   const [printDocument, setPrintDocument] = useState<AnswerSheetDocument>()
   const [questionGroupOpen, setQuestionGroupOpen] = useState(false)
+  const [batchGroupOpen, setBatchGroupOpen] = useState(false)
   const [questionGroupType, setQuestionGroupType] = useState<QuestionGroupType>('single')
   const [editingQuestionGroupId, setEditingQuestionGroupId] = useState('')
   const [objectiveAnswerOpen, setObjectiveAnswerOpen] = useState(false)
   const [aiOpen, setAiOpen] = useState(true)
   const [aiInput, setAiInput] = useState('')
-  const [aiMessages, setAiMessages] = useState<string[]>(['可以告诉我想怎样调整题目、分值或作答区。选中题组后，我会优先修改它。'])
+  const [aiMessages, setAiMessages] = useState<string[]>([])
   const [reviewedBlockIds, setReviewedBlockIds] = useState<string[]>([])
   const [originalPaperOpen, setOriginalPaperOpen] = useState(false)
   const [uploadedSourceOpen, setUploadedSourceOpen] = useState(false)
@@ -153,8 +157,8 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
     const nextPage = Math.min(Math.max(1, activePage), snapshot.pageCount)
     const preferred = snapshot.blocks.find((block) => block.id === preferredId)
     const fallback = snapshot.blocks.find((block) => block.page === nextPage) ?? snapshot.blocks[0]
-    setActivePage(preferred?.page ?? fallback?.page ?? 1)
-    setSelectedBlockId(preferred?.id ?? fallback?.id ?? '')
+    setActivePage(preferred?.page ?? nextPage)
+    setSelectedBlockId(preferredId ? preferred?.id ?? fallback?.id ?? '' : '')
   }
 
   const commitDocument = (nextDocument: AnswerSheetDocument) => {
@@ -283,15 +287,25 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
     setSelectedBlockId(nextBlock.id)
   }
 
-  const addQuestionGroup = (draft: QuestionGroupDraft) => {
-    const editingBlock = editingQuestionGroupId ? blocks.find((block) => block.id === editingQuestionGroupId) : undefined
+  const buildQuestionGroup = (draft: QuestionGroupDraft, sourceBlocks: AnswerBlock[], editingId = '') => {
+    const editingBlock = editingId ? sourceBlocks.find((block) => block.id === editingId) : undefined
     const endNumber = draft.startNumber + draft.questionCount - 1
     const kind: AnswerBlockKind = ['single', 'multiple', 'judge'].includes(draft.type) ? 'objective' : draft.type === 'essay' ? 'essay' : 'short-answer'
-    const blockHeight = kind === 'objective' ? Math.max(112, Math.ceil(draft.questionCount / 4) * 26 + 54) : draft.type === 'essay' ? 280 : draft.type === 'solution' ? 220 : draft.type === 'comprehensive' ? 200 : 150
+    const blockHeight = kind === 'objective' ? Math.max(112, Math.ceil(draft.questionCount / 4) * 26 + 54) : draft.type === 'essay' ? 280 : draft.type === 'solution' ? 220 : draft.type === 'comprehensive' ? Math.max(200, 34 + draft.items.reduce((sum, item) => sum + Math.max(1, item.subquestionCount) * 32 + 12, 0)) : Math.max(150, 34 + draft.questionCount * 28)
     const inheritedSubjectiveStyle = draft.type === 'solution' || draft.type === 'comprehensive' ? settings.subjectiveAnswerStyle : undefined
     const inheritedLinesPerQuestion = Math.max(1, Math.floor((blockHeight - 30 - Math.max(0, draft.questionCount - 1) * 6) / Math.max(1, draft.questionCount) / settings.subjectiveLineHeight))
-    const pageBlocks = blocks.filter((block) => block.page === activePage)
-    const nextY = pageBlocks.reduce((bottom, block) => Math.max(bottom, (block.canvasY ?? 0) + block.height), 0)
+    let targetPage = editingBlock?.page ?? Math.max(activePage, ...sourceBlocks.map((block) => block.page))
+    const pageBottom = (page: number) => sourceBlocks.filter((block) => block.page === page && block.id !== editingId).reduce((bottom, block) => Math.max(bottom, (block.canvasY ?? 0) + block.height), 0)
+    let nextY = editingBlock?.canvasY ?? pageBottom(targetPage)
+    const paperElement = window.document.querySelector<HTMLElement>('.paper-stack .answer-paper')
+    const contentElement = paperElement?.querySelector<HTMLElement>('.paper-blocks')
+    const paperHeight = paperElement ? parseFloat(getComputedStyle(paperElement).minHeight) : settings.paperSize === 'A3' ? 620 : settings.paperSize === '16K' ? 665 : settings.paperSize === '8K' ? 925 : 996
+    const firstPageCapacity = paperHeight - (contentElement?.offsetTop ?? 240) - 40
+    const pageCapacity = (page: number) => page === 1 ? firstPageCapacity : paperHeight - 70
+    if (!editingBlock && nextY > 0 && nextY + blockHeight > pageCapacity(targetPage)) {
+      targetPage += 1
+      nextY = pageBottom(targetPage)
+    }
     const fillSlotCounts = draft.type === 'fill' ? draft.items.map((item) => item.subquestionCount > 0 ? (item.subquestionBlankCounts ?? []).reduce((sum, count) => sum + count, 0) : item.blankCount) : undefined
     const fillSlotLabels = draft.type === 'fill' ? draft.items.map((item) => item.subquestionCount > 0 ? (item.subquestionBlankCounts ?? []).flatMap((count, subIndex) => Array.from({ length: count }, (_, blankIndex) => blankIndex === 0 ? `（${subIndex + 1}）` : '')) : Array.from({ length: item.blankCount }, () => '')) : undefined
     const fillSlotEntries = draft.type === 'fill' ? draft.items.flatMap((item) => {
@@ -305,8 +319,8 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
       return Array.from({ length: item.blankCount }, (_, blankIndex) => ({ key: `${item.number}.${blankIndex + 1}`, score: item.blankScores?.[blankIndex] ?? Number((item.score / item.blankCount).toFixed(2)), style: item.fillStyle }))
     }) : []
     const nextBlock: AnswerBlock = {
-      id: editingBlock?.id ?? `group-${Date.now()}`,
-      page: editingBlock?.page ?? activePage,
+      id: editingBlock?.id ?? createEntityId('group'),
+      page: targetPage,
       title: draft.title,
       range: draft.questionCount === 1 ? `${draft.startNumber}` : `${draft.startNumber}–${endNumber}`,
       score: draft.totalScore,
@@ -320,7 +334,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
       answerSlotCounts: draft.type === 'fill' ? fillSlotCounts : draft.type === 'solution' || draft.type === 'essay' || draft.type === 'comprehensive' || kind === 'objective' && draft.items.some((item) => item.subquestionCount > 0) ? draft.items.map((item) => item.subquestionCount) : undefined,
       answerSlotLabels: draft.type === 'fill' ? fillSlotLabels : undefined,
       answerSlotSettings: draft.type === 'fill' ? Object.fromEntries(fillSlotEntries.map((slot) => [slot.key, { style: slot.style, count: slot.style === 'composition' ? 40 : ['tian', 'mi', 'squares'].includes(slot.style) ? 4 : undefined }])) : undefined,
-      answerVariant: draft.type === 'fill' ? 'fill' : draft.type === 'solution' || draft.type === 'essay' ? 'solution' : undefined,
+      answerVariant: draft.type === 'fill' ? 'fill' : draft.type === 'solution' || draft.type === 'essay' || draft.type === 'comprehensive' ? 'solution' : undefined,
       optionCount: kind === 'objective' ? (draft.type === 'judge' ? 2 : Math.max(...draft.items.map((item) => item.optionCount), draft.optionCount) as 4 | 5) : undefined,
       objectiveMode: draft.type === 'single' || draft.type === 'multiple' || draft.type === 'judge' ? draft.type : undefined,
       itemsPerColumn: kind === 'objective' ? Math.min(10, draft.questionCount) : undefined,
@@ -343,12 +357,27 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
       locked: false,
       userInserted: true,
     }
+    return nextBlock
+  }
+
+  const addQuestionGroup = (draft: QuestionGroupDraft) => {
+    const editingBlock = editingQuestionGroupId ? blocks.find((block) => block.id === editingQuestionGroupId) : undefined
+    const nextBlock = buildQuestionGroup(draft, blocks, editingQuestionGroupId)
     const nextBlocks = editingBlock ? blocks.map((block) => block.id === editingBlock.id ? nextBlock : block) : [...blocks, nextBlock]
-    commitDocument({ ...document, blocks: nextBlocks, paper: { ...paper, score: totalQuestionScore(nextBlocks) } })
+    commitDocument({ ...document, blocks: nextBlocks, pageCount: Math.max(document.pageCount, ...nextBlocks.map((block) => block.page)), paper: { ...paper, score: totalQuestionScore(nextBlocks) } })
     setSelectedBlockId(nextBlock.id)
     setQuestionGroupOpen(false)
     setEditingQuestionGroupId('')
     MetisMessage.success(editingBlock ? `已更新“${draft.title}”` : `已添加“${draft.title}”`)
+  }
+
+  const addBatchQuestionGroups = (drafts: QuestionGroupDraft[]) => {
+    const nextBlocks = [...blocks]
+    drafts.forEach((draft) => nextBlocks.push(buildQuestionGroup(draft, nextBlocks)))
+    commitDocument({ ...document, blocks: nextBlocks, pageCount: Math.max(document.pageCount, ...nextBlocks.map((block) => block.page)), paper: { ...paper, score: totalQuestionScore(nextBlocks) } })
+    setSelectedBlockId(nextBlocks[nextBlocks.length - 1].id)
+    setBatchGroupOpen(false)
+    MetisMessage.success(`已添加 ${drafts.length} 个题组`)
   }
 
   const saveAnswers = (answers: Record<string, AnswerDialogValue>) => {
@@ -362,7 +391,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
   const changePage = (page: number) => {
     setActivePage(page)
     const selected = blocks.find((block) => block.id === selectedBlockId)
-    if (selected?.page !== page) {
+    if (selected && selected.page !== page) {
       const firstBlock = blocks.find((block) => block.page === page)
       setSelectedBlockId(firstBlock?.id ?? '')
     }
@@ -371,7 +400,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
   const deleteSelected = () => {
     const nextBlocks = blocks.filter((block) => block.id !== selectedBlockId)
     const nextDocument = paper.sections.length === 0
-      ? { ...document, blocks: nextBlocks, paper: { ...paper, score: totalQuestionScore(nextBlocks) } }
+      ? { ...document, blocks: nextBlocks, pageCount: Math.max(document.pageCount, ...nextBlocks.map((block) => block.page)), paper: { ...paper, score: totalQuestionScore(nextBlocks) } }
       : { ...document, blocks: nextBlocks }
     commitDocument(nextDocument)
     const fallback = nextBlocks.find((block) => block.page === activePage)
@@ -570,7 +599,14 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
     commitDocument({ ...document, settings: nextSettings, blocks: nextBlocks })
   }
 
-  const updateModuleMerge = (kind: 'objective' | 'subjective', checked: boolean) => {
+  const updateModuleMerge = (kind: 'objective' | 'subjective' | 'none', checked: boolean) => {
+    if (kind === 'none') {
+      if (!settings.objectiveMerge && !settings.subjectiveMerge) return
+      const nextBlocks = splitMergedModulesByCategory(splitMergedModulesByCategory(blocks, 'objective'), 'subjective')
+      commitDocument({ ...document, settings: { ...settings, objectiveMerge: false, subjectiveMerge: false }, blocks: nextBlocks })
+      MetisMessage.success('已取消题块合并')
+      return
+    }
     const field = kind === 'objective' ? 'objectiveMerge' : 'subjectiveMerge'
     const nextBlocks = checked
       ? mergeModulesByCategory(blocks, kind)
@@ -708,7 +744,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
     if (!request) return
     const selected = blocks.find((block) => block.id === selectedBlockId)
     const score = request.match(/(?:改成|设为|设置为|每题|分值)[^\d]{0,8}(\d+(?:\.\d+)?)\s*分/)
-    const lines = request.match(/(?:多|增加|加)(\d+)\s*行/)
+    const lines = request.match(/(?:多加|增加|多|加)\s*(\d+)\s*行/)
     let response = ''
     if (score && selected?.questionGroupDraft && selected.questionGroupDraft.items.every((item) => item.subquestionCount === 0 && (selected.questionGroupDraft?.type !== 'fill' || item.blankCount === 1))) {
       const value = Number(score[1])
@@ -780,7 +816,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
               hasAnswerBlocks={blocks.some(isAnswerableBlock)}
               onAnswers={() => setObjectiveAnswerOpen(true)}
         />
-        <div className={`ai-editor-layout${aiOpen ? ' ai-editor-layout-open' : ''}`}>
+        <div className={`ai-editor-layout ${aiOpen ? 'ai-editor-layout-open' : 'ai-editor-layout-closed'}`}>
         <EditorWorkbench
               document={document}
               rulePacks={rulePacks}
@@ -794,6 +830,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
               onMove={moveBlock}
               onDelete={deleteSelected}
               onAdd={addBlock}
+              onBatchAddQuestionGroups={() => setBatchGroupOpen(true)}
               onAddQuestionGroup={(type) => { setEditingQuestionGroupId(''); setQuestionGroupType(type); setQuestionGroupOpen(true) }}
               onEditQuestionGroup={(id) => {
                 const block = blocks.find((item) => item.id === id)
@@ -832,19 +869,24 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
               onSplitMerged={splitCanvasBlock}
               printDocument={printDocument}
         />
-        <aside className="ai-assistant-panel" aria-label="AI 核对助手">
-          <div className="ai-assistant-head"><strong>✦ AI 核对助手</strong><span>{pendingReviewCount ? `${pendingReviewCount} 项待核对` : '已核对'}</span><button type="button" onClick={() => setAiOpen(false)}>收起</button></div>
-          <div className="ai-assistant-summary"><strong>让题组跟上你的教学节奏</strong><p>当前共 {blocks.filter((block) => isQuestionBlockKind(block.kind)).length} 个题组，合计 {totalQuestionScore(blocks)} 分。点选题组后可让助手调整。</p></div>
-          <div className="ai-review-list">
-            {scoreReviewBlock && <div className="ai-review-card"><strong>分值待确认 · {scoreReviewBlock.title}</strong><p>这组题有未填写的分值，请核对后继续。</p><button type="button" onClick={() => { selectBlock(scoreReviewBlock.id); setEditingQuestionGroupId(scoreReviewBlock.id); setQuestionGroupType(scoreReviewBlock.questionGroupDraft!.type); setQuestionGroupOpen(true) }}>定位并设置</button></div>}
-            {spaceReviewBlock && spaceReviewBlock.id !== scoreReviewBlock?.id && <div className="ai-review-card"><strong>作答空间 · {spaceReviewBlock.title}</strong><p>可以对照试卷检查作答区高度，再决定是否调整。</p><button type="button" onClick={() => selectBlock(spaceReviewBlock.id)}>定位到卡面</button><button type="button" onClick={() => markReviewed(spaceReviewBlock.id)}>已检查</button></div>}
-            {!pendingReviewCount && <div className="ai-review-card"><strong>题目结构已核对</strong><p>可以继续调整卡面、设置答案，或执行下载前检查。</p></div>}
-          </div>
-          <div className="ai-assistant-messages">{aiMessages.map((message, index) => <div key={index}>{message}</div>)}</div>
-          <div className="ai-assistant-prompts">{['检查总分', '添加填空题', '多加 2 行'].map((prompt) => <button type="button" key={prompt} onClick={() => setAiInput(prompt)}>{prompt}</button>)}</div>
-          <form onSubmit={(event) => { event.preventDefault(); askAi() }}><input aria-label="向 AI 制卡助手描述调整" placeholder="告诉我想怎样调整…" value={aiInput} onChange={(event) => setAiInput(event.target.value)} /><button type="submit">发送</button></form>
-        </aside>
-        {!aiOpen && <button type="button" className="ai-assistant-reopen" onClick={() => setAiOpen(true)}>✦ AI 制卡助手</button>}
+        {aiOpen && <AiCardAssistant
+          messages={aiMessages}
+          input={aiInput}
+          scope={blocks.find((block) => block.id === selectedBlockId)?.title ?? '整张答题卡'}
+          hasSelection={Boolean(selectedBlockId)}
+          reviewCount={pendingReviewCount}
+          onInputChange={setAiInput}
+          onSend={askAi}
+          onNewConversation={() => { setAiMessages([]); setAiInput('') }}
+          onClearScope={() => setSelectedBlockId('')}
+          onCollapse={() => setAiOpen(false)}
+          reviews={<>
+            {scoreReviewBlock && <div className="ai-review-card"><strong>分值待确认 · {scoreReviewBlock.title}</strong><button type="button" onClick={() => { selectBlock(scoreReviewBlock.id); setEditingQuestionGroupId(scoreReviewBlock.id); setQuestionGroupType(scoreReviewBlock.questionGroupDraft!.type); setQuestionGroupOpen(true) }}>定位并设置</button></div>}
+            {spaceReviewBlock && spaceReviewBlock.id !== scoreReviewBlock?.id && <div className="ai-review-card"><strong>作答空间 · {spaceReviewBlock.title}</strong><button type="button" onClick={() => selectBlock(spaceReviewBlock.id)}>定位到卡面</button><button type="button" onClick={() => markReviewed(spaceReviewBlock.id)}>已检查</button></div>}
+          </>}
+        />}
+
+        {!aiOpen && <button type="button" className="ai-assistant-reopen" aria-label="展开 AI 制卡助手" aria-expanded={false} aria-controls="ai-card-assistant" onClick={() => setAiOpen(true)}><span aria-hidden="true">✦</span><span>AI 制卡助手</span><span aria-hidden="true">›</span></button>}
         </div>
         {fromPaper && <OriginalPaperReference
           open={originalPaperOpen}
@@ -871,6 +913,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
         onDownload={() => printSnapshot(published?.snapshot ?? document)}
         onDownloadPublished={() => printSnapshot(published?.snapshot ?? document)}
       />
+      <BatchQuestionGroupDialog open={batchGroupOpen} subject={paper.subject} suggestedStart={suggestedQuestionStart} onClose={() => setBatchGroupOpen(false)} onSubmit={addBatchQuestionGroups} />
       <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} type={questionGroupType} subject={paper.subject} initialValue={editingQuestionGroupId ? blocks.find((block) => block.id === editingQuestionGroupId)?.questionGroupDraft : undefined} onClose={() => { setQuestionGroupOpen(false); setEditingQuestionGroupId('') }} onSubmit={addQuestionGroup} />
       <ObjectiveAnswerDialog open={objectiveAnswerOpen} blocks={blocks} onClose={() => setObjectiveAnswerOpen(false)} onSave={saveAnswers} />
       <SourcePaperPreviewDialog file={uploadedSourceOpen ? uploadedSourceFile : undefined} onClose={() => setUploadedSourceOpen(false)} />

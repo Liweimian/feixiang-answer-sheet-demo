@@ -264,7 +264,7 @@ function ShortAnswerContent({
       return <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><GridPaper rows={rows} cells={rows * 20} /></div>
     })}</div>
   }
-  if (block.answerVariant === 'solution' && numbers.length > 0) {
+  if ((block.answerVariant === 'solution' || block.questionGroupDraft?.type === 'comprehensive') && numbers.length > 0) {
     return <div className="solution-question-groups" style={{ paddingTop: block.responseStyle === 'blank' ? `${(block.leadingBlankLines ?? 0) * lineHeight}px` : undefined }}>{numbers.map((no, questionIndex) => {
       const subCount = block.answerSlotCounts?.[questionIndex] ?? 0
       const totalLines = block.questionLineCounts?.[String(no)] ?? Math.max(2, Math.floor(count / Math.max(1, numbers.length)))

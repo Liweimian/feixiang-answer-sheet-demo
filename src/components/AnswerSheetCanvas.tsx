@@ -341,11 +341,33 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
 }
 
 export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const [fitZoom, setFitZoom] = useState(1)
   const [selectedIds, setSelectedIds] = useState<string[]>(props.selectedBlockId ? [props.selectedBlockId] : [])
   const [marquee, setMarquee] = useState<{ page: number; startX: number; startY: number; currentX: number; currentY: number } | null>(null)
 
   useEffect(() => {
-    if (!props.selectedBlockId) return
+    const viewport = viewportRef.current
+    const paper = viewport?.querySelector<HTMLElement>('.answer-paper')
+    if (!viewport || !paper) return
+    const fitPaper = () => {
+      const availableWidth = viewport.clientWidth - 24
+      if (availableWidth > 0 && paper.offsetWidth > 0) {
+        setFitZoom(Math.min(1.05, availableWidth / paper.offsetWidth))
+      }
+    }
+    const observer = new ResizeObserver(fitPaper)
+    observer.observe(viewport)
+    observer.observe(paper)
+    fitPaper()
+    return () => observer.disconnect()
+  }, [props.settings.paperSize])
+
+  useEffect(() => {
+    if (!props.selectedBlockId) {
+      setSelectedIds([])
+      return
+    }
     setSelectedIds((current) => current.includes(props.selectedBlockId) ? current : [props.selectedBlockId])
   }, [props.selectedBlockId])
 
@@ -360,11 +382,12 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
       const target = event.target as HTMLElement | null
       if (target?.matches('input, textarea, [contenteditable="true"]')) return
       setSelectedIds([])
+      props.onSelectBlock('')
       setMarquee(null)
     }
     window.addEventListener('keydown', clearWithEscape)
     return () => window.removeEventListener('keydown', clearWithEscape)
-  }, [])
+  }, [props.onSelectBlock])
 
   const selectBlock = (id: string, additive: boolean) => {
     setSelectedIds((current) => additive
@@ -393,6 +416,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
     const isClick = right - left < 5 && bottom - top < 5
     if (isClick) {
       setSelectedIds([])
+      props.onSelectBlock('')
       setMarquee(null)
       return
     }
@@ -405,7 +429,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
       .map((block) => block.dataset.blockId)
       .filter((id): id is string => Boolean(id))
     setSelectedIds(ids)
-    if (ids[0]) props.onSelectBlock(ids[0])
+    props.onSelectBlock(ids[0] ?? '')
     setMarquee(null)
   }
 
@@ -468,8 +492,14 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
 
   return (
     <section className="answer-canvas" data-sec="5">
-      <div className="paper-viewport">
-        <div className="paper-stack">
+      <div className="paper-viewport" ref={viewportRef} onPointerDown={(event) => {
+        const target = event.target as HTMLElement
+        if (event.button === 0 && (target === event.currentTarget || target.classList.contains('paper-stack'))) {
+          setSelectedIds([])
+          props.onSelectBlock('')
+        }
+      }}>
+        <div className="paper-stack" style={{ '--canvas-zoom': fitZoom } as CSSProperties}>
           {Array.from({ length: props.pageCount }, (_, index) => index + 1).map((page) => (
             <div
               className={`paper-frame ${marquee?.page === page ? 'is-marquee-selecting' : ''}`}

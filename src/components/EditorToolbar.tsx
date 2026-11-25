@@ -46,10 +46,9 @@ export function EditorToolbar(props: EditorToolbarProps) {
   return (
     <section className="editor-toolbar editor-toolbar-compact" data-sec="3">
       <div className="editor-title-row">
-        <MetisButton type="borderless" icon={<ChevronLeft size={17} />} onClick={props.onBack}>{props.backLabel ?? '返回首页'}</MetisButton>
+        <button type="button" className="editor-back-link" onClick={props.onBack}><ChevronLeft size={16} />{props.backLabel ?? '返回首页'}</button>
         <div className="editor-paper-title">
           <strong>{props.paper.title}</strong>
-          <span>{props.paper.subject} · {props.paper.score} 分</span>
         </div>
         {!props.fromPaper && <div className="editor-stage-subject" ref={subjectMenuRef}>
           <button type="button" className="editor-stage-subject-trigger" aria-label="切换学段和学科" aria-expanded={subjectMenuOpen} onClick={() => { setMenuStage(currentStage); setSubjectMenuOpen((open) => !open) }}>{currentStage} / {props.paper.subject}<ChevronDown size={15} /></button>

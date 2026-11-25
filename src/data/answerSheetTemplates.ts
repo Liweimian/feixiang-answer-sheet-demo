@@ -253,6 +253,9 @@ export function instantiateTemplate(template: AnswerSheetTemplate): AnswerSheetD
     },
     blocks: template.document.blocks.map((block) => ({
       ...block,
+      canvasX: 0,
+      canvasY: undefined,
+      canvasWidth: 100,
       answerSlotCounts: block.answerSlotCounts ? [...block.answerSlotCounts] : undefined,
       answerSlotNumbers: block.answerSlotNumbers?.map((numbers) => [...numbers]),
       answerSlotNumberStyles: block.answerSlotNumberStyles ? [...block.answerSlotNumberStyles] : undefined,

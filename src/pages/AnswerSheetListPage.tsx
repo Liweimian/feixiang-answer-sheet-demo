@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { MetisButton, MetisDialog, MetisInput, MetisMessage, MetisSelect } from '@yuanfudao/metis-web-component'
 import { ArrowRight, BookOpen, ChevronLeft, ChevronRight, Clock3, Copy, Download, Edit3, Eye, FileCheck2, FilePlus2, Files, FileText, Link2, ListChecks, MoreHorizontal, Search, Upload } from 'lucide-react'
 import { answerSheetTemplates, instantiateTemplate } from '../data/answerSheetTemplates'
-import type { AnswerSheetDocument } from '../features/answer-sheet/types'
+import type { AnswerBlock, AnswerSheetDocument } from '../features/answer-sheet/types'
 import { isAnswerableBlock } from '../features/answer-sheet/types'
 import { questionNumbers } from '../features/answer-sheet/range'
 import { importPaperAsAnswerSheet } from '../features/answer-sheet/importPaper'
@@ -33,6 +33,50 @@ const records: AnswerSheetRecord[] = [
   { id: 'card-2', name: '九年级物理实验专题', subject: '物理', templateId: 'science-lab-school', updatedAt: '昨天 18:42', pages: 2, status: 'downloaded', creator: '李老师' },
   { id: 'card-3', name: '语文作文训练通用卡', subject: '语文', templateId: 'true-blank', updatedAt: '11-03 09:18', pages: 1, status: 'linked', creator: '备课组' },
 ]
+
+const examTypes = ['随堂测验', '单元练习', '期中期末', '中考模拟', '高考模拟'] as const
+const templateSubjects = ['全部', '语文', '数学', '英语', '物理', '化学', '生物', '历史', '地理', '政治'] as const
+type ExamType = typeof examTypes[number]
+type TemplatePreset = { id: string; examType: ExamType; subject: string; grade: string; name: string; structure: string; baseId: string; variant?: 'objective' | 'subjective' }
+const templatePresets: TemplatePreset[] = [
+  { id: 'quiz-math', examType: '随堂测验', subject: '数学', grade: '小学', name: '数学随堂测验', structure: '选择题 · 解答题 · 综合题', baseId: 'general-a4-smart' },
+  { id: 'quiz-english', examType: '随堂测验', subject: '英语', grade: '初中', name: '英语随堂测验', structure: '选择题 · 填空题 · 作文题', baseId: 'beijing-english-standard' },
+  { id: 'quiz-physics', examType: '随堂测验', subject: '物理', grade: '初中', name: '物理随堂测验', structure: '选择题 · 实验计算 · 作图题', baseId: 'science-lab-school' },
+  { id: 'quiz-math-objective', examType: '随堂测验', subject: '数学', grade: '小学', name: '数学选择专项', structure: '选择题', baseId: 'general-a4-smart', variant: 'objective' },
+  { id: 'quiz-physics-lab', examType: '随堂测验', subject: '物理', grade: '初中', name: '物理实验专项', structure: '实验计算 · 作图题 · 数据分析', baseId: 'science-lab-school', variant: 'subjective' },
+  { id: 'unit-physics', examType: '单元练习', subject: '物理', grade: '初中', name: '物理单元练习', structure: '选择题 · 实验计算 · 作图题', baseId: 'science-lab-school' },
+  { id: 'unit-math', examType: '单元练习', subject: '数学', grade: '初中', name: '数学单元练习', structure: '选择题 · 解答题 · 综合题', baseId: 'general-a4-smart' },
+  { id: 'unit-english', examType: '单元练习', subject: '英语', grade: '初中', name: '英语单元练习', structure: '客观题 · 阅读理解 · 作文题', baseId: 'beijing-english-standard' },
+  { id: 'unit-math-objective', examType: '单元练习', subject: '数学', grade: '初中', name: '数学选择专项', structure: '选择题', baseId: 'general-a4-smart', variant: 'objective' },
+  { id: 'unit-physics-lab', examType: '单元练习', subject: '物理', grade: '初中', name: '物理实验专项', structure: '实验计算 · 作图题 · 数据分析', baseId: 'science-lab-school', variant: 'subjective' },
+  { id: 'term-english', examType: '期中期末', subject: '英语', grade: '初中', name: '英语期中期末', structure: '客观题 · 阅读理解 · 作文题', baseId: 'beijing-english-standard' },
+  { id: 'term-physics', examType: '期中期末', subject: '物理', grade: '初中', name: '物理期中期末', structure: '选择题 · 实验计算 · 作图题', baseId: 'science-lab-school' },
+  { id: 'term-math', examType: '期中期末', subject: '数学', grade: '初中', name: '数学期中期末', structure: '选择题 · 解答题 · 综合题', baseId: 'general-a4-smart' },
+  { id: 'term-english-objective', examType: '期中期末', subject: '英语', grade: '初中', name: '英语客观题专项', structure: '单项填空 · 完形填空 · 阅读理解', baseId: 'beijing-english-standard', variant: 'objective' },
+  { id: 'term-physics-lab', examType: '期中期末', subject: '物理', grade: '初中', name: '物理实验专题', structure: '实验计算 · 作图题 · 数据分析', baseId: 'science-lab-school', variant: 'subjective' },
+  { id: 'middle-english', examType: '中考模拟', subject: '英语', grade: '初三', name: '英语中考模拟', structure: '客观题 · 阅读理解 · 作文题', baseId: 'beijing-english-standard' },
+  { id: 'middle-science', examType: '中考模拟', subject: '物理', grade: '初三', name: '物理中考模拟', structure: '客观题 · 实验计算 · 作图题', baseId: 'science-lab-school' },
+  { id: 'middle-math', examType: '中考模拟', subject: '数学', grade: '初三', name: '数学中考模拟', structure: '选择题 · 解答题 · 综合题', baseId: 'general-a4-smart' },
+  { id: 'middle-english-objective', examType: '中考模拟', subject: '英语', grade: '初三', name: '英语客观题模拟', structure: '单项填空 · 完形填空 · 阅读理解', baseId: 'beijing-english-standard', variant: 'objective' },
+  { id: 'middle-physics-lab', examType: '中考模拟', subject: '物理', grade: '初三', name: '物理实验模拟', structure: '实验计算 · 作图题 · 数据分析', baseId: 'science-lab-school', variant: 'subjective' },
+  { id: 'high-math', examType: '高考模拟', subject: '数学', grade: '高中', name: '数学高考模拟', structure: '选择题 · 解答题 · 综合题', baseId: 'general-a4-smart' },
+  { id: 'high-english', examType: '高考模拟', subject: '英语', grade: '高中', name: '英语高考模拟', structure: '客观题 · 阅读理解 · 作文题', baseId: 'beijing-english-standard' },
+  { id: 'high-physics', examType: '高考模拟', subject: '物理', grade: '高中', name: '物理高考模拟', structure: '选择题 · 实验计算 · 作图题', baseId: 'science-lab-school' },
+  { id: 'high-math-objective', examType: '高考模拟', subject: '数学', grade: '高中', name: '数学选择专项', structure: '选择题', baseId: 'general-a4-smart', variant: 'objective' },
+  { id: 'high-physics-lab', examType: '高考模拟', subject: '物理', grade: '高中', name: '物理实验专题', structure: '实验计算 · 作图题 · 数据分析', baseId: 'science-lab-school', variant: 'subjective' },
+  { id: 'quiz-chinese', examType: '随堂测验', subject: '语文', grade: '初中', name: '语文随堂测验', structure: '选择题 · 阅读理解 · 作文题', baseId: 'beijing-english-standard' },
+  { id: 'unit-chemistry', examType: '单元练习', subject: '化学', grade: '初中', name: '化学单元练习', structure: '选择题 · 填空题 · 实验题', baseId: 'science-lab-school' },
+  { id: 'term-biology', examType: '期中期末', subject: '生物', grade: '初中', name: '生物期中期末', structure: '选择题 · 填空题 · 综合题', baseId: 'science-lab-school' },
+  { id: 'middle-history', examType: '中考模拟', subject: '历史', grade: '初三', name: '历史中考模拟', structure: '选择题 · 材料题 · 综合题', baseId: 'general-a4-smart' },
+  { id: 'high-geography', examType: '高考模拟', subject: '地理', grade: '高中', name: '地理高考模拟', structure: '选择题 · 填空题 · 综合题', baseId: 'general-a4-smart' },
+  { id: 'high-politics', examType: '高考模拟', subject: '政治', grade: '高中', name: '政治高考模拟', structure: '选择题 · 材料题 · 综合题', baseId: 'general-a4-smart' },
+]
+
+function blocksForPreset(blocks: AnswerBlock[], preset: TemplatePreset): AnswerBlock[] {
+  if (preset.variant === 'objective') return blocks.filter((block) => block.kind === 'objective')
+  if (preset.variant === 'subjective') return blocks.filter((block) => isAnswerableBlock(block) && block.kind !== 'objective')
+  return blocks
+}
 
 function createDocument(name: string, subject: string, templateId: string) {
   const template = answerSheetTemplates.find((item) => item.id === templateId)
@@ -80,10 +124,15 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
   const [status, setStatus] = useState('all')
   const [created, setCreated] = useState('all')
   const [createOpen, setCreateOpen] = useState(false)
+  const [templateBrowseOpen, setTemplateBrowseOpen] = useState(false)
+  const [templatePreviewOpen, setTemplatePreviewOpen] = useState(false)
   const [createMode, setCreateMode] = useState<'ai' | 'template'>('ai')
   const [name, setName] = useState('未命名答题卡')
   const [newSubject, setNewSubject] = useState('英语')
   const [templateId, setTemplateId] = useState('true-blank')
+  const [templateCategory, setTemplateCategory] = useState<ExamType | '全部'>('全部')
+  const [selectedPresetId, setSelectedPresetId] = useState('quiz-math')
+  const [templateSubjectFilter, setTemplateSubjectFilter] = useState('全部')
   const [createPrompt, setCreatePrompt] = useState('')
   const [createSuggestion, setCreateSuggestion] = useState('')
   const [paperSize, setPaperSize] = useState<'A4' | 'A3' | '8K'>('A4')
@@ -129,14 +178,21 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
       return
     }
     setCreateOpen(false)
+    setTemplateBrowseOpen(false)
+    setTemplatePreviewOpen(false)
     const baseDocument = createDocument(trimmed, newSubject, templateId)
-    const nextDocument = { ...baseDocument, settings: { ...baseDocument.settings, paperSize, frontColumns: columns, backColumns: columns } }
+    const selectedPreset = createMode === 'template' ? templatePresets.find((preset) => preset.id === selectedPresetId) : undefined
+    const presetBlocks = selectedPreset ? blocksForPreset(baseDocument.blocks, selectedPreset) : baseDocument.blocks
+    const presetPageCount = selectedPreset?.variant ? Math.max(1, ...presetBlocks.map((block) => block.page)) : baseDocument.pageCount
+    const nextDocument = { ...baseDocument, blocks: presetBlocks, pageCount: presetPageCount, paper: { ...baseDocument.paper, grade: selectedPreset?.grade ?? baseDocument.paper.grade, examType: selectedPreset?.examType ?? baseDocument.paper.examType, score: presetBlocks.reduce((sum, block) => sum + (block.score ?? 0), 0) }, settings: { ...baseDocument.settings, paperSize, frontColumns: columns, backColumns: columns } }
     setLocalDocuments((current) => ({ ...current, [nextDocument.paper.id]: nextDocument }))
     setItems((current) => [{ id: nextDocument.paper.id, name: trimmed, subject: newSubject, templateId, updatedAt: '刚刚', pages: nextDocument.pageCount, status: 'draft', creator: '李老师' }, ...current])
     onEdit(nextDocument, undefined, nextDocument.paper.id)
   }
 
   const createBlankCard = () => {
+    setTemplateBrowseOpen(false)
+    setTemplatePreviewOpen(false)
     const blankName = '未命名答题卡'
     const document = createDocument(blankName, newSubject, 'true-blank')
     setLocalDocuments((current) => ({ ...current, [document.paper.id]: document }))
@@ -146,9 +202,16 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
 
   const openTemplateCreate = () => {
     setCreateMode('template')
-    setTemplateId('beijing-english-standard')
-    setNewSubject('英语')
-    setCreateOpen(true)
+    setTemplateCategory('全部')
+    setTemplateSubjectFilter('全部')
+    setSelectedPresetId('quiz-math')
+    setTemplateId('general-a4-smart')
+    setNewSubject('数学')
+    setName('数学随堂测验答题卡')
+    setPaperSize('A4')
+    setColumns(2)
+    setTemplateBrowseOpen(true)
+    setTemplatePreviewOpen(false)
   }
 
   const uploadPaper = async (file?: File) => {
@@ -185,6 +248,48 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
     setCreateSuggestion('已根据描述预选学科、模板和版面。请核对后创建，题目结构可在编辑页继续告诉助手。')
   }
 
+  if (templateBrowseOpen) {
+    const selectedPreset = templatePresets.find((preset) => preset.id === selectedPresetId) ?? templatePresets[0]
+    const selectedBase = answerSheetTemplates.find((template) => template.id === selectedPreset.baseId)!
+    const visiblePresets = templatePresets.filter((preset) => (templateCategory === '全部' || preset.examType === templateCategory) && (templateSubjectFilter === '全部' || preset.subject === templateSubjectFilter))
+    const selectedPreviewBlocks = blocksForPreset(selectedBase.document.blocks, selectedPreset)
+    const templateBlocks = selectedPreviewBlocks.filter(isAnswerableBlock)
+    const templatePageCount = selectedPreset.variant ? Math.max(1, ...selectedPreviewBlocks.map((block) => block.page)) : selectedBase.document.pageCount
+    const templateQuestionCount = new Set(templateBlocks.flatMap((block) => questionNumbers(block.range))).size
+    const templateScore = templateBlocks.reduce((sum, block) => sum + (block.score ?? 0), 0)
+    const templateTypeRows = Array.from(templateBlocks.reduce((groups, block) => {
+      const title = block.title.replace(/^[一二三四五六七八九十]+[、.．]\s*/, '').replace(/\s*\d+(?:[–—-]\d+)?$/, '').trim()
+      const current = groups.get(title) ?? { title, numbers: new Set<number>(), score: 0 }
+      questionNumbers(block.range).forEach((number) => current.numbers.add(number))
+      current.score += block.score ?? 0
+      groups.set(title, current)
+      return groups
+    }, new Map<string, { title: string; numbers: Set<number>; score: number }>() ).values())
+    return <div className="template-browser-page">
+      <header className="template-browser-header"><button type="button" onClick={() => setTemplateBrowseOpen(false)}><ChevronLeft size={18} />返回制卡工具</button><strong>选模板制卡</strong></header>
+      <div className="template-browser-layout">
+        <main className="template-browser-main">
+          <div className="template-browser-intro"><h1>选择答题卡模板</h1></div>
+          <div className="template-browser-filter-row"><span>学科：</span><div className="template-browser-subjects" aria-label="学科">{templateSubjects.map((item) => <button type="button" key={item} className={templateSubjectFilter === item ? 'is-selected' : ''} onClick={() => setTemplateSubjectFilter(item)}>{item}</button>)}</div></div>
+          <div className="template-browser-filter-row"><span>场景：</span><nav className="template-browser-categories" aria-label="场景">{(['全部', ...examTypes] as const).map((examType) => <button type="button" key={examType} className={templateCategory === examType ? 'is-selected' : ''} onClick={() => { setTemplateCategory(examType); setTemplateSubjectFilter('全部'); const first = templatePresets.find((preset) => examType === '全部' || preset.examType === examType)!; setSelectedPresetId(first.id); setTemplateId(first.baseId); setNewSubject(first.subject); setName(`${first.name}答题卡`); const base = answerSheetTemplates.find((template) => template.id === first.baseId)!; setPaperSize(base.paperSize === '16K' ? 'A4' : base.paperSize); setColumns(base.columns === 2 ? 2 : 1) }}>{examType}</button>)}</nav></div>
+          <div className="template-browser-grid">{visiblePresets.length ? visiblePresets.map((preset) => {
+            const base = answerSheetTemplates.find((template) => template.id === preset.baseId)!
+            const blocks = blocksForPreset(base.document.blocks, preset).filter(isAnswerableBlock)
+            const count = new Set(blocks.flatMap((block) => questionNumbers(block.range))).size
+            const score = blocks.reduce((sum, block) => sum + (block.score ?? 0), 0)
+            return <button type="button" key={preset.id} className="template-browser-card" onClick={() => { setSelectedPresetId(preset.id); setTemplateId(preset.baseId); setNewSubject(preset.subject); setName(`${preset.name}答题卡`); setPaperSize(base.paperSize === '16K' ? 'A4' : base.paperSize); setColumns(base.columns === 2 ? 2 : 1); setTemplatePreviewOpen(true) }}>
+              <span className="template-browser-preview"><span className="template-preview-paper"><b>答题卡</b><em>姓名 ______　班级 ______</em>{blocks.slice(0, 4).map((block) => <span key={block.id}><strong>{block.title}</strong><i /><i /></span>)}</span></span>
+              <span className="template-browser-card-copy"><strong>{preset.name}</strong><small>{preset.subject} · {count} 题 · {score} 分 · {base.paperSize}</small></span>
+            </button>
+          }) : <div className="template-browser-empty">该考试类型暂没有{templateSubjectFilter}模板，请选择其他学科。</div>}</div>
+        </main>
+      </div>
+      {templatePreviewOpen && <div className="template-preview-backdrop" role="presentation" onClick={() => setTemplatePreviewOpen(false)}><div className="template-preview-dialog" role="dialog" aria-modal="true" aria-label={`${selectedPreset.name}模板预览`} onClick={(event) => event.stopPropagation()}>
+        <div className="template-preview-content"><div className="template-preview-title"><strong>{selectedPreset.name} · 完整预览</strong><span className="template-detail-paper">{selectedBase.paperSize} · {selectedBase.columns === 2 ? '双栏' : '单栏'} · {templatePageCount} 页</span><button type="button" aria-label="关闭预览" onClick={() => setTemplatePreviewOpen(false)}>×</button></div><div className="template-preview-body"><aside className="template-preview-info"><div className="template-preview-info-scroll"><div className="template-detail-score"><strong>共 {templateQuestionCount} 道</strong><strong>共 {templateScore} 分</strong></div><div className="template-detail-blocks">{templateTypeRows.map((row) => <div key={row.title}><span>{row.title}</span><span>{row.numbers.size} 题 · {row.score} 分</span></div>)}</div></div></aside><div className="template-preview-pages">{Array.from({ length: templatePageCount }, (_, pageIndex) => <section className="template-preview-page" key={pageIndex}><h3>{selectedPreset.name}答题卡</h3><div className="template-preview-identity">学校 __________　姓名 __________　班级 ______　学号 __________</div>{selectedPreviewBlocks.filter((block) => block.page === pageIndex + 1).map((block) => <div className="template-preview-block" key={block.id}><strong>{block.title}{block.range ? `　${block.range}` : ''}</strong>{block.kind === 'objective' ? <div className="template-preview-options">{questionNumbers(block.range).map((number) => <span key={number}>{number}.　[A]　[B]　[C]　[D]</span>)}</div> : block.kind === 'forbidden' ? <p>请勿在此区域作答</p> : <div className="template-preview-lines">{Array.from({ length: Math.min(Math.max(block.lineCount ?? 4, 4), 12) }, (_, line) => <i key={line} />)}</div>}</div>)}<footer>第 {pageIndex + 1} 页 / 共 {templatePageCount} 页</footer></section>)}</div></div><div className="template-preview-actions"><button type="button" className="template-detail-primary" onClick={createCard}>直接使用 <ArrowRight size={17} /></button></div></div>
+      </div></div>}
+    </div>
+  }
+
   return <div className={`answer-sheet-library${toolOpen ? ' tool-library-open' : ''}`}>
     {toolOpen ? <header className="tool-library-breadcrumb">
       <button type="button" className="tool-library-back" aria-label="返回答题卡工具入口" onClick={() => setToolOpen(false)}><ChevronLeft size={22} /></button>
@@ -213,15 +318,19 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
         <div className="tool-ai-hero-heading"><h1>今天想制作什么答题卡？</h1></div>
         <div className="tool-ai-hero-body">
           <form className="tool-ai-composer" onSubmit={(event) => { event.preventDefault(); if (!createPrompt.trim()) { MetisMessage.warning('请先描述答题卡需求'); return } setCreateMode('ai'); applyCreatePrompt(); setCreateOpen(true) }}>
-            <input aria-label="描述答题卡需求" value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} placeholder="描述你要的答题卡，例如：七年级数学，满分 100 分" />
+            <textarea rows={3} aria-label="描述答题卡需求" value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} placeholder="描述学科、使用场景、题量和分值，例如：数学中考模拟，25道题，满分120分" />
             <button type="submit">AI 生成答题卡 <ArrowRight size={16} /></button>
+          <div className="tool-prompt-examples" aria-label="快捷输入示例">{[
+            { subject: '数学', scene: '单元测试', count: 15, score: 60, prompt: '制作数学单元测试答题卡，共15道题，满分60分。单选题6道，每题3分，4个选项；填空题6道，每题1个空，每空3分；解答题3道，每题8分。A4单栏，题号全卷连续，使用日常测验表头。' },
+            { subject: '英语', scene: '期中考试', count: 76, score: 120, prompt: '制作英语期中考试答题卡，共76道题，满分120分。听力20道，每题1分；单项选择10道，每题1分；完形填空10道，每题1分；阅读理解20道，每题2分；词汇填空10道，每题1个空，每空1分；任务型阅读5道，每题2分；书面表达1道，20分，提供作答线。A4双栏，题号全卷连续。' },
+            { subject: '物理', scene: '月考', count: 30, score: 100, prompt: '制作物理月考答题卡，共30道题，满分100分。单选题10道，每题2分，4个选项；多选题5道，每题3分，4个选项，少选得1分；填空题6道，每题2个空，每空1分；作图题2道，每题4分；实验探究题4道，分别5分、5分、5分、6分；计算题3道，每题8分，保留计算作答空间。A4双栏，题号全卷连续。' },
+          ].map((example) => <button type="button" key={example.scene} onClick={(event) => { setCreatePrompt(example.prompt); event.currentTarget.closest('.tool-ai-hero-body')?.querySelector('textarea')?.focus() }}><span className="prompt-example-heading"><strong>{example.subject}</strong><span>{example.scene}</span></span><span className="prompt-example-summary">共 {example.count} 道题 · 共 {example.score} 分<ArrowRight size={14} /></span></button>)}</div>
           </form>
         </div>
         <div className="tool-quick-entry" aria-label="其他制卡方式">
           <button type="button" onClick={createBlankCard}><span className="tool-quick-icon"><FilePlus2 size={23} /></span><span className="tool-quick-copy"><strong>空白答题卡</strong><small>从空白画布开始</small></span></button>
           <button type="button" onClick={openTemplateCreate}><span className="tool-quick-icon"><Files size={23} /></span><span className="tool-quick-copy"><strong>选模板制卡</strong><small>套用预设题型与版面</small></span></button>
           <button type="button" onClick={() => uploadInputRef.current?.click()}><span className="tool-quick-icon"><Upload size={23} /></span><span className="tool-quick-copy"><strong>上传试卷制卡</strong><small>{importing ? '正在识别试卷…' : '识别试卷，生成答题卡'}</small></span></button>
-          <button type="button" onClick={onExperienceFromPaper}><span className="tool-quick-icon"><FileCheck2 size={23} /></span><span className="tool-quick-copy"><strong>从题库开始制卡</strong><small>带入题型、题号与分值</small></span></button>
         </div>
       </section>
       <div className="tool-library-section-heading"><h2>我的答题卡 <small>{items.length}</small></h2></div>
@@ -249,13 +358,8 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
         const paperLabel = `${document.settings.paperSize} ${document.settings.printSide === 'double' ? '双面' : '单面'}`
         return <article className="card-list-row" key={record.id} role="link" tabIndex={0} aria-label={`编辑${record.name}`} onClick={() => openRecord(record)} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openRecord(record) } }}>
           <div className="record-main">
-            <div className="record-name"><FileText size={22} /><strong>{record.name}</strong></div>
-            <div className="record-summary"><span>共 {questionCount} 题</span><span>共 {scoreLabel} 分</span><span>{paperLabel}</span></div>
-            <div className="record-meta">
-              <span title="学科"><BookOpen size={15} />{record.subject}</span>
-              <span title="页数"><Files size={15} />{record.pages} 页</span>
-              <span title="更新时间"><Clock3 size={15} />{record.updatedAt}</span>
-            </div>
+            <div className="record-name"><span className="record-subject" title="学科"><BookOpen size={14} />{record.subject}</span><strong>{record.name}</strong></div>
+            <div className="record-summary"><span>共 {questionCount} 题</span><span>共 {scoreLabel} 分</span><span>{paperLabel}</span><time className="record-updated" title="更新时间"><Clock3 size={14} />{record.updatedAt}</time></div>
           </div>
           <div className="record-actions" onClick={(event) => event.stopPropagation()}>
             <MetisButton className="card-action-button" type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
@@ -274,12 +378,23 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
       }) : <div className="library-empty"><FileText size={36} /><strong>没有找到答题卡</strong><span>调整筛选条件，或新建一张空白答题卡</span></div>}
     </section></div>}
 
-    <MetisDialog open={createOpen} title={createMode === 'template' ? '选择模板制卡' : '新建答题卡'} width={520} footer={footer} onCancel={() => setCreateOpen(false)}>
+    <MetisDialog open={createOpen} title={createMode === 'template' ? '选择模板制卡' : '新建答题卡'} width={createMode === 'template' ? 760 : 520} footer={footer} onCancel={() => setCreateOpen(false)}>
       <div className="create-card-form">
         {createMode === 'ai' && <div className="create-ai-prompt"><strong>✦ 告诉 AI 想制作什么答题卡</strong><div><input value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); applyCreatePrompt() } }} placeholder="如：初中英语小测，A4 单栏" /><button type="button" onClick={applyCreatePrompt}>生成建议</button></div>{createSuggestion && <p>{createSuggestion}</p>}</div>}
+        {createMode === 'template' && <div className="template-library-picker">
+          <div className="template-exam-types" aria-label="考试类型">{examTypes.map((examType) => <button key={examType} type="button" className={templateCategory === examType ? 'is-selected' : ''} onClick={() => { const first = templatePresets.find((preset) => preset.examType === examType)!; setTemplateCategory(examType); setSelectedPresetId(first.id); setTemplateId(first.baseId); setNewSubject(first.subject); setName(`${first.name}答题卡`); const base = answerSheetTemplates.find((template) => template.id === first.baseId)!; setPaperSize(base.paperSize === '16K' ? 'A4' : base.paperSize); setColumns(base.columns === 2 ? 2 : 1) }}>{examType}</button>)}</div>
+          <div className="template-preset-grid">{templatePresets.filter((preset) => preset.examType === templateCategory).map((preset) => {
+            const base = answerSheetTemplates.find((template) => template.id === preset.baseId)!
+            return <button type="button" key={preset.id} className={`template-preset-card${selectedPresetId === preset.id ? ' is-selected' : ''}`} onClick={() => { setSelectedPresetId(preset.id); setTemplateId(preset.baseId); setNewSubject(preset.subject); setName(`${preset.name}答题卡`); setPaperSize(base.paperSize === '16K' ? 'A4' : base.paperSize); setColumns(base.columns === 2 ? 2 : 1) }}>
+              <span className="template-preset-preview"><span /><i /><i /><i /></span>
+              <span className="template-preset-info"><strong>{preset.name}</strong><small>{preset.grade} · {preset.subject} · {base.paperSize} {base.columns === 2 ? '双栏' : '单栏'}</small><small>{preset.structure}</small></span>
+              <span className="template-preset-check">{selectedPresetId === preset.id ? '已选' : '选择'}</span>
+            </button>
+          })}</div>
+        </div>}
         <label><span>答题卡名称</span><MetisInput value={name} maxLength={40} onChange={(event) => setName(event.target.value)} /></label>
         <label><span>学科</span><MetisSelect value={newSubject} onChange={(value) => setNewSubject(String(value))} options={['语文', '数学', '英语', '物理', '化学', '道德与法治'].map((value) => ({ label: value, value }))} /></label>
-        <label><span>起始模板</span><MetisSelect value={templateId} onChange={(value) => { const nextId = String(value); setTemplateId(nextId); if (createMode === 'template') setNewSubject(nextId === 'science-lab-school' ? '物理' : '英语') }} options={answerSheetTemplates.filter((template) => template.id === 'science-lab-school' || template.id === 'beijing-english-standard' || createMode === 'ai' && template.id === 'true-blank').map((template) => ({ label: template.id === 'true-blank' ? '纯空白卡' : template.name, value: template.id }))} /></label>
+        {createMode === 'ai' && <label><span>起始模板</span><MetisSelect value={templateId} onChange={(value) => setTemplateId(String(value))} options={answerSheetTemplates.filter((template) => ['science-lab-school', 'beijing-english-standard', 'true-blank'].includes(template.id)).map((template) => ({ label: template.id === 'true-blank' ? '纯空白卡' : template.name, value: template.id }))} /></label>}
         <label><span>纸张</span><MetisSelect value={paperSize} onChange={(value) => setPaperSize(value as 'A4' | 'A3' | '8K')} options={['A4', 'A3', '8K'].map((value) => ({ label: value, value }))} /></label>
         <label><span>分栏</span><MetisSelect value={columns} onChange={(value) => setColumns(Number(value) as 1 | 2)} options={[{ label: '单栏', value: 1 }, { label: '双栏', value: 2 }]} /></label>
       </div>

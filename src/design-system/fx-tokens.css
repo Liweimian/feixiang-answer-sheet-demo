@@ -1,9 +1,9 @@
 :root {
-  --fx_brand: #5b70f2;
-  --fx_brand_hover: #4b60e6;
-  --fx_brand_active: #3e51cf;
-  --fx_brand_soft: #eef1ff;
-  --fx_brand_subtle: #f6f7ff;
+  --fx_brand: #6658cf;
+  --fx_brand_hover: #5748bd;
+  --fx_brand_active: #493ba8;
+  --fx_brand_soft: #eeedfa;
+  --fx_brand_subtle: #f7f6fd;
   --fx_page: #f4f6fa;
   --fx_surface: #ffffff;
   --fx_surface_muted: #f8f9fc;
@@ -60,4 +60,11 @@
   --fx_editor_inspector: 292px;
   --fx_paper_width: 620px;
   --fx_paper_height: 876px;
+}
+
+/* Metis controls and portalled dialogs use the same accent as the workspace. */
+:root {
+  --theme_primary1_color: #6658cf;
+  --theme_primary1_hover_color: #5748bd;
+  --theme_primary1_active_color: #493ba8;
 }
