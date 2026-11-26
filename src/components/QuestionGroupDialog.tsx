@@ -8,6 +8,7 @@ interface QuestionGroupDialogProps {
   suggestedStart: number
   type: QuestionGroupType
   subject: string
+  initialQuestionNumber?: number
   initialValue?: QuestionGroupDraft
   onClose: () => void
   onSubmit: (draft: QuestionGroupDraft) => void
@@ -31,10 +32,10 @@ export function QuestionGroupDialog(props: QuestionGroupDialogProps) {
 
   useEffect(() => {
     if (props.open) {
-      setSelectedItemIndex(0)
+      setSelectedItemIndex(Math.max(0, props.initialValue?.items.findIndex((item) => item.number === props.initialQuestionNumber) ?? 0))
       setDraft(props.initialValue ? structuredClone(props.initialValue) : initialDraft(props.suggestedStart, props.type))
     }
-  }, [props.initialValue, props.open, props.suggestedStart, props.type])
+  }, [props.initialQuestionNumber, props.initialValue, props.open, props.suggestedStart, props.type])
 
   const updateBatch = (patch: Partial<QuestionGroupDraft>) => {
     const next = { ...draft, ...patch }

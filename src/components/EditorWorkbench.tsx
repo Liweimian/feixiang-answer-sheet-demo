@@ -33,6 +33,7 @@ interface EditorWorkbenchProps {
   onAdd: (kind: AnswerBlockKind) => void
   onBatchAddQuestionGroups: () => void
   onAddQuestionGroup: (type: QuestionGroupType) => void
+  onQuestionAction?: (id: string, number: number | undefined, action: string, value?: number) => void
   onEditQuestionGroup: (id: string) => void
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
@@ -156,6 +157,7 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           onMoveBlock={props.onMoveBlock}
           onResizeBlock={props.onResizeBlock}
           onToggleBlockContent={props.onToggleBlockContent}
+          onQuestionAction={props.onQuestionAction}
           onUpdateBlock={props.onUpdateCanvasBlock}
           onInsertAfter={props.onInsertAfter}
           onDeleteInsertedBlock={props.onDeleteInsertedBlock}

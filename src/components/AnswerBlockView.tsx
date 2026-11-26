@@ -17,6 +17,7 @@ interface AnswerBlockViewProps {
   onMoveCommit?: (x: number, y: number, page: number) => void
   onResizeCommit?: (height: number, width: number) => void
   onToggleContent?: (element: ContentElement) => void
+  onQuestionAction?: (number: number | undefined, action: string, value?: number) => void
   onUpdateBlock?: (patch: Partial<AnswerBlock>) => void
   onInsertAfter?: (kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position?: 'before' | 'after') => void
   onSplitMerged?: () => void
@@ -47,7 +48,7 @@ function ObjectiveGrid({ block, compact = false, sortMode = 'number-horizontal-o
         const subCount = block.answerSlotCounts?.[questionIndex] ?? 0
         const rows = subCount > 0 ? Array.from({ length: subCount }, (_, index) => `（${index + 1}）`) : ['']
         return rows.map((subLabel, subIndex) => <div key={`${no}-${subIndex}`} className="bubble-row" style={{ gridTemplateColumns: sortMode === 'number-horizontal-option-vertical' ? '24px' : `24px repeat(${options.length}, 18px)` }}>
-          <b>{subLabel ? `${no}${subLabel}` : no}</b>
+          <b data-question-number={no} data-subquestion-index={subLabel ? subIndex : undefined}>{subLabel ? `${no}${subLabel}` : no}</b>
           {options.map((option) => <span key={option}>[{option}]</span>)}
         </div>)
       })}
@@ -131,16 +132,16 @@ function defaultBlankAnswerHtml(block: AnswerBlock) {
       const numberStyle = block.answerSlotNumberStyles?.[questionIndex] ?? 'paren'
       const labels = block.answerSlotLabels?.[questionIndex]
       return [
-        `<div data-answer-preset="true">${number}.</div>`,
+        `<div data-answer-preset="true"><b contenteditable="false" data-question-number="${number}">${number}.</b></div>`,
         ...slots.map((slot, slotIndex) => {
           const label = labels?.[slotIndex] ?? formatSubquestionNumber(slot, numberStyle)
           const score = questionScore(block, `${number}.${slot}`)
-          return `<div data-answer-preset="true">　${escapeAnswerText(label)}　${score === undefined ? '' : `（${score}分）`}</div>`
+          return `<div data-answer-preset="true"><b contenteditable="false" data-question-number="${number}" data-subquestion-index="${slotIndex}">　${escapeAnswerText(label)}</b>　${score === undefined ? '' : `（${score}分）`}</div>`
         }),
       ]
     }
     const score = questionScore(block, String(number))
-    return [`<div data-answer-preset="true">${number}.　${score === undefined ? '' : `（${score}分）`}</div>`]
+    return [`<div data-answer-preset="true"><b contenteditable="false" data-question-number="${number}">${number}.</b>　${score === undefined ? '' : `（${score}分）`}</div>`]
   }).join('')
 }
 
@@ -156,7 +157,7 @@ function ManualScoreRail({ score, allowHalfScore = false, inline = false }: { sc
 function AnswerMarks({ block }: { block: AnswerBlock }) {
   const numbers = questionNumbers(block.range)
   const mark = block.responseStyle === 'square' ? '□' : '（　）'
-  return <div className="answer-marks">{numbers.map((number) => <span key={number}><b>{number}.</b><QuestionScore block={block} scoreKey={String(number)} />{mark}</span>)}</div>
+  return <div className="answer-marks">{numbers.map((number) => <span key={number}><b data-question-number={number}>{number}.</b><QuestionScore block={block} scoreKey={String(number)} />{mark}</span>)}</div>
 }
 
 function GridPaper({ rows = 8, cells, variant = 'grid' }: { rows?: number; cells?: number; variant?: 'grid' | 'tian' | 'mi' }) {
@@ -253,7 +254,7 @@ function ShortAnswerContent({
   }
   if (fillModule && block.answerVariant === 'fill' && !block.answerSlotCounts?.length) {
     const fullLineCount = Math.max(1, Math.round(count))
-    return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b key={number}>{number}.<QuestionScore block={block} scoreKey={String(number)} /></b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
+    return <div className="full-module-answer"><div className="answer-number-strip">{numbers.map((number) => <b data-question-number={number} key={number}>{number}.<QuestionScore block={block} scoreKey={String(number)} /></b>)}</div><RuledLines count={fullLineCount} dashed={dashed} /></div>
   }
   if (block.responseStyle === 'grid' && numbers.length > 0) {
     const totalRows = compositionRowsForWords(block.wordCount ?? 400)
@@ -261,7 +262,7 @@ function ShortAnswerContent({
     const remainder = totalRows % numbers.length
     return <div className="short-answer-groups composition-answer-groups">{numbers.map((no, index) => {
       const rows = Math.max(1, baseRows + (index < remainder ? 1 : 0))
-      return <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><GridPaper rows={rows} cells={rows * 20} /></div>
+      return <div key={no}><b data-question-number={no}>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><GridPaper rows={rows} cells={rows * 20} /></div>
     })}</div>
   }
   if ((block.answerVariant === 'solution' || block.questionGroupDraft?.type === 'comprehensive') && numbers.length > 0) {
@@ -271,8 +272,8 @@ function ShortAnswerContent({
       const slots = subCount > 0 ? (block.answerSlotNumbers?.[questionIndex] ?? Array.from({ length: subCount }, (_, index) => index + 1)) : [0]
       const numberStyle = block.answerSlotNumberStyles?.[questionIndex] ?? 'paren'
       const labels = block.answerSlotLabels?.[questionIndex]
-      return <section key={no}><b>{no}.</b>{slots.map((slot, slotIndex) => <div key={`${slot}-${slotIndex}`} className="solution-subquestion">{slot > 0
-        ? <em>{labels?.[slotIndex] ?? formatSubquestionNumber(slot, numberStyle)}<QuestionScore block={block} scoreKey={`${no}.${slot}`} />{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${no}.${slot}题手写分数框`} />}</em>
+      return <section key={no}><b data-question-number={no}>{no}.</b>{slots.map((slot, slotIndex) => <div key={`${slot}-${slotIndex}`} className="solution-subquestion">{slot > 0
+        ? <em data-question-number={no} data-subquestion-index={slotIndex}>{labels?.[slotIndex] ?? formatSubquestionNumber(slot, numberStyle)}<QuestionScore block={block} scoreKey={`${no}.${slot}`} />{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${no}.${slot}题手写分数框`} />}</em>
         : <span className="solution-score-label"><QuestionScore block={block} scoreKey={String(no)} />{showInlineHandwriteScore && <span className="inline-handwrite-score-box" aria-label={`${no}题手写分数框`} />}</span>}{block.responseStyle === 'blank' ? <div className="blank-response-area" /> : <RuledLines count={Math.max(1, Math.floor(totalLines / slots.length))} dashed={dashed} lineHeight={lineHeight} />}</div>)}</section>
     })}</div>
   }
@@ -286,7 +287,7 @@ function ShortAnswerContent({
           const numberStyle = block.answerSlotNumberStyles?.[questionIndex] ?? 'paren'
           return (
             <div key={no} className="short-answer-slot-row">
-              <b>{no}.</b>
+              <b data-question-number={no}>{no}.</b>
               {Array.from({ length: slotCount }, (_, slotIndex) => {
                 const slotNumber = slotNumbers[slotIndex] ?? slotIndex + 1
                 const slotKey = `${no}.${slotNumber}`
@@ -359,7 +360,7 @@ function ShortAnswerContent({
     const linesPerQuestion = Math.max(2, Math.floor(count / numbers.length))
     return (
       <div className="short-answer-groups">
-        {numbers.map((no) => <div key={no}><b>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><RuledLines count={linesPerQuestion} dashed={dashed} /></div>)}
+        {numbers.map((no) => <div key={no}><b data-question-number={no}>{no}.<QuestionScore block={block} scoreKey={String(no)} /></b><RuledLines count={linesPerQuestion} dashed={dashed} /></div>)}
       </div>
     )
   }
@@ -435,7 +436,7 @@ function ScoreBox({ block, enabled, style = 'handwrite', allowHalfScore = false 
   })}</div>
 }
 
-export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLeft = false, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onUpdateBlock, onInsertAfter, onSplitMerged, onDeleteBlock, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true, subjectiveAnswerStyle = 'lines', subjectiveLineHeight = 16, subjectiveManualGrading = false, manualScoreStyle = 'handwrite', allowHalfScore = false }: AnswerBlockViewProps) {
+export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLeft = false, selected, multiSelected = false, locked = false, onSelect, onTitleCommit, onMoveCommit, onResizeCommit, onToggleContent, onQuestionAction, onUpdateBlock, onInsertAfter, onSplitMerged, onDeleteBlock, onUndo, onRedo, questionAnswer = false, questionContext, objectiveSortMode = 'number-horizontal-option-horizontal', objectiveMerge = true, subjectiveAnswerStyle = 'lines', subjectiveLineHeight = 16, subjectiveManualGrading = false, manualScoreStyle = 'handwrite', allowHalfScore = false }: AnswerBlockViewProps) {
   const blockRef = useRef<HTMLDivElement | null>(null)
   const [resizeHeight, setResizeHeight] = useState(block.height)
   const [draftLayout, setDraftLayout] = useState(layout)
@@ -900,6 +901,21 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
   const borderBottomVisible = block.borderStyle === 'borderless' ? false : block.borderBottomVisible !== false
   const headerDividerVisible = block.headerDividerVisible !== false
   const hasEditableBlankStructure = effectiveSubjectiveStyle === 'blank' && !isFillAnswerBlock && isSubjectiveAnswerBlock
+  const [structureAnchor, setStructureAnchor] = useState({ top: 0, left: 0 })
+  const [structureSubTarget, setStructureSubTarget] = useState<number | null>(null)
+  const [structureTarget, setStructureTarget] = useState<number | null>(null)
+  useEffect(() => { if (!selected) setStructureTarget(null) }, [selected])
+  useEffect(() => {
+    const root = blockRef.current
+    if (!root || !onQuestionAction) return
+    const labels = root.querySelectorAll<HTMLElement>('[data-question-number]')
+    labels.forEach((label) => {
+      label.classList.toggle('question-number-active', selected && Number(label.dataset.questionNumber) === structureTarget && (structureSubTarget === null || Number(label.dataset.subquestionIndex) === structureSubTarget))
+      label.setAttribute('role', 'button')
+      label.setAttribute('tabindex', locked ? '-1' : '0')
+      label.setAttribute('aria-label', `编辑第${label.dataset.questionNumber}题${label.dataset.subquestionIndex === undefined ? '' : `第${Number(label.dataset.subquestionIndex) + 1}小题`}`)
+    })
+  }, [selected, structureTarget, structureSubTarget, block, locked, onQuestionAction])
   const blankAnswerHtml = hasEditableBlankStructure ? (block.answerRichText ?? defaultBlankAnswerHtml(block)) : (block.answerRichText ?? '')
 
   return (
@@ -914,18 +930,43 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       onClick={(event) => {
         const target = event.target as HTMLElement
         if (target.closest('.block-settings-popover, .metis-select-dropdown, [role="listbox"], [role="option"]')) return
+        const question = target.closest<HTMLElement>('[data-question-number]')
+        if (question && onQuestionAction && !locked) {
+          event.preventDefault()
+          const rootBounds = event.currentTarget.getBoundingClientRect()
+          const labelBounds = question.getBoundingClientRect()
+          const scale = rootBounds.width / event.currentTarget.offsetWidth || 1
+          setStructureAnchor({ top: (labelBounds.bottom - rootBounds.top) / scale + 7, left: Math.max(0, Math.min((labelBounds.left - rootBounds.left) / scale, event.currentTarget.offsetWidth - 440)) })
+          setStructureTarget(Number(question.dataset.questionNumber))
+          setStructureSubTarget(question.dataset.subquestionIndex === undefined ? null : Number(question.dataset.subquestionIndex))
+          setSettingsPanel(null)
+          onSelect(false)
+          return
+        }
+        if (!target.closest('.question-structure-tools')) setStructureTarget(null)
         onSelect(event.metaKey || event.ctrlKey || event.shiftKey)
       }}
       onKeyDown={(event) => {
+        if ((event.key === 'Enter' || event.key === ' ') && (event.target as HTMLElement).matches('[data-question-number]')) { event.preventDefault(); (event.target as HTMLElement).click(); return }
+        if (event.key === 'Escape') setStructureTarget(null)
         if (event.key === 'Enter' && event.target === event.currentTarget) onSelect(false)
       }}
       role="button"
       tabIndex={0}
       aria-label={`编辑${block.title}`}
     >
+      {selected && structureTarget !== null && onQuestionAction && <div className="question-structure-tools" style={{ top: structureAnchor.top, left: structureAnchor.left }} onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()}>
+        <strong>第 {structureTarget} 题{structureSubTarget !== null ? `（${structureSubTarget + 1}）` : ''}</strong>
+        {!block.answerSlotCounts?.[questionNumbers(block.range).indexOf(structureTarget)] && block.answerVariant !== 'fill' && <label>分值 <input aria-label={`第${structureTarget}题分值`} type="number" min="0" step="0.5" key={`${structureTarget}-${block.score}`} defaultValue={questionScore(block, String(structureTarget)) ?? 0} onBlur={(event) => { const value = event.currentTarget.valueAsNumber; if (Number.isFinite(value) && value >= 0) onQuestionAction(structureTarget, 'score', value) }} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur() }} /></label>}
+        <button type="button" onClick={() => onQuestionAction(structureTarget, 'edit')}>题目设置</button>
+        <button type="button" onClick={() => onQuestionAction(structureTarget, 'add-subquestion')}><Plus size={13} /> 添加小题</button>
+        {structureSubTarget !== null && <button type="button" className="danger" onClick={() => { onQuestionAction(structureTarget, 'delete-subquestion', structureSubTarget); setStructureSubTarget(null) }}>删除小题</button>}
+        <button type="button" className="danger" onClick={() => { onQuestionAction(structureTarget, 'delete'); setStructureTarget(null) }}><Trash2 size={13} /> 删除本题</button>
+        <button type="button" aria-label="关闭题目操作" onClick={() => setStructureTarget(null)}>×</button>
+      </div>}
       <span className="block-drag-handle" aria-label={`自由拖动${block.title}`} role="button" tabIndex={0} onPointerDown={beginMove}><GripVertical size={13} /></span>
       <button type="button" className="block-select-toggle" title="选择模块，可与其他模块合并" aria-label={`${multiSelected ? '取消选择' : '选择'}${block.title}`} aria-pressed={multiSelected} onClick={(event) => { event.stopPropagation(); onSelect(true) }}>{multiSelected ? '✓' : ''}</button>
-      {selected && (block.kind !== 'objective' || block.mergedParts?.length) && (
+      {selected && structureTarget === null && (block.kind !== 'objective' || block.mergedParts?.length) && (
         <div className="block-floating-tools" onClick={(event) => event.stopPropagation()}>
           {block.kind !== 'objective' && onToggleContent && <>
             <button type="button" onClick={onUndo} title="撤销"><Undo2 size={12} /></button>
@@ -946,8 +987,9 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
         </div>
       )}
       {(onInsertAfter || onUpdateBlock) && (
-        <div className="block-module-tools" onClick={(event) => event.stopPropagation()}>
+        <div className="block-module-tools" style={structureTarget !== null ? { display: 'none' } : undefined} onClick={(event) => event.stopPropagation()}>
           {block.mergedParts?.length && onSplitMerged ? <button type="button" onClick={(event) => { event.stopPropagation(); onSplitMerged() }}><Scissors size={11} /> 分割</button> : null}
+          {onQuestionAction && isQuestionBlockKind(block.kind) && <button type="button" onClick={() => onQuestionAction(undefined, 'edit')}>题目结构</button>}
           {hasAnswerSettings && <button type="button" aria-expanded={settingsPanel === 'answer'} onClick={() => { setActiveSlotKey(null); openAnswerSettings() }}>作答设置</button>}
           {canEditSlotNumbers && <button type="button" aria-expanded={settingsPanel === 'subquestion'} onClick={() => { openAnswerSettings(); setSettingsPanel('subquestion') }}>题号设置</button>}
           {onInsertAfter && <button type="button" aria-expanded={settingsPanel === 'insert'} onClick={() => setSettingsPanel('insert')}><Plus size={11} /> 插入 <ChevronDown size={11} /></button>}
@@ -1129,6 +1171,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
             className="block-title-edit"
             onClick={(event) => {
               event.stopPropagation()
+              if (onQuestionAction) { onSelect(false); onQuestionAction(undefined, 'edit'); return }
               cancelling.current = false
               setEditingTitle(true)
             }}
@@ -1180,7 +1223,7 @@ export function AnswerBlockView({ block, layout, seamlessTop = false, seamlessLe
       )}
       {!mergedSubjectiveParts && block.kind === 'essay' && (
         <div className={`essay-area ${block.writingLayout === 'separate' ? 'essay-separated' : ''}`}>
-          {questionNumbers(block.range).map((number) => <div key={number} className="subjective-question-label"><b>{number}.</b><QuestionScore block={block} scoreKey={String(number)} /></div>)}
+          {questionNumbers(block.range).map((number) => <div key={number} className="subjective-question-label"><b data-question-number={number}>{number}.</b><QuestionScore block={block} scoreKey={String(number)} /></div>)}
           <p className={`text-${block.fontSize ?? 'medium'} spacing-${block.lineSpacing ?? 'normal'}`} style={{ fontWeight: block.textBold ? 700 : undefined, fontStyle: block.textItalic ? 'italic' : undefined, textDecoration: block.textUnderline ? 'underline' : undefined, textAlign: block.textAlign ?? 'left' }}>{block.hint ?? (block.responseStyle === 'grid' ? `作文格作答区；当前设置 ${block.wordCount ?? 600} 字，可在选中后调整字数` : '请在指定区域内完成作文，超出区域的答案无效。')}</p>
           {!!block.leadingBlankLines && <div className="essay-leading-space" style={{ height: `${block.leadingBlankLines * 14}px` }} aria-label={`作文前空 ${block.leadingBlankLines} 行`} />}
           {block.responseStyle === 'grid' ? <GridPaper rows={compositionRowsForWords(block.wordCount ?? 600)} cells={block.wordCount ?? 600} /> : block.writingLayout === 'separate' ? (

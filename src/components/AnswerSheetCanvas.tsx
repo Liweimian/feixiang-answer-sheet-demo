@@ -24,6 +24,7 @@ interface AnswerSheetCanvasProps {
   onMoveBlock: (id: string, x: number, y: number, page: number) => void
   onResizeBlock: (id: string, height: number, width: number) => void
   onToggleBlockContent: (id: string, element: ContentElement) => void
+  onQuestionAction?: (id: string, number: number | undefined, action: string, value?: number) => void
   onUpdateBlock: (id: string, patch: Partial<AnswerBlock>) => void
   onInsertAfter: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position?: 'before' | 'after') => void
   onDeleteInsertedBlock: (id: string) => void
@@ -52,6 +53,7 @@ interface PaperPageProps {
   onMoveBlock?: (id: string, x: number, y: number, page: number) => void
   onResizeBlock?: (id: string, height: number, width: number) => void
   onToggleBlockContent?: (id: string, element: ContentElement) => void
+  onQuestionAction?: (id: string, number: number | undefined, action: string, value?: number) => void
   onUpdateBlock?: (id: string, patch: Partial<AnswerBlock>) => void
   onInsertAfter?: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position?: 'before' | 'after') => void
   onDeleteInsertedBlock?: (id: string) => void
@@ -74,7 +76,7 @@ function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
   })}</>
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onUpdateBlock, onInsertAfter, onSplitMerged, onDeleteInsertedBlock, onUndo, onRedo, onMergeBlocks, onSelectionChange, onHeaderChange, selectionToolbar }: PaperPageProps) {
+function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onQuestionAction, onUpdateBlock, onInsertAfter, onSplitMerged, onDeleteInsertedBlock, onUndo, onRedo, onMergeBlocks, onSelectionChange, onHeaderChange, selectionToolbar }: PaperPageProps) {
   const standard = mode === 'standard'
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
@@ -311,6 +313,7 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
             onMoveCommit={onMoveBlock ? (x, y, targetPage) => onMoveBlock(block.id, x, y, targetPage) : undefined}
             onResizeCommit={onResizeBlock ? (height, width) => onResizeBlock(block.id, height, width) : undefined}
             onToggleContent={onToggleBlockContent ? (element) => onToggleBlockContent(block.id, element) : undefined}
+            onQuestionAction={onQuestionAction ? (number, action, value) => onQuestionAction(block.id, number, action, value) : undefined}
             onUpdateBlock={onUpdateBlock ? (patch) => onUpdateBlock(block.id, patch) : undefined}
             onInsertAfter={onInsertAfter ? (kind, responseStyle, position) => onInsertAfter(block.id, kind, responseStyle, position) : undefined}
             onSplitMerged={block.mergedParts?.length && onSplitMerged ? () => onSplitMerged(block.id) : undefined}
@@ -526,6 +529,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
                 onMoveBlock={props.onMoveBlock}
                 onResizeBlock={props.onResizeBlock}
                 onToggleBlockContent={props.onToggleBlockContent}
+                onQuestionAction={props.onQuestionAction}
                 onUpdateBlock={props.onUpdateBlock}
                 onInsertAfter={props.onInsertAfter}
                 onSplitMerged={props.onSplitMerged}

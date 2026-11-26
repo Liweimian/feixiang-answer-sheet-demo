@@ -113,7 +113,7 @@ function createDocument(name: string, subject: string, templateId: string) {
 
 export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedFiles, onAssociateFile }: AnswerSheetListPageProps) {
   const [toolOpen, setToolOpen] = useState(false)
-  const [homeLayout, setHomeLayout] = useState<1 | 2>(2)
+  const recommendedSubject = '数学'
   const uploadInputRef = useRef<HTMLInputElement>(null)
   const associateInputRef = useRef<HTMLInputElement>(null)
   const associateRecordIdRef = useRef('')
@@ -291,19 +291,11 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
     </div>
   }
 
-  const promptExamples = (
-    <div className="tool-prompt-examples" aria-label="快捷输入示例">{[
-            { subject: '数学', scene: '单元测试', count: 15, score: 60, prompt: '制作数学单元测试答题卡，共15道题，满分60分。单选题6道，每题3分，4个选项；填空题6道，每题1个空，每空3分；解答题3道，每题8分。A4单栏，题号全卷连续，使用日常测验表头。' },
-            { subject: '英语', scene: '期中考试', count: 76, score: 120, prompt: '制作英语期中考试答题卡，共76道题，满分120分。听力20道，每题1分；单项选择10道，每题1分；完形填空10道，每题1分；阅读理解20道，每题2分；词汇填空10道，每题1个空，每空1分；任务型阅读5道，每题2分；书面表达1道，20分，提供作答线。A4双栏，题号全卷连续。' },
-            { subject: '物理', scene: '月考', count: 30, score: 100, prompt: '制作物理月考答题卡，共30道题，满分100分。单选题10道，每题2分，4个选项；多选题5道，每题3分，4个选项，少选得1分；填空题6道，每题2个空，每空1分；作图题2道，每题4分；实验探究题4道，分别5分、5分、5分、6分；计算题3道，每题8分，保留计算作答空间。A4双栏，题号全卷连续。' },
-          ].slice(0, homeLayout === 2 ? 2 : 3).map((example) => <button type="button" key={example.scene} onClick={(event) => { setCreatePrompt(example.prompt); event.currentTarget.closest('.tool-ai-hero-body')?.querySelector('textarea')?.focus() }}><span className="prompt-example-heading"><strong>{example.subject}</strong><span>{example.scene}</span></span><span className="prompt-example-summary">共 {example.count} 道题 · 共 {example.score} 分<ArrowRight size={14} /></span></button>)}</div>
-  )
-
-  return <div className={`answer-sheet-library${toolOpen ? ' tool-library-open' : ''}${toolOpen && homeLayout === 2 ? ' tool-library-alternative' : ''}`}>
+  return <div className={`answer-sheet-library${toolOpen ? ' tool-library-open' : ''}${toolOpen ? ' tool-library-alternative' : ''}`}>
     {toolOpen ? <header className="tool-library-breadcrumb">
       <button type="button" className="tool-library-back" aria-label="返回答题卡工具入口" onClick={() => setToolOpen(false)}><ChevronLeft size={22} /></button>
       <span>首页</span><ChevronRight size={16} /><span>考试管理</span><ChevronRight size={16} /><strong>制卡工具</strong>
-      <div className="tool-layout-switch" role="group" aria-label="首页布局方案">{([1, 2] as const).map((layout) => <button type="button" key={layout} aria-pressed={homeLayout === layout} onClick={() => setHomeLayout(layout)}>方案{layout === 1 ? '一' : '二'}</button>)}</div>
+
     </header> : <header className="library-header">
       <div><span>题库卷库 / 答题卡工具</span><h1>答题卡工具</h1><p>已有题库试卷可从组卷流程生成；没有题库试卷可进入制卡工具。</p></div>
     </header>}
@@ -324,23 +316,21 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
     </section>}
 
     {toolOpen && <div className="blank-card-library">
-      <section className={`tool-ai-hero${homeLayout === 2 ? ' tool-ai-hero-alternative' : ''}`} aria-label="AI 制卡入口">
-        <div className="tool-ai-hero-heading"><h1>今天想制作什么答题卡？</h1></div>
-        <div className="tool-ai-hero-body">
-          <form className="tool-ai-composer" onSubmit={(event) => { event.preventDefault(); if (!createPrompt.trim()) { MetisMessage.warning('请先描述答题卡需求'); return } setCreateMode('ai'); applyCreatePrompt(); setCreateOpen(true) }}>
-            <textarea rows={3} aria-label="描述答题卡需求" value={createPrompt} onChange={(event) => setCreatePrompt(event.target.value)} placeholder="描述学科、使用场景、题量和分值，例如：数学中考模拟，25道题，满分120分" />
-            <button type="submit">AI 生成答题卡 <ArrowRight size={16} /></button>
-          {homeLayout === 1 && promptExamples}
-          </form>
-          {homeLayout === 2 && promptExamples}
-        </div>
-        <div className="tool-quick-entry" aria-label="其他制卡方式">
-          <button type="button" onClick={createBlankCard}><span className="tool-quick-icon"><FilePlus2 size={23} /></span><span className="tool-quick-copy"><strong>空白答题卡</strong><small>从空白画布开始</small></span></button>
-          <button type="button" onClick={openTemplateCreate}><span className="tool-quick-icon"><Files size={23} /></span><span className="tool-quick-copy"><strong>选模板制卡</strong><small>套用预设题型与版面</small></span></button>
-          <button type="button" onClick={() => uploadInputRef.current?.click()}><span className="tool-quick-icon"><Upload size={23} /></span><span className="tool-quick-copy"><strong>上传试卷制卡</strong><small>{importing ? '正在识别试卷…' : '识别试卷，生成答题卡'}</small></span></button>
+      <section className="home-template-section" aria-label="答题卡模板">
+        <header className="home-template-heading"><h1>模板</h1><button type="button" className="home-template-more" onClick={() => { openTemplateCreate(); setTemplateSubjectFilter(recommendedSubject) }}>查看更多<ChevronRight size={16} /></button></header>
+        <div className="home-template-shelf">
+          <button type="button" className="home-template-tile" onClick={createBlankCard}><span className="home-template-sheet home-template-empty"><FilePlus2 size={32} /></span><strong>空白答题卡</strong></button>
+          <button type="button" className="home-template-tile" disabled={importing} onClick={() => uploadInputRef.current?.click()}><span className="home-template-sheet home-template-upload"><Upload size={30} /><span>{importing ? '正在识别…' : '上传试卷'}</span></span><strong>上传试卷制卡</strong></button>
+          {templatePresets.filter((preset) => preset.subject === recommendedSubject).slice(0, 5).map((preset) => {
+            const base = answerSheetTemplates.find((template) => template.id === preset.baseId)!
+            const previewBlocks = blocksForPreset(base.document.blocks, preset).filter(isAnswerableBlock)
+            return <button type="button" className="home-template-tile" key={preset.id} onClick={() => {
+              openTemplateCreate(); setTemplateSubjectFilter(recommendedSubject); setSelectedPresetId(preset.id); setTemplateId(preset.baseId); setNewSubject(preset.subject); setName(`${preset.name}答题卡`); setPaperSize(base.paperSize === '16K' ? 'A4' : base.paperSize); setColumns(base.columns === 2 ? 2 : 1); setTemplatePreviewOpen(true)
+            }}><span className="home-template-sheet home-template-miniature"><b>{preset.name}答题卡</b><em>姓名 ______　班级 ______</em>{previewBlocks.slice(0, 4).map((block) => <span key={block.id}><strong>{block.title}</strong><i /><i /><i /></span>)}</span><strong>{preset.name}</strong></button>
+          })}
         </div>
       </section>
-      <div className="tool-library-section-heading"><h2>我的答题卡 <small>{items.length}</small></h2></div>
+      <div className="tool-library-section-heading"><h2>我的答题卡</h2></div>
       <div className="library-tool-actions">
         <input ref={uploadInputRef} type="file" hidden onChange={(event) => { void uploadPaper(event.target.files?.[0]); event.currentTarget.value = '' }} />
         <input ref={associateInputRef} type="file" hidden onChange={(event) => {
@@ -366,18 +356,19 @@ export function AnswerSheetListPage({ onEdit, onExperienceFromPaper, associatedF
         return <article className="card-list-row" key={record.id} role="link" tabIndex={0} aria-label={`编辑${record.name}`} onClick={() => openRecord(record)} onKeyDown={(event) => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openRecord(record) } }}>
           <div className="record-main">
             <div className="record-name"><span className="record-subject" title="学科"><BookOpen size={14} />{record.subject}</span><strong>{record.name}</strong></div>
-            <div className="record-summary"><span>共 {questionCount} 题</span><span>共 {scoreLabel} 分</span><span>{paperLabel}</span><time className="record-updated" title="更新时间"><Clock3 size={14} />{record.updatedAt}</time></div>
+            <div className="record-summary"><span>共 {questionCount} 题</span><span>共 {scoreLabel} 分</span><span>{paperLabel}</span></div>
           </div>
+          <time className="record-updated" title="更新时间"><Clock3 size={14} />{record.updatedAt}</time>
           <div className="record-actions" onClick={(event) => event.stopPropagation()}>
             <MetisButton className="card-action-button" type="borderless" size="s" icon={<Edit3 size={14} />} onClick={() => openRecord(record)}>编辑</MetisButton>
             <MetisButton className="card-action-button" type="borderless" size="s" icon={<Download size={14} />} onClick={() => MetisMessage.info('演示：下载最新版 PDF')}>下载</MetisButton>
+            <MetisButton className="card-action-button" type="borderless" size="s" icon={<Copy size={14} />} onClick={() => { setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft', sourceFile: undefined }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}>复制</MetisButton>
             <details className="record-more" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) event.currentTarget.open = false }}>
               <summary><MoreHorizontal size={14} />更多</summary>
               <div className="record-more-menu">
                 {fileForRecord(record) ? <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); setSourceFile(fileForRecord(record)) }}><Eye size={15} />查看原卷</button>
                   : <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); associateRecordIdRef.current = record.id; associateInputRef.current?.click() }}><Link2 size={15} />关联原卷</button>}
                 <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); setAnswerRecord(record) }}><ListChecks size={15} />设置答案</button>
-                <button type="button" onClick={(event) => { event.currentTarget.closest('details')?.removeAttribute('open'); setItems((current) => [{ ...record, id: `${record.id}-copy-${Date.now()}`, name: `${record.name}（副本）`, updatedAt: '刚刚', status: 'draft', sourceFile: undefined }, ...current]); MetisMessage.success(`已复制“${record.name}”`) }}><Copy size={15} />复制</button>
               </div>
             </details>
           </div>
