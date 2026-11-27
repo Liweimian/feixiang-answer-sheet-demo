@@ -1089,7 +1089,7 @@
 .solution-add-close:hover { background: #ede9f7; }
 
 .solution-batch-question.is-subpart { padding-left: 25px; min-height: 33px; }
-.solution-batch-question.is-subpart > span { color: #626d87; }
+.solution-batch-question.is-subpart > span { color: #626d87; white-space: nowrap; }
 
 .solution-batch-select-all { justify-content: flex-start; gap: 12px; }
 .solution-batch-select-all > .solution-selection-tools { flex-wrap: nowrap; }
@@ -1147,6 +1147,8 @@
 .solution-batch-select-all > .solution-batch-toggle { margin-left: auto; }
 .solution-batch-select-all { flex-wrap: wrap; gap: 4px 8px; }
 .is-reading-mode .solution-batch-question { grid-template-columns: 23px minmax(0, 1fr); }
+.is-reading-mode .solution-batch-question.is-subpart { grid-template-columns: 38px minmax(0, 1fr); }
+.is-batch-mode .solution-batch-question.is-subpart { grid-template-columns: 18px 38px minmax(0, 1fr); }
 
 .config-group-overview-action {
   display: inline-flex;
@@ -1196,6 +1198,7 @@
 .group-summary-toggle[aria-expanded="true"] { background: #eeebfa; }
 .group-summary-toggle[aria-expanded="true"] svg { transform: rotate(90deg); }
 .batch-group-edit-body {
+  container-type: inline-size;
   margin: 0 4px 12px 36px;
   padding: 8px 14px;
   border-left: 2px solid #e3ddf4;
@@ -1204,6 +1207,24 @@
 .batch-group-edit-body .question-structure-panel { display: grid; gap: 12px; width: 100%; padding: 0; }
 .batch-group-edit-body .solution-batch-row-content { column-gap: 10px; }
 .batch-group-edit-body .solution-row-actions { margin-inline-start: 0; }
+.batch-group-edit-body .solution-batch-list {
+  display: grid;
+  align-items: start;
+  column-gap: 16px;
+}
+@container (min-width: 660px) {
+  .batch-group-edit-body .solution-batch-list {
+    grid-auto-flow: column;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(var(--question-rows-two-columns), auto);
+  }
+}
+@container (min-width: 780px) {
+  .batch-group-edit-body .solution-batch-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(var(--question-rows-three-columns), auto);
+  }
+}
 .solution-batch-question > .group-question-number { margin-top: 4px; line-height: 25px; color: #5146b0; }
 
 .group-edit-workspace .group-summary-line { padding-block: 8px; }

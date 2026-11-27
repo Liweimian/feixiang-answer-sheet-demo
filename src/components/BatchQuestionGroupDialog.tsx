@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { MetisButton, MetisDialog, MetisInputNumber, MetisMessage } from '@yuanfudao/metis-web-component'
 import { ChevronRight, ChevronsDown, ChevronsUp, ListChecks, Plus, Trash2 } from 'lucide-react'
 import type { QuestionGroupDraft, QuestionGroupType } from '../features/answer-sheet/types'
@@ -258,7 +258,7 @@ export function BatchQuestionGroupDialog(props: Props) {
               </select>}
               {activeAction === 'delete' && <span>删完的题组会一并移除</span>}
               {activeAction && <MetisButton type="primary" size="s" disabled={invalidNumber || (activeAction === 'type' && !batchValue)}
-                onClick={applySelection}>{activeAction === 'delete' ? '确认删除' : '应用到所选'}</MetisButton>}
+                onClick={applySelection}>{activeAction === 'delete' ? '确认删除' : '确定'}</MetisButton>}
               <MetisButton type="borderless" size="s" onClick={clearSelection}>取消勾选</MetisButton>
             </>}
             <span aria-live="polite">{selectedCount ? `已选 ${selectedCount} 项` : '勾选要操作的题目或小题'}</span>
@@ -309,7 +309,11 @@ export function BatchQuestionGroupDialog(props: Props) {
                 </div>
               </div>
               {expanded && editingDraft && (
-                <div className="batch-group-edit-body" id={`details-${row.id}`}>
+                <div className="batch-group-edit-body" id={`details-${row.id}`}
+                  style={{
+                    '--question-rows-two-columns': Math.ceil(editingDraft.items.length / 2),
+                    '--question-rows-three-columns': Math.ceil(editingDraft.items.length / 3),
+                  } as CSSProperties}>
                   <QuestionStructurePanel
                     key={`${editingStart}-${batchMode}`}
                     workspaceSelection={batchMode ? (selection[row.id] ?? []).map((target) => ({ ...target, number: editingStart + target.number })) : undefined}
