@@ -289,10 +289,46 @@
 .question-group-preview-builder .question-item-head > span:first-child { width: auto; }
 .question-group-preview-builder .question-item-head > span { min-width: 0; }
 @media (max-width: 850px) { .question-group-builder.question-group-preview-builder { grid-template-columns: minmax(200px, .8fr) minmax(0, 1.2fr); } }
-.group-type-presets { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 22px; }
-.group-type-presets button { display: flex; align-items: center; gap: 5px; padding: 9px 12px; background: #eeedfa; color: #4f46b5; border: 1px solid #eeedfa; border-radius: 7px; cursor: pointer; }
+.group-type-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; flex-shrink: 0; }
+.group-type-presets button { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: #eeedfa; color: #4f46b5; border: 1px solid #eeedfa; border-radius: 7px; cursor: pointer; }
 .group-type-presets button:hover { background: #eeedfa; border-color: #bac1d8; }
-.group-summary-list { max-height: 50vh; overflow: auto; }
+.group-edit-workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid #e3def3;
+  border-radius: 10px;
+  background: #f9f8fd;
+}
+.group-edit-heading {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  white-space: nowrap;
+  gap: 4px 12px;
+  padding: 5px 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #e3def3;
+  border-radius: 9px 9px 0 0;
+  background: #f1effa;
+  color: #303a55;
+  font-size: 14px;
+  font-weight: 600;
+}
+.group-edit-heading h3 { margin: 0; font: inherit; }
+.group-edit-heading-actions { display: flex; flex: none; gap: 4px; margin-inline-start: auto; }
+.group-edit-heading-actions > button:not(:disabled):not([aria-pressed="true"]) { color: #5146b0; }
+.group-summary-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  border-radius: 0 0 9px 9px;
+  background: #fff;
+}
+.group-summary-list > :first-child,
+.group-summary-list > :first-child > .group-summary-line { border-top: 0; }
 .group-summary-line { display: grid; grid-template-columns: 100px minmax(160px, 1fr) 85px 64px; align-items: center; gap: 12px; padding: 14px 8px; border-top: 1px solid #eeedfa; }
 .group-summary-line strong { font-size: 15px; color: #303a55; }
 .group-summary-values { display: flex; align-items: center; gap: 6px; color: #626d85; }
@@ -1144,11 +1180,50 @@
 .has-batch-type .solution-selection-tools > button > svg { width: 11px; }
 .has-batch-type .solution-selection-tools > .group-part-type { height: 24px; padding-inline-start: 3px; font-size: 11px; }
 
+.group-summary-toggle {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 28px;
+  height: 28px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #5146b0;
+  cursor: pointer;
+}
+.group-summary-toggle:hover,
+.group-summary-toggle[aria-expanded="true"] { background: #eeebfa; }
+.group-summary-toggle[aria-expanded="true"] svg { transform: rotate(90deg); }
 .batch-group-edit-body {
-  max-height: min(65vh, 620px);
-  overflow: auto;
-  padding-inline: 2px 8px;
+  margin: 0 4px 12px 36px;
+  padding: 8px 14px;
+  border-left: 2px solid #e3ddf4;
+  background: #faf9fd;
 }
 .batch-group-edit-body .question-structure-panel { display: grid; gap: 12px; width: 100%; padding: 0; }
-.batch-group-edit-body .question-structure-heading strong { font-size: 15px; color: #303a55; }
+.batch-group-edit-body .solution-batch-row-content { column-gap: 10px; }
+.batch-group-edit-body .solution-row-actions { margin-inline-start: 0; }
 .solution-batch-question > .group-question-number { margin-top: 4px; line-height: 25px; color: #5146b0; }
+
+.group-edit-workspace .group-summary-line { padding-block: 8px; }
+.batch-group-footer { flex-wrap: wrap; row-gap: 4px; }
+
+.group-workspace-batch-actions {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 8px;
+  color: #535b73;
+  font-size: 13px;
+}
+.group-workspace-batch-actions :is(input, select) {
+  min-height: 28px;
+  padding: 2px 6px;
+  border: 1px solid #d8d1ef;
+  border-radius: 5px;
+  background: #fff;
+  color: #303a55;
+  font: inherit;
+}
+.group-workspace-batch-actions input { width: 76px; }

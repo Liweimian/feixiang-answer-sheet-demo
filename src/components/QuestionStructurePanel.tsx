@@ -11,9 +11,12 @@ export interface QuestionStructurePanelProps {
   onUpdateGroupQuestion: (target: GroupQuestionSelection, patch: QuestionItemPatch) => void
   onAddGroupSubparts: (numbers: number[], count: number) => boolean
   onDeleteGroupQuestionSelection: (selection: GroupQuestionSelection[]) => boolean
-  onAddGroupQuestion: () => boolean
+  onAddGroupQuestion?: () => boolean
   onResizeGroup: (count: number) => boolean
   onLocateQuestion?: (number: number) => void
+  hideHeading?: boolean
+  workspaceSelection?: GroupQuestionSelection[]
+  onWorkspaceSelectionChange?: (selection: GroupQuestionSelection[]) => void
   maxQuestionCount?: number
   subject: string
   onUpdateSubquestionType: (selection: readonly GroupQuestionSelection[], type: PartType) => void
@@ -106,7 +109,7 @@ function QuestionBatchSettings({ draft, onApplyBatch }: Pick<QuestionStructurePa
   </section>
 }
 
-function QuestionGroupSelectionSettings({ draft, onUpdateGroupQuestion, onAddGroupSubparts, onDeleteGroupQuestionSelection, onAddGroupQuestion, onLocateQuestion, subject, onUpdateSubquestionType, onApplyBatch }: QuestionStructurePanelProps) {
+function QuestionGroupSelectionSettings({ draft, onUpdateGroupQuestion, onAddGroupSubparts, onDeleteGroupQuestionSelection, onAddGroupQuestion, onLocateQuestion, subject, onUpdateSubquestionType, onApplyBatch, hideHeading, workspaceSelection, onWorkspaceSelectionChange }: QuestionStructurePanelProps) {
   const footerRef = useRef<HTMLDivElement>(null)
   const scrollToNewQuestion = useRef(false)
   useLayoutEffect(() => {
@@ -115,8 +118,12 @@ function QuestionGroupSelectionSettings({ draft, onUpdateGroupQuestion, onAddGro
     footerRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   }, [draft.questionCount])
 
-  const [batchMode, setBatchMode] = useState(false)
-  const [selected, setSelected] = useState<GroupQuestionSelection[]>([])
+  const [localBatchMode, setLocalBatchMode] = useState(false)
+  const workspaceBatchMode = workspaceSelection !== undefined
+  const batchMode = workspaceBatchMode || localBatchMode
+  const [localSelection, setLocalSelection] = useState<GroupQuestionSelection[]>([])
+  const selected = workspaceSelection ?? localSelection
+  const setSelected = onWorkspaceSelectionChange ?? setLocalSelection
   const [pending, setPending] = useState<'add' | 'delete'>()
   const [rowToDelete, setRowToDelete] = useState<GroupQuestionSelection>()
   const [addQuantity, setAddQuantity] = useState(2)
@@ -127,7 +134,8 @@ function QuestionGroupSelectionSettings({ draft, onUpdateGroupQuestion, onAddGro
   const parentNumbers = [...new Set(targets.map((target) => target.number))]
   const batchItems = draft.items.filter((item) => parentNumbers.includes(item.number))
   const addLimit = Math.min(20, ...batchItems.map((item) => 20 - item.subquestionCount))
-  const allSelected = count > 0 && targets.filter((target) => target.subIndex === undefined).length === draft.items.length
+  const selectableItems = draft.items
+  const allSelected = count > 0 && targets.filter((target) => target.subIndex === undefined).length === selectableItems.length
   const deletion = rowToDelete ? [rowToDelete] : targets
   const parentCount = deletion.filter((target) => target.subIndex === undefined).length
   const childCount = deletion.length - parentCount
@@ -137,24 +145,24 @@ function QuestionGroupSelectionSettings({ draft, onUpdateGroupQuestion, onAddGro
 
   const toggle = (target: GroupQuestionSelection, checked: boolean) => {
     close()
-    setSelected((current) => {
-      const remaining = current.filter((entry) => entry.number !== target.number || (
+    const remaining = selected.filter((entry) => entry.number !== target.number || (
         target.subIndex !== undefined && entry.subIndex !== undefined && entry.subIndex !== target.subIndex
       ))
-      return checked ? [...remaining, target] : remaining
-    })
+    setSelected(checked ? [...remaining, target] : remaining)
   }
 
   const toggleBatchMode = () => {
     close()
     setSelected([])
-    setBatchMode((active) => !active)
+    setLocalBatchMode((active) => !active)
   }
 
   const renderAddForm = () => <form className="solution-add-subparts" onSubmit={(event) => {
       event.preventDefault()
       if (Number.isInteger(addQuantity) && addQuantity >= 1 && addQuantity <= addLimit
-        && onAddGroupSubparts(parentNumbers, addQuantity)) close()
+        && onAddGroupSubparts(parentNumbers, addQuantity)) {
+        close()
+      }
     }} onKeyDown={(event) => {
       if (event.key === 'Escape') { event.stopPropagation(); close() }
     }}>
@@ -186,11 +194,11 @@ function QuestionGroupSelectionSettings({ draft, onUpdateGroupQuestion, onAddGro
 
   return <section className={`solution-batch ${batchMode ? 'is-batch-mode' : 'is-reading-mode'}`} aria-label="题目列表">
     {batchMode ? <div className={`solution-batch-select-all ${canSetBatchType ? 'has-batch-type' : ''}`}>
-      <MetisCheckbox checked={allSelected} indeterminate={count > 0 && !allSelected} onChange={(event) => {
+      <MetisCheckbox checked={allSelected} disabled={!selectableItems.length} indeterminate={count > 0 && !allSelected} onChange={(event) => {
         close()
-        setSelected(event.target.checked ? draft.items.map((item) => ({ number: item.number })) : [])
-      }}>全选</MetisCheckbox>
-      <div className="solution-selection-tools" aria-label="所选题目操作">
+        setSelected(event.target.checked ? selectableItems.map((item) => ({ number: item.number })) : [])
+      }}>{workspaceBatchMode ? '全选本组' : '全选'}</MetisCheckbox>
+      {!workspaceBatchMode && <div className="solution-selection-tools" aria-label="所选题目操作">
         <button type="button" className="solution-selection-add" disabled={count === 0 || addLimit < 1} onClick={() => {
           setRowToDelete(undefined)
           setAddQuantity(Math.min(addLimit, batchItems.every((item) => item.subquestionCount === 0) ? 2 : 1))
@@ -201,9 +209,9 @@ function QuestionGroupSelectionSettings({ draft, onUpdateGroupQuestion, onAddGro
           onUpdateSubquestionType(targets, type)
         }} />}
         <button type="button" className="solution-selection-delete" disabled={count === 0} onClick={() => { setRowToDelete(undefined); setPending('delete') }}><Trash2 size={13} /> 删除</button>
-      </div>
-      <button type="button" className="solution-batch-toggle" onClick={toggleBatchMode}>完成</button>
-    </div> : <div className="solution-batch-entry">
+      </div>}
+      {!workspaceBatchMode && <button type="button" className="solution-batch-toggle" onClick={toggleBatchMode}>完成</button>}
+    </div> : !hideHeading && <div className="solution-batch-entry">
       <button type="button" className="solution-batch-toggle" onClick={toggleBatchMode}><ListChecks size={14} /> 批量操作</button>
     </div>}
     {pending === 'add' && renderAddForm()}
@@ -263,7 +271,7 @@ function QuestionGroupSelectionSettings({ draft, onUpdateGroupQuestion, onAddGro
                   onCommit={(value) => onUpdateGroupQuestion(target, { score: value })} />
               </span>
             </div>
-            <div className="solution-row-actions">
+            {!workspaceBatchMode && <div className="solution-row-actions">
               {!isChild && <button type="button" className="solution-row-add" aria-label={`为${label}添加小题`} title="添加小题"
                 disabled={item.subquestionCount >= 20} onClick={() => {
                   if (onAddGroupSubparts([item.number], 1)) close()
@@ -272,7 +280,7 @@ function QuestionGroupSelectionSettings({ draft, onUpdateGroupQuestion, onAddGro
                 setRowToDelete(target)
                 setPending('delete')
               }}><Trash2 size={14} /></button>
-            </div>
+            </div>}
           </div>
           </div>
           {pending === 'delete' && rowToDelete?.number === item.number && rowToDelete.subIndex === subIndex && renderDeleteForm()}
@@ -280,12 +288,12 @@ function QuestionGroupSelectionSettings({ draft, onUpdateGroupQuestion, onAddGro
         })}
       </div>)}
     </div>
-    <div className="solution-batch-footer" ref={footerRef}>
+    {onAddGroupQuestion && <div className="solution-batch-footer" ref={footerRef}>
       <MetisButton type="borderless" size="s" icon={<Plus size={14} />} onClick={() => {
         scrollToNewQuestion.current = onAddGroupQuestion()
       }}>新增一题</MetisButton>
-    </div>
-    {batchMode && (isChoice(draft.type) || draft.type === 'fill') && <details className="question-type-batch">
+    </div>}
+    {batchMode && !workspaceBatchMode && (isChoice(draft.type) || draft.type === 'fill') && <details className="question-type-batch">
       <summary>批量设置{draft.type === 'fill' ? '空数与分值' : '选项'}</summary>
       <QuestionBatchSettings draft={draft} onApplyBatch={onApplyBatch} />
     </details>}
@@ -297,7 +305,7 @@ export function QuestionStructurePanel(props: QuestionStructurePanelProps) {
   const [pendingCount, setPendingCount] = useState<number>()
 
   return <div className="question-structure-panel config-questions-view solution-structure-panel">
-    <header className="question-structure-heading">
+    {!props.hideHeading && <header className="question-structure-heading">
       <div className="question-structure-heading-line">
         <strong title={draft.title}>{draft.title}</strong>
         <div className="question-structure-summary solution-structure-summary">
@@ -316,7 +324,7 @@ export function QuestionStructurePanel(props: QuestionStructurePanelProps) {
           }}>确认调整</MetisButton>
         </div>
       </div>}
-    </header>
+    </header>}
     <QuestionGroupSelectionSettings {...props} />
   </div>
 }
