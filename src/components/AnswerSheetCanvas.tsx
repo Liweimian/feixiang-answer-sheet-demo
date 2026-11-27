@@ -1,11 +1,19 @@
+import { canEditQuestionGroup } from '../features/answer-sheet/directQuestionEdit'
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { MetisButton, MetisInput } from '@yuanfudao/metis-web-component'
 import { Combine, Eye, EyeOff, LockKeyhole, Pencil, QrCode } from 'lucide-react'
 import type { AnswerBlock, AnswerBlockKind, AnswerSheetDocument, AnswerSheetSettings, CardMode, ContentElement, ExamPaper, HeaderLayout, RulePack } from '../features/answer-sheet/types'
 import { isQuestionBlockKind } from '../features/answer-sheet/types'
 import { questionNumbers } from '../features/answer-sheet/range'
+import { layoutAnswerBlocks } from '../features/answer-sheet/pageLayout'
 import { AnswerBlockView } from './AnswerBlockView'
 import { AnswerSheetHeader } from './AnswerSheetHeader'
+
+export interface CanvasQuestionSelection {
+  id: string
+  number: number
+  subIndex?: number
+}
 
 interface AnswerSheetCanvasProps {
   paper: ExamPaper
@@ -17,14 +25,15 @@ interface AnswerSheetCanvasProps {
   pageCount: number
   activePage: number
   selectedBlockId: string
+  questionSelection?: CanvasQuestionSelection
   onPageChange: (page: number) => void
-  onSelectBlock: (id: string) => void
+  onSelectBlock: (id: string, inspectGroup?: boolean) => void
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
   onMoveBlock: (id: string, x: number, y: number, page: number) => void
   onResizeBlock: (id: string, height: number, width: number) => void
   onToggleBlockContent: (id: string, element: ContentElement) => void
-  onQuestionAction?: (id: string, number: number | undefined, action: string, value?: number) => void
+  onQuestionAction?: (id: string, number: number | undefined, action: string, value?: number, editedSubIndex?: number) => void
   onUpdateBlock: (id: string, patch: Partial<AnswerBlock>) => void
   onInsertAfter: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position?: 'before' | 'after') => void
   onDeleteInsertedBlock: (id: string) => void
@@ -47,13 +56,14 @@ interface PaperPageProps {
   page: number
   pageCount: number
   selectedBlockIds?: string[]
+  questionSelection?: CanvasQuestionSelection
   onSelectBlock?: (id: string) => void
   onTitleCommit?: (title: string) => void
   onBlockTitleCommit?: (id: string, title: string) => void
   onMoveBlock?: (id: string, x: number, y: number, page: number) => void
   onResizeBlock?: (id: string, height: number, width: number) => void
   onToggleBlockContent?: (id: string, element: ContentElement) => void
-  onQuestionAction?: (id: string, number: number | undefined, action: string, value?: number) => void
+  onQuestionAction?: (id: string, number: number | undefined, action: string, value?: number, editedSubIndex?: number) => void
   onUpdateBlock?: (id: string, patch: Partial<AnswerBlock>) => void
   onInsertAfter?: (id: string, kind: AnswerBlockKind, responseStyle?: AnswerBlock['responseStyle'], position?: 'before' | 'after') => void
   onDeleteInsertedBlock?: (id: string) => void
@@ -76,41 +86,12 @@ function CandidateNumberArea({ settings }: { settings: AnswerSheetSettings }) {
   })}</>
 }
 
-function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, pageCount, selectedBlockIds = [], onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onQuestionAction, onUpdateBlock, onInsertAfter, onSplitMerged, onDeleteInsertedBlock, onUndo, onRedo, onMergeBlocks, onSelectionChange, onHeaderChange, selectionToolbar }: PaperPageProps) {
+function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, pageCount, selectedBlockIds = [], questionSelection, onSelectBlock, onTitleCommit, onBlockTitleCommit, onMoveBlock, onResizeBlock, onToggleBlockContent, onQuestionAction, onUpdateBlock, onInsertAfter, onSplitMerged, onDeleteInsertedBlock, onUndo, onRedo, onMergeBlocks, onSelectionChange, onHeaderChange, selectionToolbar }: PaperPageProps) {
   const standard = mode === 'standard'
   const paperSize = settings.paperSize.toLowerCase()
   const pageBlocks = blocks.filter((block) => block.page === page)
   const columns = settings.frontColumns
-  const gapPercent = 0
-  const defaultWidth = (100 - gapPercent * (columns - 1)) / columns
-  const columnBottoms = Array.from({ length: columns }, () => 0)
-  const placedLayouts: Array<{ x: number; y: number; width: number; height: number }> = []
-  const blockLayouts = new Map<string, { x: number; y: number; width: number }>()
-  pageBlocks.forEach((block) => {
-    const column = columnBottoms.indexOf(Math.min(...columnBottoms))
-    const width = block.canvasWidth ?? defaultWidth
-    const x = block.canvasX ?? column * (defaultWidth + gapPercent)
-    let y = block.canvasY ?? columnBottoms[column]
-    let collision = true
-    while (collision) {
-      const overlaps = placedLayouts.filter((item) => (
-        x < item.x + item.width
-        && x + width > item.x
-        && y < item.y + item.height
-        && y + block.height > item.y
-      ))
-      collision = overlaps.length > 0
-      if (collision) y = Math.max(...overlaps.map((item) => item.y + item.height))
-    }
-    const layout = { x, y, width }
-    blockLayouts.set(block.id, layout)
-    placedLayouts.push({ ...layout, height: block.height })
-    columnBottoms.forEach((bottom, index) => {
-      const columnLeft = index * (defaultWidth + gapPercent)
-      const columnRight = columnLeft + defaultWidth
-      if (x < columnRight && x + width > columnLeft) columnBottoms[index] = Math.max(bottom, y + block.height)
-    })
-  })
+  const blockLayouts = layoutAnswerBlocks(pageBlocks, columns)
   const minimumCanvasHeight = paperSize === 'a3' ? 390 : paperSize === '16k' ? 450 : paperSize === '8k' ? 650 : 720
   const contentHeight = Math.max(minimumCanvasHeight, ...pageBlocks.map((block) => {
     const layout = blockLayouts.get(block.id)
@@ -308,12 +289,16 @@ function PaperPage({ paper, blocks, mode, rulePack, settings, header, page, page
             selected={selectedBlockIds.length === 1 && selectedBlockIds.includes(block.id)}
             multiSelected={selectedBlockIds.length > 1 && selectedBlockIds.includes(block.id)}
             locked={standard && Boolean(block.locked)}
-            onSelect={(additive) => { onSelectBlock?.(block.id); onSelectionChange?.(block.id, Boolean(additive)) }}
+            onSelect={(additive) => {
+              if (onSelectionChange) onSelectionChange(block.id, Boolean(additive))
+              else onSelectBlock?.(block.id)
+            }}
             onTitleCommit={onBlockTitleCommit ? (title) => onBlockTitleCommit(block.id, title) : undefined}
             onMoveCommit={onMoveBlock ? (x, y, targetPage) => onMoveBlock(block.id, x, y, targetPage) : undefined}
             onResizeCommit={onResizeBlock ? (height, width) => onResizeBlock(block.id, height, width) : undefined}
             onToggleContent={onToggleBlockContent ? (element) => onToggleBlockContent(block.id, element) : undefined}
-            onQuestionAction={onQuestionAction ? (number, action, value) => onQuestionAction(block.id, number, action, value) : undefined}
+            questionSelection={questionSelection?.id === block.id ? questionSelection : undefined}
+            onQuestionAction={onQuestionAction && canEditQuestionGroup(block) ? (number, action, value, editedSubIndex) => onQuestionAction(block.id, number, action, value, editedSubIndex) : undefined}
             onUpdateBlock={onUpdateBlock ? (patch) => onUpdateBlock(block.id, patch) : undefined}
             onInsertAfter={onInsertAfter ? (kind, responseStyle, position) => onInsertAfter(block.id, kind, responseStyle, position) : undefined}
             onSplitMerged={block.mergedParts?.length && onSplitMerged ? () => onSplitMerged(block.id) : undefined}
@@ -393,9 +378,12 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
   }, [props.onSelectBlock])
 
   const selectBlock = (id: string, additive: boolean) => {
-    setSelectedIds((current) => additive
-      ? current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
-      : [id])
+    const wasSelected = selectedIds.includes(id)
+    const next = additive
+      ? wasSelected ? selectedIds.filter((item) => item !== id) : [...selectedIds, id]
+      : [id]
+    setSelectedIds(next)
+    props.onSelectBlock(additive && wasSelected ? next[next.length - 1] ?? '' : id, next.length === 1)
   }
 
   const beginMarquee = (page: number, event: ReactPointerEvent<HTMLDivElement>) => {
@@ -432,7 +420,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
       .map((block) => block.dataset.blockId)
       .filter((id): id is string => Boolean(id))
     setSelectedIds(ids)
-    props.onSelectBlock(ids[0] ?? '')
+    props.onSelectBlock(ids[0] ?? '', ids.length === 1)
     setMarquee(null)
   }
 
@@ -522,6 +510,7 @@ export function AnswerSheetCanvas(props: AnswerSheetCanvasProps) {
                 page={page}
                 pageCount={props.pageCount}
                 selectedBlockIds={selectedIds}
+                questionSelection={props.questionSelection}
                 onSelectBlock={props.onSelectBlock}
                 onSelectionChange={selectBlock}
                 onTitleCommit={props.onTitleCommit}

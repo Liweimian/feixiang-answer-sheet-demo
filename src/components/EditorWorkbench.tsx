@@ -13,7 +13,8 @@ import type {
   QuestionGroupType,
   RulePack,
 } from '../features/answer-sheet/types'
-import { AnswerSheetCanvas } from './AnswerSheetCanvas'
+import { AnswerSheetCanvas, type CanvasQuestionSelection } from './AnswerSheetCanvas'
+import type { QuestionStructurePanelProps } from './QuestionStructurePanel'
 import { AnswerSheetConfigPanel, AnswerSheetMoreSettings } from './AnswerSheetConfigPanel'
 
 interface EditorWorkbenchProps {
@@ -22,9 +23,11 @@ interface EditorWorkbenchProps {
   rulePack: RulePack
   activePage: number
   selectedBlockId: string
+  questionSelection?: CanvasQuestionSelection
+  questionStructure?: QuestionStructurePanelProps
   printDocument?: AnswerSheetDocument
   onPageChange: (page: number) => void
-  onSelect: (id: string) => void
+  onSelect: (id: string, inspectGroup?: boolean) => void
   onUpdate: (patch: Partial<AnswerBlock>) => void
   onBlockScoresChange: (id: string, scores: Record<string, number>) => void
   onMove: (id: string, direction: -1 | 1) => void
@@ -33,7 +36,7 @@ interface EditorWorkbenchProps {
   onAdd: (kind: AnswerBlockKind) => void
   onBatchAddQuestionGroups: () => void
   onAddQuestionGroup: (type: QuestionGroupType) => void
-  onQuestionAction?: (id: string, number: number | undefined, action: string, value?: number) => void
+  onQuestionAction?: (id: string, number: number | undefined, action: string, value?: number, editedSubIndex?: number) => void
   onEditQuestionGroup: (id: string) => void
   onTitleCommit: (title: string) => void
   onBlockTitleCommit: (id: string, title: string) => void
@@ -121,6 +124,7 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           document={props.document}
           activePage={props.activePage}
           selectedBlockId={props.selectedBlockId}
+          questionStructure={props.questionStructure}
           onSettingsChange={props.onSettingsChange}
           onModuleMergeChange={props.onModuleMergeChange}
           onPresetChange={props.onPresetChange}
@@ -157,6 +161,7 @@ export function EditorWorkbench(props: EditorWorkbenchProps) {
           onMoveBlock={props.onMoveBlock}
           onResizeBlock={props.onResizeBlock}
           onToggleBlockContent={props.onToggleBlockContent}
+          questionSelection={props.questionSelection}
           onQuestionAction={props.onQuestionAction}
           onUpdateBlock={props.onUpdateCanvasBlock}
           onInsertAfter={props.onInsertAfter}

@@ -121,7 +121,7 @@ export interface AnswerBlock {
   questionLineCounts?: Record<string, number>
   answerVariant?: 'fill' | 'solution'
   wordCount?: number
-  optionCount?: 2 | 4 | 5
+  optionCount?: number
   objectiveMode?: 'single' | 'multiple' | 'judge'
   objectiveAnswers?: Record<string, string[]>
   referenceAnswers?: Record<string, string>
@@ -172,7 +172,7 @@ export interface QuestionGroupDraft {
   startNumber: number
   questionCount: number
   totalScore: number
-  optionCount: 2 | 4 | 5
+  optionCount: number
   items: QuestionGroupItemDraft[]
 }
 
@@ -191,10 +191,10 @@ export interface QuestionGroupItemDraft {
   subquestionBlankCounts?: number[]
   subquestionBlankScores?: number[][]
   subquestionFillStyles?: FillSlotStyle[]
-  subquestionOptionCounts?: Array<4 | 5>
+  subquestionOptionCounts?: number[]
   subquestionPartialScores?: number[]
   partialScore?: number
-  optionCount: 4 | 5
+  optionCount: number
   answer: string
 }
 

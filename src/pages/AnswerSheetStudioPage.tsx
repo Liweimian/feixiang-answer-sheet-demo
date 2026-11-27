@@ -1,4 +1,6 @@
-import { editableQuestionGroup, appendSubquestion } from '../features/answer-sheet/directQuestionEdit'
+import { refreshBlankAnswerHtml } from '../components/AnswerBlockView'
+import { reflowEditedAnswerBlocks } from '../features/answer-sheet/pageLayout'
+import { canEditQuestionGroup, editableQuestionGroup, appendSubquestion, appendQuestionOption, appendQuestionBlank, applyQuestionBatch, updateQuestionItem, removeQuestionSubpart, removeQuestionItem, appendGroupQuestion, addGroupQuestionSubparts, deleteGroupQuestionSelection, setGroupSubquestionType } from '../features/answer-sheet/directQuestionEdit'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MetisMessage } from '@yuanfudao/metis-web-component'
 import { SourcePaperPreviewDialog } from '../components/SourcePaperPreviewDialog'
@@ -96,6 +98,9 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
   documentRef.current = document
   const [history, setHistory] = useState<AnswerSheetDocument[]>([])
   const [future, setFuture] = useState<AnswerSheetDocument[]>([])
+  const [questionGroupBatchResult, setQuestionGroupBatchResult] = useState<{ id: string; after: AnswerSheetDocument; removedCount?: number }>()
+  const [deletedQuestion, setDeletedQuestion] = useState<{ id: string; number: number; after: AnswerSheetDocument }>()
+  const [structure, setStructure] = useState<{ id: string; number?: number; subIndex?: number }>()
   const [selectedBlockId, setSelectedBlockId] = useState('')
   const [activePage, setActivePage] = useState(1)
   const [draftVersion, setDraftVersion] = useState(1)
@@ -105,11 +110,9 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
   const [preflightOpen, setPreflightOpen] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [printDocument, setPrintDocument] = useState<AnswerSheetDocument>()
-  const [editingQuestionNumber, setEditingQuestionNumber] = useState<number | undefined>()
   const [questionGroupOpen, setQuestionGroupOpen] = useState(false)
   const [batchGroupOpen, setBatchGroupOpen] = useState(false)
   const [questionGroupType, setQuestionGroupType] = useState<QuestionGroupType>('single')
-  const [editingQuestionGroupId, setEditingQuestionGroupId] = useState('')
   const [objectiveAnswerOpen, setObjectiveAnswerOpen] = useState(false)
   const [originalPaperOpen, setOriginalPaperOpen] = useState(false)
   const [uploadedSourceOpen, setUploadedSourceOpen] = useState(false)
@@ -331,7 +334,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
       answerSlotLabels: draft.type === 'fill' ? fillSlotLabels : undefined,
       answerSlotSettings: draft.type === 'fill' ? Object.fromEntries(fillSlotEntries.map((slot) => [slot.key, { style: slot.style, count: slot.style === 'composition' ? 40 : ['tian', 'mi', 'squares'].includes(slot.style) ? 4 : undefined }])) : undefined,
       answerVariant: draft.type === 'fill' ? 'fill' : draft.type === 'solution' || draft.type === 'essay' || draft.type === 'comprehensive' ? 'solution' : undefined,
-      optionCount: kind === 'objective' ? (draft.type === 'judge' ? 2 : Math.max(...draft.items.map((item) => item.optionCount), draft.optionCount) as 4 | 5) : undefined,
+      optionCount: kind === 'objective' ? (draft.type === 'judge' ? 2 : Math.max(...draft.items.map((item) => item.optionCount), draft.optionCount, ...draft.items.flatMap((item) => item.subquestionOptionCounts ?? []))) : undefined,
       objectiveMode: draft.type === 'single' || draft.type === 'multiple' || draft.type === 'judge' ? draft.type : undefined,
       itemsPerColumn: kind === 'objective' ? Math.min(10, draft.questionCount) : undefined,
       objectiveLayout: kind === 'objective' ? 'horizontal' : undefined,
@@ -357,61 +360,150 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
   }
 
   const addQuestionGroup = (draft: QuestionGroupDraft) => {
-    const editingBlock = editingQuestionGroupId ? blocks.find((block) => block.id === editingQuestionGroupId) : undefined
-    const rebuiltBlock = buildQuestionGroup(draft, blocks, editingQuestionGroupId)
-    const nextBlock = editingBlock ? { ...editingBlock, ...rebuiltBlock, height: Math.max(editingBlock.height, rebuiltBlock.height), answerRichText: undefined } : rebuiltBlock
-    const nextBlocks = editingBlock ? blocks.map((block) => block.id === editingBlock.id ? nextBlock : block) : [...blocks, nextBlock]
+    const nextBlock = buildQuestionGroup(draft, blocks)
+    const nextBlocks = [...blocks, nextBlock]
     commitDocument({ ...document, blocks: nextBlocks, pageCount: Math.max(document.pageCount, ...nextBlocks.map((block) => block.page)), paper: { ...paper, score: totalQuestionScore(nextBlocks) } })
     setSelectedBlockId(nextBlock.id)
     setQuestionGroupOpen(false)
-    setEditingQuestionGroupId('')
-    MetisMessage.success(editingBlock ? `已更新“${draft.title}”` : `已添加“${draft.title}”`)
+    MetisMessage.success(`已添加“${draft.title}”`)
   }
 
-  const handleQuestionAction = (id: string, number: number | undefined, action: string, value?: number) => {
+  const applyStructure = (current: AnswerBlock, draft: QuestionGroupDraft, previous: QuestionGroupDraft, deletedNumber?: number, removedSubIndex?: number, editedNumber?: number, solutionBatch = false, bulkRemovedParts?: ReadonlyMap<number, readonly number[]>) => {
+    if (draft === previous) return false
+    const numbers = new Set(draft.items.map((item) => item.number))
+    const previousNumbers = new Set(previous.items.map((item) => item.number))
+    const occupied = new Set(blocks.filter((block) => block.id !== current.id).flatMap((block) => questionNumbers(block.range)))
+    if ([...numbers].some((number) => !previousNumbers.has(number) && occupied.has(number))) {
+      MetisMessage.info('新增题号与其他题组重复，请先调整题号')
+      return false
+    }
+    const removedParts = bulkRemovedParts ?? (removedSubIndex !== undefined && editedNumber !== undefined
+      ? new Map([[editedNumber, [removedSubIndex]]]) : undefined)
+    const rebuilt = buildQuestionGroup(draft, blocks, current.id)
+    const retained = <T,>(answers?: Record<string, T>) => answers && Object.fromEntries(
+      Object.entries(answers).filter(([key]) => numbers.has(Number(key.split('.')[0]))),
+    )
+    const retainedReferences = retained(current.referenceAnswers)
+    const referenceAnswers = retainedReferences && removedParts ? Object.fromEntries(Object.entries(retainedReferences).flatMap(([key, answer]) => {
+      const [number, slot] = key.split('.')
+      const indexes = removedParts.get(Number(number))
+      if (!slot || !indexes?.length) return [[key, answer]]
+      const index = Number(slot) - 1
+      if (indexes.includes(index)) return []
+      return [[`${number}.${index + 1 - indexes.filter((removed) => removed < index).length}`, answer]]
+    })) : retainedReferences
+    const rowCount = (group: QuestionGroupDraft) => group.items.reduce((sum, item) => sum + Math.max(1, item.subquestionCount), 0)
+    const addedRows = Math.max(0, rowCount(draft) - rowCount(previous))
+    const resized = addedRows > 0 || draft.items.length !== previous.items.length || draft.items.some((item, index) => item.subquestionCount !== previous.items[index]?.subquestionCount || item.blankCount !== previous.items[index]?.blankCount || String(item.subquestionBlankCounts) !== String(previous.items[index]?.subquestionBlankCounts))
+    const rowHeight = current.kind === 'objective' ? 18 : Math.max(22, settings.subjectiveLineHeight + 6)
+    const next: AnswerBlock = {
+      ...current,
+      range: rebuilt.range,
+      score: rebuilt.score,
+      questionGroupDraft: draft,
+      questionScores: rebuilt.questionScores,
+      partialCreditScores: rebuilt.partialCreditScores,
+      answerVariant: rebuilt.answerVariant,
+      answerSlotCounts: rebuilt.answerSlotCounts,
+      answerSlotLabels: rebuilt.answerSlotLabels ?? current.answerSlotLabels,
+      answerSlotSettings: rebuilt.answerSlotSettings ? { ...rebuilt.answerSlotSettings, ...retained(current.answerSlotSettings) } : current.answerSlotSettings,
+      answerSlotNumbers: resized ? undefined : current.answerSlotNumbers,
+      questionLineCounts: current.questionLineCounts ?? rebuilt.questionLineCounts,
+      optionCount: rebuilt.optionCount,
+      objectiveAnswers: retained(current.objectiveAnswers),
+      referenceAnswers,
+      height: resized ? Math.max(current.height + addedRows * rowHeight, rebuilt.height) : current.height,
+    }
+    const usesBlankAnswer = current.kind === 'short-answer' && draft.type !== 'fill'
+      && (current.answerAreaOverride ? current.responseStyle : settings.subjectiveAnswerStyle) === 'blank'
+    if (usesBlankAnswer) {
+      next.answerRichText = refreshBlankAnswerHtml(current, next, removedParts)
+      const printedRows = draft.items.reduce((count, item) => count + Math.max(1, item.subquestionCount), 0)
+      const priorRows = previous.items.reduce((count, item) => count + Math.max(1, item.subquestionCount), 0)
+      if (printedRows > priorRows) next.height = Math.max(next.height, 35 + printedRows * 52)
+    }
+    let nextBlocks = draft.items.length ? blocks.map((block) => block.id === current.id ? next : block) : blocks.filter((block) => block.id !== current.id)
+    if (next.height > current.height) {
+      const firstPaper = window.document.querySelector<HTMLElement>('.paper-stack .answer-paper')
+      const body = firstPaper?.querySelector<HTMLElement>('.paper-blocks')
+      const paperHeight = firstPaper ? parseFloat(getComputedStyle(firstPaper).minHeight) : 996
+      const capacity = (page: number) => page === 1 ? paperHeight - (body?.offsetTop ?? 240) - 40 : paperHeight - 70
+      if (next.height > capacity(2)) {
+        MetisMessage.info('当前题组超过一页可用空间，请分成多个题组')
+        return false
+      }
+      nextBlocks = reflowEditedAnswerBlocks(nextBlocks, current.page, settings.frontColumns, capacity)
+    }
+    const nextDocument = { ...document, blocks: nextBlocks, pageCount: Math.max(document.pageCount, ...nextBlocks.map((block) => block.page)), paper: { ...paper, score: totalQuestionScore(nextBlocks) } }
+    commitDocument(nextDocument)
+    if (solutionBatch && !draft.items.length) setQuestionGroupBatchResult({ id: current.id, after: nextDocument, removedCount: previous.items.length })
+    if (!draft.items.length) setSelectedBlockId('')
+    if (deletedNumber !== undefined) {
+      setDeletedQuestion({ id: current.id, number: deletedNumber, after: nextDocument })
+      setStructure(undefined)
+      return true
+    }
+    setStructure((selection) => {
+      if (selection?.id !== current.id) return selection
+      if (!draft.items.length) return undefined
+      const item = draft.items.find((entry) => entry.number === selection.number)
+      if (!item) return { id: current.id }
+      return selection.subIndex !== undefined && selection.subIndex >= item.subquestionCount ? { id: current.id, number: item.number } : selection
+    })
+    return true
+  }
+
+  const resizeQuestionGroup = (block: AnswerBlock, draft: QuestionGroupDraft, count: number) => {
+    if (!Number.isInteger(count) || count < 1 || count > 300) {
+      MetisMessage.info('题量须在 1–300 道之间')
+      return false
+    }
+    if (count < draft.items.length) {
+      const removed = draft.items.slice(count).map((item) => item.number)
+      return applyStructure(block, deleteGroupQuestionSelection(draft, removed.map((number) => ({ number }))), draft, undefined, undefined, undefined, true)
+    }
+    const occupied = new Set(blocks.flatMap((entry) => questionNumbers(entry.range)))
+    let number = Math.max(...draft.items.map((item) => item.number)) + 1
+    let next = draft
+    while (next.items.length < count) {
+      while (occupied.has(number)) number += 1
+      if (number > 999) {
+        MetisMessage.info('已达到题号上限')
+        return false
+      }
+      next = appendGroupQuestion(next, number)
+      number += 1
+    }
+    return applyStructure(block, next, draft, undefined, undefined, undefined, true)
+  }
+
+  const handleQuestionAction = (id: string, number: number | undefined, action: string, value?: number, editedSubIndex?: number) => {
     const current = blocks.find((block) => block.id === id)
-    if (!current || current.locked) return
-    let draft = editableQuestionGroup(current)
-    if (action === 'edit') {
-      setEditingQuestionNumber(number)
-      setEditingQuestionGroupId(id)
-      setQuestionGroupType(draft.type)
-      setQuestionGroupOpen(true)
+    if (!current || !canEditQuestionGroup(current)) return
+    if (action === 'clear') {
+      setStructure({ id })
+      return
+    }
+    if (action === 'select' || action === 'edit') {
+      setSelectedBlockId(id)
+      setActivePage(current.page)
+      setStructure({ id, number, subIndex: action === 'select' ? value : undefined })
       return
     }
     if (number === undefined) return
-    if (action === 'score' && value !== undefined && Number.isFinite(value) && value >= 0) {
-      const item = draft.items.find((entry) => entry.number === number)
-      if (item && !item.subquestionCount && draft.type !== 'fill') item.score = value
-      draft.totalScore = Number(draft.items.reduce((sum, entry) => sum + entry.score, 0).toFixed(2))
-    }
-    if (action === 'add-subquestion') draft = appendSubquestion(draft, number)
-    if (action === 'delete-subquestion' && value !== undefined) {
-      const item = draft.items.find((entry) => entry.number === number)
-      if (!item || item.subquestionCount <= 1 || (draft.type === 'comprehensive' && item.subquestionCount <= 2)) {
-        MetisMessage.info('请在题目设置中调整小题结构')
-        return
-      }
-      const childFields = ['subquestionScores', 'subquestionOptionCounts', 'subquestionPartialScores', 'subquestionBlankCounts', 'subquestionBlankScores', 'subquestionFillStyles', 'subquestionTypes'] as const
-      for (const key of childFields) {
-        const values = item[key]
-        if (values) values.splice(value, 1)
-      }
-      item.subquestionCount -= 1
-      item.score = Number((item.subquestionScores ?? []).reduce((sum, score) => sum + score, 0).toFixed(2))
-      draft.totalScore = Number(draft.items.reduce((sum, entry) => sum + entry.score, 0).toFixed(2))
-    }
-    if (action === 'delete') {
-      draft.items = draft.items.filter((item) => item.number !== number)
-      draft.questionCount = draft.items.length
-      draft.startNumber = draft.items[0]?.number ?? draft.startNumber
-      draft.totalScore = Number(draft.items.reduce((sum, item) => sum + item.score, 0).toFixed(2))
-    }
-    const rebuilt = buildQuestionGroup(draft, blocks, id)
-    const next = { ...current, ...rebuilt, height: Math.max(current.height, rebuilt.height), range: formatQuestionRange(draft.items.map((item) => item.number)), answerRichText: undefined }
-    const nextBlocks = draft.items.length ? blocks.map((block) => block.id === id ? next : block) : blocks.filter((block) => block.id !== id)
-    commitDocument({ ...document, blocks: nextBlocks, paper: { ...paper, score: totalQuestionScore(nextBlocks) } })
-    if (!draft.items.length) setSelectedBlockId('')
+    const draft = editableQuestionGroup(current)
+    const subIndex = editedSubIndex ?? (structure?.id === id && structure.number === number ? structure.subIndex : undefined)
+    const next = action === 'add-option' ? appendQuestionOption(draft, number, value)
+      : action === 'add-blank' ? appendQuestionBlank(draft, number, value)
+      : action === 'add-subquestion' ? appendSubquestion(draft, number)
+      : action === 'delete-subquestion' && value !== undefined ? removeQuestionSubpart(draft, number, value)
+      : action === 'delete' ? removeQuestionItem(draft, number)
+      : action === 'score' && value !== undefined ? updateQuestionItem(draft, number, { score: value }, subIndex)
+      : action === 'option-count' && value !== undefined ? updateQuestionItem(draft, number, { optionCount: value }, subIndex)
+      : action === 'partial-score' && value !== undefined ? updateQuestionItem(draft, number, { partialScore: value }, subIndex)
+      : action === 'blank-count' && value !== undefined ? updateQuestionItem(draft, number, { blankCount: value }, subIndex)
+      : draft
+    applyStructure(current, next, draft, action === 'delete' ? number : undefined, action === 'delete-subquestion' ? value : undefined, number)
   }
 
   const addBatchQuestionGroups = (drafts: QuestionGroupDraft[]) => {
@@ -428,6 +520,10 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
     setObjectiveAnswerOpen(false)
     MetisMessage.success('答案已保存')
   }
+
+  const structureBlock = structure?.id === selectedBlockId ? blocks.find((block) => block.id === structure.id && !block.locked) : undefined
+  const structureDraft = structureBlock ? editableQuestionGroup(structureBlock) : undefined
+  const structureItem = structureDraft?.items.find((item) => item.number === structure?.number)
 
   const suggestedQuestionStart = Math.max(0, ...blocks.flatMap((block) => questionNumbers(block.range))) + 1
 
@@ -502,8 +598,9 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
 
   const updateSelected = (patch: Partial<AnswerBlock>) => updateBlock(selectedBlockId, patch)
 
-  const selectBlock = (blockId: string) => {
+  const selectBlock = (blockId: string, inspectGroup = true) => {
     const block = blocks.find((item) => item.id === blockId)
+    setStructure(inspectGroup && block && canEditQuestionGroup(block) ? { id: blockId } : undefined)
     setSelectedBlockId(blockId)
     if (block) setActivePage(block.page)
   }
@@ -786,6 +883,30 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
   return (
     <>
       <div className="studio-body stage-editor">
+        {questionGroupBatchResult?.after === document && questionGroupBatchResult.removedCount && <div className="question-delete-feedback">
+          <span role="status">已删除 {questionGroupBatchResult.removedCount} 道题</span>
+          <button type="button" onClick={() => {
+            undo()
+            setSelectedBlockId(questionGroupBatchResult.id)
+            setStructure({ id: questionGroupBatchResult.id })
+            setQuestionGroupBatchResult(undefined)
+          }}>撤销删除</button>
+          <button type="button" aria-label="关闭删除提示" onClick={() => setQuestionGroupBatchResult(undefined)}>×</button>
+        </div>}
+        {deletedQuestion?.after === document && <div className="question-delete-feedback">
+          <span role="status">已删除第 {deletedQuestion.number} 题</span>
+          <button type="button" onClick={() => {
+            undo()
+            const restored = history[history.length - 1]?.blocks.find((block) => block.id === deletedQuestion.id)
+            if (restored) {
+              setSelectedBlockId(restored.id)
+              setActivePage(restored.page)
+              setStructure({ id: restored.id, number: deletedQuestion.number })
+            }
+            setDeletedQuestion(undefined)
+          }}>撤销删除</button>
+          <button type="button" aria-label="关闭删除提示" onClick={() => setDeletedQuestion(undefined)}>×</button>
+        </div>}
         <EditorToolbar
               paper={paper}
               backLabel={backLabel}
@@ -830,9 +951,44 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
               onMove={moveBlock}
               onDelete={deleteSelected}
               onAdd={addBlock}
+              questionSelection={structureBlock && structureItem ? { id: structureBlock.id, number: structureItem.number, subIndex: structure?.subIndex } : undefined}
+              questionStructure={structureBlock && structureDraft && structure?.number === undefined ? {
+                draft: structureDraft,
+                onApplyBatch: (patch) => applyStructure(structureBlock, applyQuestionBatch(structureDraft, patch), structureDraft),
+                onUpdateGroupQuestion: ({ number, subIndex }, patch) => applyStructure(
+                  structureBlock, updateQuestionItem(structureDraft, number, patch, subIndex), structureDraft, undefined, undefined, undefined, true,
+                ),
+                onAddGroupSubparts: (numbers, count) => applyStructure(
+                  structureBlock, addGroupQuestionSubparts(structureDraft, numbers, count), structureDraft, undefined, undefined, undefined, true,
+                ),
+                onDeleteGroupQuestionSelection: (selection) => {
+                  const next = deleteGroupQuestionSelection(structureDraft, selection)
+                  if (next === structureDraft && structureDraft.type === 'comprehensive') {
+                    MetisMessage.info('综合题的每道题至少保留两个小题')
+                    return false
+                  }
+                  const removedParts = new Map<number, number[]>()
+                  for (const { number, subIndex } of selection) {
+                    if (subIndex !== undefined) removedParts.set(number, [...(removedParts.get(number) ?? []), subIndex])
+                  }
+                  return applyStructure(structureBlock, next, structureDraft, undefined, undefined, undefined, true, removedParts)
+                },
+                onAddGroupQuestion: () => resizeQuestionGroup(structureBlock, structureDraft, structureDraft.questionCount + 1),
+                onResizeGroup: (count) => resizeQuestionGroup(structureBlock, structureDraft, count),
+                onLocateQuestion: (number) => {
+                  const labels = window.document.querySelectorAll<HTMLElement>(`.paper-stack [data-block-id="${CSS.escape(structureBlock.id)}"] [data-question-number="${number}"]`)
+                  const label = [...labels].find((element) => element.getClientRects().length > 0 && getComputedStyle(element).visibility === 'visible')
+                  label?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' })
+                  label?.animate([{ backgroundColor: '#d8cffb' }, { backgroundColor: 'transparent' }], { duration: 1500 })
+                },
+                subject: paper.subject,
+                onUpdateSubquestionType: (selection, type) => applyStructure(
+                  structureBlock, setGroupSubquestionType(structureDraft, selection, type), structureDraft, undefined, undefined, undefined, true,
+                ),
+              } : undefined}
               onQuestionAction={handleQuestionAction}
               onBatchAddQuestionGroups={() => setBatchGroupOpen(true)}
-              onAddQuestionGroup={(type) => { setEditingQuestionGroupId(''); setQuestionGroupType(type); setQuestionGroupOpen(true) }}
+              onAddQuestionGroup={(type) => { setQuestionGroupType(type); setQuestionGroupOpen(true) }}
               onEditQuestionGroup={(id) => {
                 const block = blocks.find((item) => item.id === id)
                 if (block) handleQuestionAction(id, undefined, 'edit')
@@ -895,7 +1051,7 @@ export function AnswerSheetStudioPage({ initialDocument, uploadedSourceFile, onA
         onDownloadPublished={() => printSnapshot(published?.snapshot ?? document)}
       />
       <BatchQuestionGroupDialog open={batchGroupOpen} subject={paper.subject} suggestedStart={suggestedQuestionStart} onClose={() => setBatchGroupOpen(false)} onSubmit={addBatchQuestionGroups} />
-      <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} type={questionGroupType} subject={paper.subject} initialQuestionNumber={editingQuestionNumber} initialValue={editingQuestionGroupId && blocks.find((block) => block.id === editingQuestionGroupId) ? editableQuestionGroup(blocks.find((block) => block.id === editingQuestionGroupId)!) : undefined} onClose={() => { setQuestionGroupOpen(false); setEditingQuestionGroupId('') }} onSubmit={addQuestionGroup} />
+      <QuestionGroupDialog open={questionGroupOpen} suggestedStart={suggestedQuestionStart} type={questionGroupType} subject={paper.subject} onClose={() => setQuestionGroupOpen(false)} onSubmit={addQuestionGroup} />
       <ObjectiveAnswerDialog open={objectiveAnswerOpen} blocks={blocks} onClose={() => setObjectiveAnswerOpen(false)} onSave={saveAnswers} />
       <SourcePaperPreviewDialog file={uploadedSourceOpen ? uploadedSourceFile : undefined} onClose={() => setUploadedSourceOpen(false)} />
       <input ref={associateSourceInputRef} type="file" hidden onChange={(event) => {

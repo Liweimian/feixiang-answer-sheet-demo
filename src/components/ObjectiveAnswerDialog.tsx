@@ -138,7 +138,7 @@ export function ObjectiveAnswerDialog(props: ObjectiveAnswerDialogProps) {
           {objective ? <div className="objective-answer-grid">
             {numbers.map((number) => <div key={number} className="objective-answer-row">
               <b>{number}</b>
-              {(block.objectiveMode === 'judge' ? ['T', 'F'] : Array.from({ length: block.optionCount ?? 4 }, (_, index) => String.fromCharCode(65 + index))).map((option) => <MetisCheckbox key={option} checked={(answers[block.id]?.objectiveAnswers[String(number)] ?? []).includes(option)} onChange={(event) => toggle(block.id, number, option, event.target.checked)}>{option}</MetisCheckbox>)}
+              {(block.objectiveMode === 'judge' ? ['T', 'F'] : Array.from({ length: block.questionGroupDraft?.items.find((item) => item.number === number)?.optionCount ?? block.optionCount ?? 4 }, (_, index) => String.fromCharCode(65 + index))).map((option) => <MetisCheckbox key={option} checked={(answers[block.id]?.objectiveAnswers[String(number)] ?? []).includes(option)} onChange={(event) => toggle(block.id, number, option, event.target.checked)}>{option}</MetisCheckbox>)}
             </div>)}
           </div> : <div className="reference-answer-list">
             {numbers.flatMap((number, questionIndex) => {

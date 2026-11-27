@@ -11,6 +11,7 @@ import { Ban, Check, ChevronLeft, ChevronRight, Pencil, PenLine, Plus, Slash, Sq
 import { blockKindLabels } from '../data/mockPaper'
 import { examHeaderTemplates } from '../data/headerTemplates'
 import { questionNumbers } from '../features/answer-sheet/range'
+import { QuestionStructurePanel, type QuestionStructurePanelProps } from './QuestionStructurePanel'
 import {
   isQuestionBlockKind,
   type AnswerBlock,
@@ -24,6 +25,7 @@ import {
 
 interface AnswerSheetConfigPanelProps {
   settingsRequest?: number
+  questionStructure?: QuestionStructurePanelProps
   document: AnswerSheetDocument
   activePage: number
   selectedBlockId: string
@@ -110,9 +112,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
     if (props.settingsRequest) setActiveConfigView('card')
   }, [props.settingsRequest])
   useEffect(() => {
-    if (props.selectedBlockId) {
-      setActiveConfigView('questions')
-    }
+    setActiveConfigView('questions')
     setEditingScoreBlockId(null)
     setEditingQuestionIndex(0)
   }, [props.selectedBlockId])
@@ -131,11 +131,15 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
     <aside className="answer-sheet-config" data-sec="4">
       <div className="config-panel-head">
         <div><strong>题目与分值</strong></div>
+        {props.questionStructure && <button type="button" className="config-group-overview-action" onClick={() => {
+          setActiveConfigView('questions')
+          props.onSelect('')
+        }}><ChevronLeft size={13} /> 全部题组</button>}
       </div>
 
 
 
-      <div className="config-scroll" data-view={activeConfigView}>
+      <div className="config-scroll" data-view={activeConfigView} key={props.questionStructure ? `structure-${props.selectedBlockId}` : 'overview'}>
         <section className="config-flat-section config-layout-inline config-card-view">
           <div className="config-flat-title">纸张</div>
           <MetisSelect value={settings.paperSize} options={layoutOptions.map((item) => ({ value: item.value, label: item.label }))} onChange={(value) => props.onSettingsChange({ paperSize: value as AnswerSheetSettings['paperSize'] })} />
@@ -169,7 +173,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
           <AnswerSheetMoreSettings {...props} />
         </details>
 
-        <section className="config-flat-section config-block-section config-questions-view">
+        {props.questionStructure ? <QuestionStructurePanel {...props.questionStructure} /> : <section className="config-flat-section config-block-section config-questions-view">
           <div className="config-flat-body">
             {standaloneCard && <div className="config-creation-tools">
             <div className="config-meta-row config-question-order-row">
@@ -234,7 +238,7 @@ export function AnswerSheetConfigPanel(props: AnswerSheetConfigPanelProps) {
               <MetisButton type="primary" size="s" icon={<Plus size={13} />} onClick={() => props.onAdd(addKind)}>添加到本页</MetisButton>
             </div>}
           </div>
-        </section>
+        </section>}
 
         {blankCard && selected && !standaloneCard && (
           <section className="config-flat-section config-selected-section config-questions-view">
